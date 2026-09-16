@@ -1,0 +1,509 @@
+/**
+ * Sistem Pendataan Pemuda Kabupaten Sragen
+ * Main Layout & Global Component Styles (Tema Merah / Red Nuance)
+ */
+
+:root {
+    --pmd-primary: #dc2626;        /* Vibrant Red */
+    --pmd-primary-dark: #991b1b;   /* Deep Maroon */
+    --pmd-primary-light: #ef4444;  /* Coral Red */
+    --pmd-primary-subtle: #fef2f2; /* Light Red Tint */
+    --pmd-secondary: #475569;
+    --pmd-accent: #f59e0b;
+    --pmd-bg: #fafbfc;
+    --pmd-card-bg: #ffffff;
+    --pmd-text-main: #0f172a;
+    --pmd-text-muted: #64748b;
+    --pmd-border: #e2e8f0;
+    --pmd-border-red: #fee2e2;
+    --pmd-radius-sm: 8px;
+    --pmd-radius-md: 12px;
+    --pmd-radius-lg: 16px;
+}
+
+html,
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--pmd-bg);
+    color: var(--pmd-text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Top Utility Bar (UMS Style) */
+.top-utility-bar {
+    background: #500718;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.4rem 0;
+    letter-spacing: 0.01em;
+}
+
+.top-utility-bar a {
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.top-utility-bar a:hover {
+    color: #fef08a;
+}
+
+/* Navbar - Rich Crimson Gradient */
+.navbar-pmd {
+    background: linear-gradient(135deg, #700f2b 0%, #991b1b 45%, #dc2626 100%);
+    box-shadow: 0 4px 20px -2px rgba(185, 28, 28, 0.35);
+    padding: 0.75rem 0;
+}
+
+.navbar-brand-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.navbar-brand-subtitle {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+    display: block;
+    line-height: 1.2;
+}
+
+.navbar-brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    color: var(--pmd-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    padding: 3px;
+    overflow: hidden;
+}
+
+.navbar-brand-icon .navbar-brand-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Cards */
+.card-custom {
+    background-color: var(--pmd-card-bg);
+    border: 1px solid var(--pmd-border);
+    border-radius: var(--pmd-radius-lg);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+    color: #ffffff;
+    border-top-left-radius: var(--pmd-radius-lg) !important;
+    border-top-right-radius: var(--pmd-radius-lg) !important;
+    padding: 1.25rem 1.5rem;
+    border-bottom: none;
+}
+
+/* Form Controls & Labels */
+.form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #334155;
+    margin-bottom: 0.35rem;
+}
+
+.form-label .required-star {
+    color: var(--pmd-primary);
+    margin-left: 2px;
+}
+
+.form-control, 
+.form-select {
+    border-radius: var(--pmd-radius-sm);
+    border: 1.5px solid #cbd5e1;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.925rem;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, 
+.form-select:focus {
+    border-color: var(--pmd-primary);
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15);
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+/* Red-themed Custom Buttons */
+.btn-primary-pmd {
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--pmd-radius-sm);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28);
+    transition: all 0.2s ease;
+}
+
+.btn-primary-pmd:hover, 
+.btn-primary-pmd:focus {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.38);
+}
+
+.btn-outline-pmd {
+    background-color: transparent;
+    border: 1.5px solid var(--pmd-primary);
+    color: var(--pmd-primary);
+    font-weight: 600;
+    padding: 0.45rem 1.15rem;
+    border-radius: 50px;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-pmd:hover,
+.btn-outline-pmd:focus {
+    background-color: var(--pmd-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+.btn-secondary-pmd {
+    background-color: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    color: #475569;
+    font-weight: 600;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--pmd-radius-sm);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary-pmd:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+/* Red Nuance Utilities */
+.text-pmd-red {
+    color: var(--pmd-primary) !important;
+}
+
+.bg-pmd-badge {
+    background-color: var(--pmd-primary-subtle) !important;
+    color: var(--pmd-primary) !important;
+    border: 1px solid var(--pmd-border-red);
+}
+
+/* Footer */
+.footer-pmd {
+    margin-top: auto;
+    background-color: #ffffff;
+    border-top: 1px solid var(--pmd-border);
+    padding: 1.5rem 0;
+    font-size: 0.85rem;
+    color: var(--pmd-text-muted);
+}
+
+/* ========================================================================= */
+/* Mobile Phone Responsive Enhancements                                      */
+/* ========================================================================= */
+
+/* Navbar on small screens */
+@media (max-width: 575.98px) {
+    .navbar-pmd {
+        padding: 0.5rem 0;
+    }
+
+    .navbar-brand {
+        max-width: 78%;
+    }
+
+    .navbar-brand-title {
+        font-size: 0.92rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-brand-subtitle {
+        font-size: 0.65rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-brand-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .navbar-brand-icon i {
+        font-size: 1rem !important;
+    }
+
+    .navbar-toggler {
+        padding: 0.35rem 0.5rem;
+        font-size: 1.1rem;
+    }
+}
+
+/* Mobile Dropdown Navigation Menu */
+@media (max-width: 991.98px) {
+    .navbar-pmd .navbar-collapse {
+        background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: var(--pmd-radius-md);
+        padding: 1rem;
+        margin-top: 0.75rem;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .navbar-pmd .navbar-nav .nav-link {
+        padding: 0.65rem 0.85rem;
+        border-radius: var(--pmd-radius-sm);
+        color: rgba(255, 255, 255, 0.9) !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar-pmd .navbar-nav .nav-link:hover,
+    .navbar-pmd .navbar-nav .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff !important;
+    }
+
+    .navbar-pmd .navbar-nav .btn {
+        width: 100%;
+        margin-top: 0.4rem;
+        text-align: center;
+        padding: 0.65rem 1rem;
+        display: block;
+    }
+}
+
+/* Form Controls & Touch Targets on Mobile (Prevents iOS Safari auto-zoom) */
+@media (max-width: 768px) {
+    .form-control,
+    .form-select,
+    .input-group-text {
+        font-size: 16px !important; /* Minimum 16px to prevent iOS Safari auto-zoom */
+        min-height: 46px;
+    }
+
+    .form-control::placeholder {
+        font-size: 14px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .btn-primary-pmd,
+    .btn-secondary-pmd {
+        min-height: 46px;
+        padding: 0.65rem 1.25rem;
+    }
+
+    .card-custom {
+        border-radius: 14px;
+    }
+
+    .footer-pmd {
+        padding: 1.25rem 0;
+    }
+}
+
+/* ========================================================================= */
+/* Mobile App Experience: Bottom Navigation Bar & PWA Banner                 */
+/* ========================================================================= */
+
+.mobile-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(58px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        z-index: 1040;
+        align-items: center;
+        justify-content: space-around;
+    }
+
+    .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.68rem;
+        font-weight: 600;
+        transition: color 0.15s ease, transform 0.15s ease;
+        position: relative;
+        padding: 4px 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-nav-item i {
+        font-size: 1.22rem;
+        margin-bottom: 2px;
+        transition: transform 0.15s ease;
+    }
+
+    .mobile-nav-item:active {
+        transform: scale(0.92);
+    }
+
+    .mobile-nav-item.active {
+        color: var(--pmd-primary);
+    }
+
+    .mobile-nav-item.active i {
+        transform: translateY(-2px);
+    }
+
+    /* Floating Center Button (FAB) for Pendataan */
+    .mobile-nav-fab {
+        position: relative;
+        overflow: visible;
+    }
+
+    .mobile-nav-fab .fab-icon-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -24px;
+        box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+        border: 3.5px solid #ffffff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .mobile-nav-fab .fab-icon-wrap i {
+        font-size: 1.35rem;
+        margin-bottom: 0;
+    }
+
+    .mobile-nav-fab:active .fab-icon-wrap {
+        transform: scale(0.92);
+        box-shadow: 0 3px 10px rgba(220, 38, 38, 0.5);
+    }
+
+    .mobile-nav-fab span {
+        margin-top: 2px;
+        font-weight: 700;
+        color: var(--pmd-primary);
+    }
+
+    /* PWA Install Banner */
+    .pwa-install-banner {
+        position: fixed;
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+        left: 12px;
+        right: 12px;
+        background: #ffffff;
+        border: 1px solid var(--pmd-border);
+        border-radius: 16px;
+        z-index: 1045;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+    }
+
+    /* PWA iOS Sheet */
+    .pwa-ios-sheet {
+        position: fixed;
+        inset: 0;
+        z-index: 1060;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .pwa-ios-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .pwa-ios-content {
+        position: relative;
+        background: #ffffff;
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        padding: 1.25rem 1.5rem 2rem;
+        z-index: 1;
+        max-width: 500px;
+        width: 100%;
+        margin: 0 auto;
+        padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+    }
+
+    .pwa-ios-drag-handle {
+        width: 42px;
+        height: 5px;
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+    animation: slideDown 0.25s ease-in forwards;
+}
+

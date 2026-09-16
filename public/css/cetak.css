@@ -1,0 +1,77 @@
+/**
+ * Sistem Pendataan Pemuda Kabupaten Sragen
+ * Cetak Dokumen & Biodata Stylesheet
+ */
+
+body.cetak-body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000000;
+    background: #ffffff;
+    font-size: 13px;
+    margin: 0;
+    padding: 1.5rem;
+}
+
+.cetak-header-box {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.cetak-header-subtitle {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.cetak-photo-box {
+    border: 1px dashed #cbd5e1;
+    padding: 8px;
+    text-align: center;
+    display: inline-block;
+    border-radius: 6px;
+    width: 110px;
+    height: 130px;
+    line-height: 110px;
+    color: #94a3b8;
+    font-size: 11px;
+    background-color: #f8fafc;
+}
+
+.table-cetak td {
+    padding: 4px 8px;
+    vertical-align: top;
+}
+
+.cetak-section-title {
+    background-color: #f1f5f9;
+    font-weight: bold;
+    padding: 6px 10px;
+    border-left: 4px solid #0284c7;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+.signature-box {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    text-align: center;
+}
+
+.signature-space {
+    margin-bottom: 4rem;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    body.cetak-body {
+        padding: 0;
+    }
+    .page-break {
+        page-break-after: always;
+    }
+}

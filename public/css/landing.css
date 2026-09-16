@@ -1,0 +1,427 @@
+/**
+ * Landing Page Stylesheet - Pemuda MTA Perwakilan Sragen
+ * Simple, Elegant, and Focused Design
+ */
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+}
+
+:root {
+    --pmd-burgundy-900: #4c0519;
+    --pmd-burgundy-800: #700f2b;
+    --pmd-burgundy-700: #881337;
+    --pmd-red-600: #be123c;
+    --pmd-red-500: #e11d48;
+    --pmd-red-light: #fff1f2;
+    --pmd-slate-900: #0f172a;
+    --pmd-slate-800: #1e293b;
+    --pmd-slate-600: #475569;
+    --pmd-slate-500: #64748b;
+    --pmd-slate-200: #e2e8f0;
+    --pmd-slate-100: #f1f5f9;
+    --pmd-slate-50: #f8fafc;
+    --pmd-radius-lg: 20px;
+    --pmd-radius-md: 14px;
+}
+
+/* ===================================================
+   1. HERO SECTION (ELEGAN, MINIMALIS & FOKUS)
+   =================================================== */
+.hero-elegant {
+    position: relative;
+    background: linear-gradient(150deg, #4c0519 0%, #700f2b 45%, #991b1b 100%);
+    color: #ffffff;
+    padding: 5rem 0 4.5rem;
+    overflow: hidden;
+}
+
+.hero-elegant::before {
+    content: '';
+    position: absolute;
+    top: -15%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(254, 202, 202, 0.12) 0%, transparent 65%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hero-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    padding: 0.4rem 1.15rem;
+    border-radius: 50px;
+    letter-spacing: 0.01em;
+}
+
+.badge-dot-live {
+    width: 8px;
+    height: 8px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+    display: inline-block;
+}
+
+.hero-title {
+    font-size: clamp(2.1rem, 3.8vw, 2.9rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+}
+
+.hero-subtitle {
+    font-size: 1.08rem;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 400;
+}
+
+.hero-btn-primary {
+    background: #ffffff;
+    color: var(--pmd-burgundy-700);
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 0.85rem 2.2rem;
+    border-radius: 50px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+}
+
+.hero-btn-primary:hover {
+    background: #fff1f2;
+    color: var(--pmd-burgundy-900);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.hero-trust-badge {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.78);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Card Preview Kanan Hero */
+.hero-summary-card {
+    background: #ffffff;
+    border-radius: var(--pmd-radius-lg);
+    padding: 1.85rem;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: var(--pmd-slate-900);
+    position: relative;
+}
+
+.hero-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.hero-summary-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.hero-summary-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--pmd-red-light);
+    color: var(--pmd-burgundy-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+/* ===================================================
+   2. STATISTIK STRIP (MINIMALIS & BERSIH)
+   =================================================== */
+.stats-strip {
+    background: #ffffff;
+    border-bottom: 1px solid var(--pmd-slate-200);
+    padding: 2.25rem 0;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.5rem 1rem;
+}
+
+.stat-item .stat-num {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--pmd-burgundy-700);
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+}
+
+.stat-item .stat-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--pmd-slate-900);
+    margin-bottom: 0.15rem;
+}
+
+.stat-item .stat-desc {
+    font-size: 0.8rem;
+    color: var(--pmd-slate-500);
+}
+
+/* ===================================================
+   3. SECTION UMUM (PADDING & TYPOGRAPHY)
+   =================================================== */
+.section-clean {
+    padding: 4.75rem 0;
+}
+
+.section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pmd-burgundy-700);
+    background-color: var(--pmd-red-light);
+    padding: 0.35rem 0.95rem;
+    border-radius: 50px;
+    margin-bottom: 0.75rem;
+}
+
+.section-title {
+    font-size: clamp(1.75rem, 2.7vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--pmd-slate-900);
+    line-height: 1.25;
+}
+
+.section-subtitle {
+    font-size: 1.02rem;
+    color: var(--pmd-slate-500);
+    line-height: 1.65;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+/* ===================================================
+   4. ALUR PENDATAAN (3 LANGKAH ELEGAN)
+   =================================================== */
+.step-card-elegant {
+    background: #ffffff;
+    border: 1px solid var(--pmd-slate-200);
+    border-radius: var(--pmd-radius-md);
+    padding: 2.25rem 1.75rem;
+    height: 100%;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.03);
+}
+
+.step-card-elegant:hover {
+    border-color: #fda4af;
+    transform: translateY(-4px);
+    box-shadow: 0 16px 30px -8px rgba(225, 29, 72, 0.12);
+}
+
+.step-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--pmd-red-500);
+    line-height: 1;
+    margin-bottom: 1.15rem;
+    opacity: 0.9;
+}
+
+.step-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--pmd-slate-900);
+    margin-bottom: 0.5rem;
+}
+
+.step-desc {
+    font-size: 0.92rem;
+    color: var(--pmd-slate-600);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* ===================================================
+   5. WILAYAH SECTION (RINGKAS & INFORMATIF)
+   =================================================== */
+.wilayah-card-clean {
+    background: #ffffff;
+    border: 1px solid var(--pmd-slate-200);
+    border-radius: var(--pmd-radius-md);
+    padding: 1.75rem 1.5rem;
+    height: 100%;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.03);
+}
+
+.wilayah-card-clean:hover {
+    border-color: #fca5a5;
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.07);
+}
+
+.wilayah-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    background-color: var(--pmd-red-light);
+    color: var(--pmd-burgundy-700);
+}
+
+.wilayah-count {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--pmd-slate-500);
+}
+
+.wilayah-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--pmd-slate-900);
+    margin-bottom: 0.4rem;
+}
+
+.wilayah-desc {
+    font-size: 0.88rem;
+    color: var(--pmd-slate-500);
+    line-height: 1.55;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.cabang-preview-box {
+    background-color: var(--pmd-slate-50);
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--pmd-slate-600);
+    border: 1px solid #f1f5f9;
+}
+
+/* ===================================================
+   6. BANTUAN & KONTAK SECTION (MINIMALIS)
+   =================================================== */
+.help-card-clean {
+    background: #ffffff;
+    border: 1px solid var(--pmd-slate-200);
+    border-radius: var(--pmd-radius-lg);
+    padding: 2.25rem 2rem;
+    height: 100%;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+}
+
+.help-card-clean:hover {
+    border-color: var(--pmd-slate-200);
+    box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.08);
+}
+
+.help-icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    margin-bottom: 1.25rem;
+}
+
+.help-icon-circle.icon-maroon {
+    background: var(--pmd-red-light);
+    color: var(--pmd-burgundy-700);
+}
+
+.help-icon-circle.icon-green {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.btn-whatsapp-elegant {
+    background: #25d366;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.75rem 1.6rem;
+    border-radius: 50px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.28);
+}
+
+.btn-whatsapp-elegant:hover {
+    background: #1ebc59;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
+}
+
+/* ===================================================
+   7. RESPONSIVE BREAKPOINTS
+   =================================================== */
+@media (max-width: 991.98px) {
+    .hero-elegant {
+        padding: 4rem 0 3.5rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .hero-elegant {
+        padding: 3.25rem 0 2.75rem;
+    }
+    .section-clean {
+        padding: 3.5rem 0;
+    }
+    .stat-item .stat-num {
+        font-size: 1.85rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hero-btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+    .hero-trust-badge {
+        justify-content: center;
+        text-align: center;
+    }
+}
