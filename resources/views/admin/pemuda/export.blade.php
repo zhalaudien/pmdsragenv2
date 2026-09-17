@@ -174,7 +174,7 @@
 
 @section('scripts')
 <script>
-    const presets = {!! json_encode($presets) !!};
+    const presets = @json($presets);
 
     function selectPreset(name) {
         deselectAllCols();

@@ -21,10 +21,15 @@ class DashboardController extends Controller
         ];
 
         $stats = Pemuda::getDashboardStats($scope);
-        $wilayahList = Wilayah::orderBy('id', 'ASC')->get();
+
+        $wilayahQuery = Wilayah::orderBy('id', 'ASC');
+        if (in_array($scope['role'], ['admin_wilayah', 'admin_wilayah_pemuda', 'admin_cabang'], true) && !empty($scope['wilayah_id'])) {
+            $wilayahQuery->where('id', (int) $scope['wilayah_id']);
+        }
+        $wilayahList = $wilayahQuery->get();
 
         return view('admin.dashboard.index', [
-            'title'       => 'Dashboard Super Admin',
+            'title'       => 'Dashboard Sistem Pendataan Pemuda',
             'stats'       => $stats,
             'wilayahList' => $wilayahList,
             'user'        => session()->all(),

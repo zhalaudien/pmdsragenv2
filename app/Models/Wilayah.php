@@ -26,27 +26,27 @@ class Wilayah extends Model
         return $this->hasMany(User::class, 'wilayah_id');
     }
 
+    public function pemuda()
+    {
+        return $this->hasManyThrough(Pemuda::class, Cabang::class, 'wilayah_id', 'cabang_id');
+    }
+
     /**
      * Ambil wilayah lengkap beserta cabang-cabangnya
      */
     public static function getWithCabang(?int $wilayahId = null, ?int $cabangId = null)
     {
-        $query = static::orderBy('id', 'ASC');
+        $query = static::with(['cabang' => function ($q) use ($cabangId) {
+            if (!empty($cabangId)) {
+                $q->where('id', $cabangId);
+            }
+            $q->orderBy('name', 'ASC');
+        }])->orderBy('id', 'ASC');
 
         if (!empty($wilayahId)) {
             $query->where('id', $wilayahId);
         }
 
-        $wilayahList = $query->get();
-
-        foreach ($wilayahList as $w) {
-            $cQuery = Cabang::where('wilayah_id', $w->id)->orderBy('name', 'ASC');
-            if (!empty($cabangId)) {
-                $cQuery->where('id', $cabangId);
-            }
-            $w->cabang = $cQuery->get();
-        }
-
-        return $wilayahList;
+        return $query->get();
     }
 }

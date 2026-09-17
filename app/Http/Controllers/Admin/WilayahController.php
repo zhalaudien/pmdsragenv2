@@ -13,13 +13,11 @@ class WilayahController extends Controller
 {
     public function index()
     {
-        $wilayahList = Wilayah::orderBy('id', 'ASC')->get();
+        $wilayahList = Wilayah::withCount(['cabang', 'pemuda'])->orderBy('id', 'ASC')->get();
 
         foreach ($wilayahList as $w) {
-            $w->total_cabang = Cabang::where('wilayah_id', $w->id)->count();
-            $w->total_pemuda = Pemuda::whereHas('cabang', function ($q) use ($w) {
-                $q->where('wilayah_id', $w->id);
-            })->count();
+            $w->total_cabang = (int) ($w->cabang_count ?? 0);
+            $w->total_pemuda = (int) ($w->pemuda_count ?? 0);
         }
 
         return view('admin.wilayah.index', [

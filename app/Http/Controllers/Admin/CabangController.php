@@ -17,7 +17,7 @@ class CabangController extends Controller
         $hasGelombang = $request->input('has_gelombang');
         $search       = $request->input('search');
 
-        $query = Cabang::with('wilayah');
+        $query = Cabang::with('wilayah')->withCount('pemuda');
 
         if (!empty($wilayahId)) {
             $query->where('wilayah_id', (int) $wilayahId);
@@ -38,13 +38,18 @@ class CabangController extends Controller
             });
         }
 
+        $perPage = (int) ($request->input('per_page', 20));
+        if ($perPage < 5 || $perPage > 100) {
+            $perPage = 20;
+        }
+
         $cabangList = $query->orderBy('wilayah_id', 'ASC')
             ->orderBy('name', 'ASC')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         foreach ($cabangList as $c) {
-            $c->total_pemuda = Pemuda::where('cabang_id', $c->id)->count();
+            $c->total_pemuda = (int) ($c->pemuda_count ?? 0);
         }
 
         $totalCabang         = Cabang::count();

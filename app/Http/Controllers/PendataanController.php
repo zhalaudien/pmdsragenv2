@@ -15,7 +15,6 @@ use App\Models\Skill;
 use App\Models\Interest;
 use App\Models\PemudaSkill;
 use App\Models\PemudaInterest;
-use App\Services\MtaApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,13 +22,6 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class PendataanController extends Controller
 {
-    protected MtaApiService $apiService;
-
-    public function __construct()
-    {
-        $this->apiService = new MtaApiService();
-    }
-
     public function index()
     {
         $wilayahWithCabang = Wilayah::getWithCabang();
@@ -39,6 +31,15 @@ class PendataanController extends Controller
         $skills            = Skill::orderBy('name', 'ASC')->get();
         $interests         = Interest::orderBy('name', 'ASC')->get();
         $districts         = \App\Models\District::where('regency_id', 3314)->orderBy('name', 'ASC')->get();
+        $defaultOrgs       = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
+        $customOrgs        = Organisasi::select('organization_name')
+            ->distinct()
+            ->whereNotIn('organization_name', $defaultOrgs)
+            ->whereNotNull('organization_name')
+            ->where('organization_name', '!=', '')
+            ->orderBy('organization_name', 'ASC')
+            ->pluck('organization_name')
+            ->toArray();
 
         return view('pendataan.form', [
             'wilayahList'     => $wilayahWithCabang,
@@ -48,6 +49,309 @@ class PendataanController extends Controller
             'jobStatuses'     => $jobStatuses,
             'skills'          => $skills,
             'interests'       => $interests,
+            'customOrgs'      => $customOrgs,
+        ]);
+    }
+
+    public function searchNama(Request $request)
+    {
+        $cabangId = (int) $request->query('cabang_id', 0);
+        $query    = trim((string) $request->query('q', ''));
+
+        if ($cabangId <= 0 || mb_strlen($query) < 2) {
+            return response()->json([
+                'status' => 'success',
+                'data'   => [],
+            ]);
+        }
+
+        $cabang = Cabang::find($cabangId);
+        if (!$cabang) {
+            return response()->json([
+                'status' => 'success',
+                'data'   => [],
+            ]);
+        }
+
+        // 1. Data Pemuda Lokal (khusus cabang ini)
+        $pemudaResults = Pemuda::where('cabang_id', $cabangId)
+            ->where('status_data', 'active')
+            ->where('name', 'LIKE', '%' . $query . '%')
+            ->orderBy('name', 'ASC')
+            ->limit(10)
+            ->get(['id', 'name', 'gender', 'birth_date', 'birth_place', 'mta_warga_uuid', 'registration_number']);
+
+        $combined = [];
+        $seenUuids = [];
+        $seenNames = [];
+
+        foreach ($pemudaResults as $p) {
+            if (!empty($p->mta_warga_uuid)) {
+                $seenUuids[$p->mta_warga_uuid] = true;
+            }
+            $seenNames[strtolower(trim($p->name))] = true;
+
+            $combined[] = [
+                'source'              => 'pemuda',
+                'id'                  => $p->id,
+                'uuid'                => $p->mta_warga_uuid,
+                'name'                => $p->name,
+                'gender'              => $p->gender,
+                'gender_text'         => $p->gender === 'L' ? 'Laki-laki' : 'Perempuan',
+                'birth_date'          => $p->birth_date ? \Carbon\Carbon::parse($p->birth_date)->format('d/m/Y') : null,
+                'birth_place'         => $p->birth_place,
+                'registration_number' => $p->registration_number,
+                'badge'               => 'Data Pemuda',
+                'badge_color'         => 'emerald',
+            ];
+        }
+
+        // 2. Data Warga MTA Pusat (khusus cabang ini)
+        $apiService = new \App\Services\MtaApiService();
+        if ($apiService->isEnabled()) {
+            try {
+                $cabangParam = $cabang->mta_uuid ?: $cabang->name;
+                $wargaRes = $apiService->getWargaList([
+                    'cabang'   => $cabangParam,
+                    'search'   => $query,
+                    'per_page' => 15,
+                ]);
+
+                if (($wargaRes['success'] ?? false) && !empty($wargaRes['data']) && is_array($wargaRes['data'])) {
+                    foreach ($wargaRes['data'] as $w) {
+                        $wUuid = $w['uuid'] ?? '';
+                        $wName = trim($w['nama'] ?? '');
+                        $wNameKey = strtolower($wName);
+
+                        if ((!empty($wUuid) && isset($seenUuids[$wUuid])) || isset($seenNames[$wNameKey])) {
+                            continue;
+                        }
+
+                        $gender = strtoupper($w['kelamin'] ?? 'L');
+                        $birthText = null;
+                        if (!empty($w['lahir'])) {
+                            try {
+                                $birthText = \Carbon\Carbon::parse($w['lahir'])->format('d/m/Y');
+                            } catch (\Throwable) {}
+                        } elseif (!empty($w['usia'])) {
+                            $birthText = "Usia {$w['usia']} th";
+                        }
+
+                        $combined[] = [
+                            'source'              => 'warga_mta',
+                            'id'                  => null,
+                            'uuid'                => $wUuid,
+                            'name'                => $wName,
+                            'gender'              => $gender,
+                            'gender_text'         => $gender === 'L' ? 'Laki-laki' : 'Perempuan',
+                            'birth_date'          => $birthText,
+                            'birth_place'         => $w['tempat_lahir'] ?? null,
+                            'phone'               => $w['nohp'] ?? null,
+                            'registration_number' => null,
+                            'badge'               => 'Warga MTA Pusat',
+                            'badge_color'         => 'sky',
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('[PendataanController] searchNama MTA API error: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $combined,
+        ]);
+    }
+
+    public function getWargaData(string $uuid, Request $request)
+    {
+        $cabangId = (int) $request->query('cabang_id', 0);
+        $cabang   = Cabang::find($cabangId);
+
+        if (!$cabang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Cabang tidak valid.',
+            ], 400);
+        }
+
+        $apiService = new \App\Services\MtaApiService();
+        if (!$apiService->isEnabled()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Layanan API MTA sedang tidak aktif.',
+            ], 503);
+        }
+
+        $res = $apiService->getWargaDetail($uuid);
+        if (!($res['success'] ?? false) || empty($res['data'])) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data warga tidak ditemukan di server MTA Pusat.',
+            ], 404);
+        }
+
+        $w = $res['data'];
+
+        // Verifikasi cabang: harus sesuai cabang yang dipilih
+        $wCabangUuid = $w['cabang_uuid'] ?? '';
+        $wCabangName = strtolower(trim($w['cabang'] ?? ''));
+        $matchCabang = false;
+
+        if (!empty($cabang->mta_uuid) && !empty($wCabangUuid) && $cabang->mta_uuid === $wCabangUuid) {
+            $matchCabang = true;
+        } elseif (!empty($wCabangName) && strtolower(trim($cabang->name)) === $wCabangName) {
+            $matchCabang = true;
+        }
+
+        if (!$matchCabang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data warga tidak terdaftar pada cabang yang dipilih.',
+            ], 403);
+        }
+
+        // Cari pencocokan kecamatan & desa Sragen jika ada
+        $districtId = null;
+        $villageId  = null;
+        if (!empty($w['kecamatan'])) {
+            $dist = \App\Models\District::where('regency_id', 3314)
+                ->where('name', 'LIKE', '%' . trim($w['kecamatan']) . '%')
+                ->first();
+            if ($dist) {
+                $districtId = $dist->id;
+                if (!empty($w['desa'])) {
+                    $vill = \App\Models\Village::where('district_id', $dist->id)
+                        ->where('name', 'LIKE', '%' . trim($w['desa']) . '%')
+                        ->first();
+                    if ($vill) {
+                        $villageId = $vill->id;
+                    }
+                }
+            }
+        }
+
+        // Parsing RT & RW jika ada di alamat_rtrw (contoh: "10/2")
+        $rt = null;
+        $rw = null;
+        if (!empty($w['alamat_rtrw']) && str_contains($w['alamat_rtrw'], '/')) {
+            $parts = explode('/', $w['alamat_rtrw']);
+            $rt = trim($parts[0] ?? '');
+            $rw = trim($parts[1] ?? '');
+        }
+
+        // Map status pernikahan
+        $marital = 'belum_menikah';
+        $wMenikah = strtolower(trim($w['menikah'] ?? ''));
+        if (str_contains($wMenikah, 'belum')) {
+            $marital = 'belum_menikah';
+        } elseif (str_contains($wMenikah, 'duda')) {
+            $marital = 'duda';
+        } elseif (str_contains($wMenikah, 'janda')) {
+            $marital = 'janda';
+        } elseif (str_contains($wMenikah, 'nikah')) {
+            $marital = 'sudah_menikah';
+        }
+
+        // Map golongan darah
+        $bloodType = 'tidak_tahu';
+        $wGoldar = strtoupper(trim($w['goldar'] ?? ''));
+        if (in_array($wGoldar, ['A', 'B', 'AB', 'O'], true)) {
+            $bloodType = $wGoldar;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'mta_warga_uuid' => $w['uuid'],
+                'name'           => $w['nama'],
+                'gender'         => strtoupper($w['kelamin'] ?? 'L'),
+                'birth_date'     => !empty($w['lahir']) ? date('Y-m-d', strtotime($w['lahir'])) : null,
+                'birth_place'    => $w['tempat_lahir'] ?? null,
+                'phone'          => $w['nohp'] ?? null,
+                'marital_status' => $marital,
+                'blood_type'     => $bloodType,
+                'alamat'         => [
+                    'district_id'    => $districtId,
+                    'village_id'     => $villageId,
+                    'dusun'          => $w['alamat'] ?? null,
+                    'rt'             => $rt,
+                    'rw'             => $rw,
+                    'address_detail' => $w['alamat'] ?? null,
+                ],
+                'pekerjaan'      => [
+                    'job_title' => $w['pekerjaan'] ?? null,
+                ],
+                'foto'           => (!empty($w['foto']) && !str_contains($w['foto'], 'default.png')) ? $w['foto'] : null,
+            ],
+        ]);
+    }
+
+    public function getPemudaData(int $id, Request $request)
+    {
+        $cabangId = (int) $request->query('cabang_id', 0);
+
+        $query = Pemuda::with(['alamat', 'pendidikan', 'pekerjaan', 'organisasi', 'skills', 'interests'])
+            ->where('id', $id)
+            ->where('status_data', 'active');
+
+        if ($cabangId > 0) {
+            $query->where('cabang_id', $cabangId);
+        }
+
+        $p = $query->first();
+
+        if (!$p) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data pemuda tidak ditemukan atau cabang tidak sesuai.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'id'                 => $p->id,
+                'cabang_id'          => $p->cabang_id,
+                'name'               => $p->name,
+                'gender'             => $p->gender,
+                'marital_status'     => $p->marital_status,
+                'blood_type'         => $p->blood_type ?: 'tidak_tahu',
+                'birth_place'        => $p->birth_place,
+                'birth_date'         => $p->birth_date ? \Carbon\Carbon::parse($p->birth_date)->format('Y-m-d') : null,
+                'phone'              => $p->phone,
+                'email'              => $p->email,
+                'foto'               => $p->foto ? asset('uploads/pemuda/' . $p->foto) : null,
+                'alamat'             => [
+                    'district_id'    => $p->alamat?->district_id,
+                    'village_id'     => $p->alamat?->village_id,
+                    'dusun'          => $p->alamat?->dusun,
+                    'rt'             => $p->alamat?->rt,
+                    'rw'             => $p->alamat?->rw,
+                    'address_detail' => $p->alamat?->address_detail,
+                ],
+                'pendidikan'         => [
+                    'education_level_id' => $p->pendidikan?->education_level_id,
+                    'school_name'        => $p->pendidikan?->school_name,
+                    'major'              => $p->pendidikan?->major,
+                    'education_status'   => $p->pendidikan?->education_status,
+                    'graduation_year'    => $p->pendidikan?->graduation_year,
+                ],
+                'pekerjaan'          => [
+                    'job_status_id'    => $p->pekerjaan?->job_status_id,
+                    'job_title'        => $p->pekerjaan?->job_title,
+                    'company_name'     => $p->pekerjaan?->company_name,
+                    'business_field'   => $p->pekerjaan?->business_field,
+                    'business_name'    => $p->pekerjaan?->business_name,
+                    'business_address' => $p->pekerjaan?->business_address,
+                    'business_contact' => $p->pekerjaan?->business_contact,
+                    'business_social'  => $p->pekerjaan?->business_social,
+                ],
+                'organisasi'         => $p->organisasi->pluck('organization_name')->values()->toArray(),
+                'skills'             => $p->skills->pluck('id')->values()->toArray(),
+                'interests'          => $p->interests->pluck('id')->values()->toArray(),
+            ],
         ]);
     }
 
@@ -98,7 +402,7 @@ class PendataanController extends Controller
 
         $existingPemuda = null;
         if ($existingId > 0) {
-            $existingPemuda = Pemuda::find($existingId);
+            $existingPemuda = Pemuda::where('id', $existingId)->where('cabang_id', $cabangId)->where('status_data', 'active')->first();
         }
         if (!$existingPemuda) {
             $existingPemuda = Pemuda::findExistingPemuda($name, $gender, $birthDate, $cabangId);
@@ -106,15 +410,15 @@ class PendataanController extends Controller
 
         $isUpdate = ($existingPemuda !== null);
 
-        // Validasi Foto: Wajib bagi laki-laki ('L') jika belum ada foto
         $hasUploadedFoto = $request->hasFile('foto') && $request->file('foto')->isValid();
         $hasExistingFoto = ($isUpdate && !empty($existingPemuda->foto));
 
-        if ($gender === 'L' && !$hasUploadedFoto && !$hasExistingFoto) {
+        // Validasi Foto: Hanya wajib bagi pendaftaran pemuda baru laki-laki
+        if (!$isUpdate && empty($request->input('mta_warga_uuid')) && $gender === 'L' && !$hasUploadedFoto) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Pas foto profil wajib diunggah untuk pendaftar laki-laki.')
-                ->withErrors(['foto' => 'Pas foto wajib diunggah untuk pendaftar laki-laki.']);
+                ->with('error', 'Pas foto profil wajib diunggah untuk pendaftaran pemuda baru laki-laki.')
+                ->withErrors(['foto' => 'Pas foto wajib diunggah untuk pendaftaran pemuda baru laki-laki.']);
         }
 
         RateLimiter::hit($throttleKey, 60);
@@ -125,7 +429,8 @@ class PendataanController extends Controller
             $fotoFilename = null;
             if ($hasUploadedFoto) {
                 $fotoFile = $request->file('foto');
-                $fotoFilename = 'foto_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $fotoFile->getClientOriginalExtension();
+                $ext = strtolower($fotoFile->extension() ?: $fotoFile->getClientOriginalExtension());
+                $fotoFilename = 'foto_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
                 $fotoFile->move(public_path('uploads/pemuda'), $fotoFilename);
             } elseif ($hasExistingFoto) {
                 $fotoFilename = $existingPemuda->foto;
@@ -138,6 +443,7 @@ class PendataanController extends Controller
 
             if ($isUpdate) {
                 $pemuda = $existingPemuda;
+                $hasMtaUuid = !empty($request->input('mta_warga_uuid')) || !empty($pemuda->mta_warga_uuid);
                 $updateData = [
                     'name'              => $name,
                     'gender'            => $gender,
@@ -147,10 +453,14 @@ class PendataanController extends Controller
                     'birth_date'        => $birthDate,
                     'phone'             => $request->input('phone'),
                     'email'             => $request->input('email') ?: null,
-                    'status_verifikasi' => 'pending', // Perlu verifikasi ulang jika diupdate publik
+                    'status_verifikasi' => $hasMtaUuid ? 'verified' : 'pending',
                 ];
                 if ($fotoFilename) {
                     $updateData['foto'] = $fotoFilename;
+                }
+                if (!empty($request->input('mta_warga_uuid'))) {
+                    $updateData['mta_warga_uuid'] = $request->input('mta_warga_uuid');
+                    $updateData['mta_synced_at']  = now();
                 }
                 $pemuda->update($updateData);
                 $pemudaId = $pemuda->id;
@@ -168,10 +478,11 @@ class PendataanController extends Controller
                     'birth_date'          => $birthDate,
                     'phone'               => $request->input('phone'),
                     'email'               => $request->input('email') ?: null,
-                    'status_verifikasi'   => 'pending',
+                    'status_verifikasi'   => !empty($request->input('mta_warga_uuid')) ? 'verified' : 'pending',
                     'status_data'         => 'active',
                     'foto'                => $fotoFilename,
                     'mta_warga_uuid'      => $request->input('mta_warga_uuid') ?: null,
+                    'mta_synced_at'       => !empty($request->input('mta_warga_uuid')) ? now() : null,
                 ]);
                 $pemudaId = $pemuda->id;
             }
@@ -220,11 +531,18 @@ class PendataanController extends Controller
 
             // 5. Element Dakwah / Organisasi
             Organisasi::where('pemuda_id', $pemudaId)->delete();
-            $orgs = $request->input('organizations', []);
-            if (is_array($orgs)) {
+            $orgs = (array) $request->input('organizations', []);
+            $customOrg = trim((string) $request->input('custom_organization', ''));
+            if (!empty($customOrg) && !in_array($customOrg, $orgs, true)) {
+                $orgs[] = $customOrg;
+            }
+            if (!empty($orgs)) {
+                $seenOrgs = [];
                 foreach ($orgs as $orgName) {
                     $cleanOrg = trim((string) $orgName);
-                    if (!empty($cleanOrg)) {
+                    $cleanKey = mb_strtoupper($cleanOrg);
+                    if (!empty($cleanOrg) && !isset($seenOrgs[$cleanKey])) {
+                        $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemudaId,
                             'organization_name' => $cleanOrg,
@@ -292,113 +610,5 @@ class PendataanController extends Controller
         }
 
         return view('pendataan.sukses', ['data' => $suksesData]);
-    }
-
-    public function searchWarga(Request $request)
-    {
-        $q = trim((string) $request->input('q'));
-        if (mb_strlen($q) < 2) {
-            return response()->json(['success' => false, 'message' => 'Kata kunci minimal 2 karakter.', 'data' => []]);
-        }
-
-        $res = $this->apiService->searchWarga($q, [
-            'cabang_uuid' => $request->input('cabang_uuid'),
-            'kelamin'     => $request->input('kelamin'),
-            'limit'       => (int) ($request->input('limit', 15)),
-        ]);
-
-        return response()->json($res);
-    }
-
-    public function wargaDetail(string $uuid)
-    {
-        $res = $this->apiService->getWargaDetail($uuid);
-        return response()->json($res);
-    }
-
-    public function pemudaDetail(int $id)
-    {
-        $pemuda = Pemuda::getPemudaDetail($id);
-        if (!$pemuda) {
-            return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan.'], 404);
-        }
-        return response()->json(['status' => 'success', 'data' => $pemuda]);
-    }
-
-    public function checkData(Request $request)
-    {
-        $name      = trim((string) $request->input('name'));
-        $gender    = trim((string) $request->input('gender'));
-        $birthDate = trim((string) $request->input('birth_date'));
-        $cabangId  = (int) $request->input('cabang_id');
-        $excludeId = $request->input('exclude_id') ? (int) $request->input('exclude_id') : null;
-
-        if (empty($name) || empty($birthDate) || $cabangId <= 0) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Parameter nama, tanggal lahir, dan cabang wajib diisi.',
-            ]);
-        }
-
-        $existing = Pemuda::with(['alamat', 'pendidikan', 'pekerjaan', 'organisasi', 'skills', 'interests'])
-            ->where('cabang_id', $cabangId)
-            ->where('birth_date', date('Y-m-d', strtotime($birthDate)))
-            ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($name)]);
-
-        if (!empty($gender) && in_array($gender, ['L', 'P'], true)) {
-            $existing->where('gender', $gender);
-        }
-        if ($excludeId) {
-            $existing->where('id', '!=', $excludeId);
-        }
-
-        $found = $existing->first();
-
-        if ($found) {
-            return response()->json([
-                'status' => 'duplicate',
-                'found'  => true,
-                'data'   => [
-                    'id'                  => $found->id,
-                    'registration_number' => $found->registration_number,
-                    'name'                => $found->name,
-                    'gender'              => $found->gender,
-                    'birth_date'          => $found->birth_date ? $found->birth_date->format('Y-m-d') : '',
-                    'birth_place'         => $found->birth_place,
-                    'marital_status'      => $found->marital_status,
-                    'blood_type'          => $found->blood_type,
-                    'phone'               => $found->phone,
-                    'email'               => $found->email,
-                    'district_id'         => $found->alamat->district_id ?? null,
-                    'village_id'          => $found->alamat->village_id ?? null,
-                    'dusun'               => $found->alamat->dusun ?? '',
-                    'rt'                  => $found->alamat->rt ?? '',
-                    'rw'                  => $found->alamat->rw ?? '',
-                    'address_detail'      => $found->alamat->address_detail ?? '',
-                    'education_level_id'  => $found->pendidikan->education_level_id ?? null,
-                    'school_name'         => $found->pendidikan->school_name ?? '',
-                    'major'               => $found->pendidikan->major ?? '',
-                    'education_status'    => $found->pendidikan->education_status ?? 'lulus',
-                    'graduation_year'     => $found->pendidikan->graduation_year ?? '',
-                    'job_status_id'       => $found->pekerjaan->job_status_id ?? null,
-                    'job_title'           => $found->pekerjaan->job_title ?? '',
-                    'company_name'        => $found->pekerjaan->company_name ?? '',
-                    'business_name'       => $found->pekerjaan->business_name ?? '',
-                    'business_field'      => $found->pekerjaan->business_field ?? '',
-                    'organizations'       => $found->organisasi->pluck('organization_name')->toArray(),
-                    'skills'              => $found->skills->pluck('id')->toArray(),
-                    'interests'           => $found->interests->pluck('id')->toArray(),
-                ],
-                'csrfHash' => csrf_token(),
-                'message' => 'Data Anda telah ditemukan di cabang ini. Anda dapat memperbarui data jika diperlukan.',
-            ]);
-        }
-
-        return response()->json([
-            'status'   => 'unique',
-            'found'    => false,
-            'csrfHash' => csrf_token(),
-            'message'  => 'Data belum terdaftar di cabang ini.',
-        ]);
     }
 }

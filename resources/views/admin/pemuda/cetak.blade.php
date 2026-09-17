@@ -91,11 +91,6 @@
                 <td class="font-bold text-slate-900">{{ $pemuda->name }}</td>
             </tr>
             <tr>
-                <td class="text-slate-600">NIK</td>
-                <td>:</td>
-                <td class="font-mono">{{ $pemuda->nik ?? '-' }}</td>
-            </tr>
-            <tr>
                 <td class="text-slate-600">Jenis Kelamin</td>
                 <td>:</td>
                 <td>{{ $pemuda->gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</td>

@@ -64,7 +64,20 @@ class WargaMtaController extends Controller
         if (!($wargaResponse['success'] ?? false)) {
             $apiError = $wargaResponse['message'] ?? 'Gagal menghubungi server API MTA (api.mta.or.id).';
         } else {
-            $wargaList = $wargaResponse['data'] ?? [];
+            $rawList   = $wargaResponse['data'] ?? [];
+            $sragenUuid = $this->apiService->getSragenUuid();
+
+            // Strict security filter: only keep citizens belonging to Perwakilan Sragen
+            $wargaList = array_values(array_filter($rawList, function ($item) use ($sragenUuid) {
+                if (!empty($item['perwakilan_uuid']) && $item['perwakilan_uuid'] !== $sragenUuid) {
+                    return false;
+                }
+                if (!empty($item['perwakilan']) && stripos($item['perwakilan'], 'Sragen') === false) {
+                    return false;
+                }
+                return true;
+            }));
+
             if (isset($wargaResponse['meta']) && is_array($wargaResponse['meta'])) {
                 $meta = $wargaResponse['meta'];
             }
@@ -118,7 +131,29 @@ class WargaMtaController extends Controller
 
         $localCabangList = Cabang::getWithWilayah();
 
-        $cabangList = !empty($mtaSragenCabangList) ? $mtaSragenCabangList : $localCabangList;
+        $cabangOptions = [];
+        if (!empty($mtaSragenCabangList)) {
+            foreach ($mtaSragenCabangList as $c) {
+                $cabangOptions[] = [
+                    'uuid' => $c['uuid'] ?? '',
+                    'name' => $c['nama'] ?? ($c['name'] ?? ''),
+                    'code' => $c['kode'] ?? ($c['code'] ?? ''),
+                ];
+            }
+        } else {
+            foreach ($localCabangList as $c) {
+                $cabangOptions[] = [
+                    'uuid' => $c->mta_uuid ?? '',
+                    'name' => $c->name,
+                    'code' => $c->code ?? '',
+                ];
+            }
+        }
+
+        $stats = [
+            'totalPemudaSyncedMta' => Pemuda::whereNotNull('mta_warga_uuid')->count(),
+            'totalPemudaLokal'     => Pemuda::count(),
+        ];
 
         return view('admin.warga_mta.index', [
             'title'               => 'Data Warga MTA Sragen (api.mta.or.id)',
@@ -127,7 +162,8 @@ class WargaMtaController extends Controller
             'apiError'            => $apiError,
             'mtaSragenCabangList' => $mtaSragenCabangList,
             'localCabangList'     => $localCabangList,
-            'cabangList'          => $cabangList,
+            'cabangList'          => $cabangOptions,
+            'stats'               => $stats,
             'search'              => $search,
             'cabang'              => $cabang,
             'kelamin'             => $kelamin,
@@ -153,6 +189,20 @@ class WargaMtaController extends Controller
         }
 
         $warga       = $res['data'];
+        $sragenUuid  = $this->apiService->getSragenUuid();
+
+        // Enforce data security: only allow warga from Perwakilan Sragen
+        $isSragen = (
+            (!empty($warga['perwakilan_uuid']) && $warga['perwakilan_uuid'] === $sragenUuid) ||
+            (!empty($warga['perwakilan']) && stripos($warga['perwakilan'], 'Sragen') !== false) ||
+            (!empty($warga['kabupaten']) && stripos($warga['kabupaten'], 'Sragen') !== false)
+        );
+
+        if (!$isSragen) {
+            return redirect()->route('admin.warga-mta.index')
+                ->with('error', 'Hanya data warga dari Perwakilan Sragen yang diizinkan untuk diakses.');
+        }
+
         $localPemuda = Pemuda::with('cabang.wilayah')->where('mta_warga_uuid', $uuid)->first();
         $localCabang = Cabang::getWithWilayah();
 
@@ -168,10 +218,9 @@ class WargaMtaController extends Controller
     public function import(Request $request)
     {
         $wargaUuid = trim((string) $request->input('warga_uuid'));
-        $cabangId  = (int) $request->input('cabang_id');
 
-        if (empty($wargaUuid) || $cabangId <= 0) {
-            return redirect()->back()->with('error', 'Pilih cabang lokal yang valid untuk mengimpor data warga ini.');
+        if (empty($wargaUuid)) {
+            return redirect()->back()->with('error', 'Parameter warga tidak valid.');
         }
 
         $detailRes = $this->apiService->getWargaDetail($wargaUuid);
@@ -179,12 +228,68 @@ class WargaMtaController extends Controller
             return redirect()->back()->with('error', 'Gagal mengambil data lengkap warga dari server API MTA.');
         }
 
-        $wargaData = $detailRes['data'];
-        $syncRes   = $this->syncService->syncWargaToPemuda($wargaData, $cabangId, auth()->id());
+        $wargaData  = $detailRes['data'];
+        $sragenUuid = $this->apiService->getSragenUuid();
+
+        // Enforce data security: only allow importing warga from Perwakilan Sragen
+        $isSragen = (
+            (!empty($wargaData['perwakilan_uuid']) && $wargaData['perwakilan_uuid'] === $sragenUuid) ||
+            (!empty($wargaData['perwakilan']) && stripos($wargaData['perwakilan'], 'Sragen') !== false) ||
+            (!empty($wargaData['kabupaten']) && stripos($wargaData['kabupaten'], 'Sragen') !== false)
+        );
+
+        if (!$isSragen) {
+            return redirect()->back()->with('error', 'Hanya data warga dari Perwakilan Sragen yang dapat diimpor ke sistem ini.');
+        }
+
+        // Resolusi cabang otomatis sesuai data cabang resmi dari MTA Pusat
+        $cabangUuid = $wargaData['cabang_uuid'] ?? null;
+        $cabangName = trim($wargaData['cabang'] ?? ($wargaData['cabang_nama'] ?? ''));
+
+        $cabang = null;
+        if (!empty($cabangUuid)) {
+            $cabang = Cabang::where('mta_uuid', $cabangUuid)->first();
+        }
+        if (!$cabang && !empty($cabangName)) {
+            $cabang = Cabang::whereRaw('LOWER(TRIM(name)) = ?', [strtolower($cabangName)])->first();
+        }
+
+        // Fallback jika dikirim eksplisit
+        if (!$cabang && $request->filled('cabang_id')) {
+            $cabang = Cabang::find((int) $request->input('cabang_id'));
+        }
+
+        if (!$cabang) {
+            return redirect()->back()->with('error', "Cabang '{$cabangName}' dari data MTA Pusat tidak ditemukan pada basis data cabang lokal.");
+        }
+
+        $cabangId = (int) $cabang->id;
+
+        // Authorization scope check
+        $user = auth()->user();
+        if ($user && (int) $user->role_id === 3 && (int) $user->cabang_id !== $cabangId) {
+            return redirect()->back()->with('error', "Warga ini tercatat di cabang '{$cabang->name}'. Anda hanya memiliki wewenang untuk mengelola cabang Anda sendiri.");
+        }
+        if ($user && in_array((int) $user->role_id, [2, 6], true)) {
+            if ((int) $cabang->wilayah_id !== (int) $user->wilayah_id) {
+                return redirect()->back()->with('error', "Cabang '{$cabang->name}' berada di luar wilayah wewenang Anda.");
+            }
+        }
+        if ($user && (int) $user->role_id === 4 && strtoupper($wargaData['kelamin'] ?? 'L') !== 'L') {
+            return redirect()->back()->with('error', 'Admin Pemuda hanya dapat mengimpor data berjenis kelamin Laki-laki.');
+        }
+        if ($user && (int) $user->role_id === 5 && strtoupper($wargaData['kelamin'] ?? '') !== 'P') {
+            return redirect()->back()->with('error', 'Admin Pemudi hanya dapat mengimpor data berjenis kelamin Perempuan.');
+        }
+        if ($user && (int) $user->role_id === 6 && strtoupper($wargaData['kelamin'] ?? 'L') !== 'L') {
+            return redirect()->back()->with('error', 'Admin Wilayah Pemuda hanya dapat mengimpor data berjenis kelamin Laki-laki.');
+        }
+
+        $syncRes = $this->syncService->syncWargaToPemuda($wargaData, $cabangId, auth()->id());
 
         if ($syncRes['success']) {
             return redirect()->route('admin.pemuda.detail', $syncRes['pemuda_id'])
-                ->with('success', $syncRes['message']);
+                ->with('success', "Data warga '{$wargaData['nama']}' berhasil diimpor ke cabang {$cabang->name} sesuai data cabang MTA Pusat.");
         }
 
         return redirect()->back()->with('error', $syncRes['message']);

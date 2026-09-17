@@ -128,6 +128,19 @@ class UsersController extends Controller
             $wilayahId = $targetCabang ? (int) $targetCabang->wilayah_id : null;
         }
 
+        // Security guards for current user and superadmin account
+        if ($user->id === auth()->id()) {
+            if ((int) $request->input('status', 1) !== 1) {
+                return redirect()->back()->withInput()->with('error', 'Anda tidak dapat menonaktifkan akun yang sedang digunakan.');
+            }
+            if ($user->isSuperadmin() && $roleName !== 'superadmin') {
+                $superadminCount = User::where('role_id', 1)->where('status', 1)->count();
+                if ($superadminCount <= 1) {
+                    return redirect()->back()->withInput()->with('error', 'Tidak dapat mengubah role karena Anda adalah satu-satunya Superadmin aktif di sistem.');
+                }
+            }
+        }
+
         $updateData = [
             'name'       => trim((string) $request->input('name')),
             'email'      => trim((string) $request->input('email')),
@@ -154,6 +167,13 @@ class UsersController extends Controller
         }
 
         $user = User::findOrFail($id);
+        if ($user->isSuperadmin()) {
+            $superadminCount = User::where('role_id', 1)->where('status', 1)->count();
+            if ($superadminCount <= 1) {
+                return redirect()->back()->with('error', 'Tidak dapat menghapus akun ini karena merupakan satu-satunya Superadmin aktif di sistem.');
+            }
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');

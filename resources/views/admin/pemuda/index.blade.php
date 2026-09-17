@@ -87,6 +87,7 @@
     <form action="{{ route('admin.pemuda.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs items-end">
         <input type="hidden" name="status_verifikasi" value="{{ $currVerif }}">
         <input type="hidden" name="status_data" value="{{ $currStatusData }}">
+        <input type="hidden" name="per_page" value="{{ request('per_page', 15) }}">
 
         <!-- Search Keyword -->
         <div class="sm:col-span-2">
@@ -198,9 +199,20 @@
 
 <!-- PEMUDA TABLE CARD -->
 <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-    <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-        <div class="text-xs font-bold text-slate-800">
-            Ditemukan <span class="text-red-600">{{ $pemudaList->total() }}</span> data pemuda
+    <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap gap-3 items-center justify-between">
+        <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+            <span>Ditemukan <span class="text-red-600 font-extrabold">{{ number_format($pemudaList->total()) }}</span> data pemuda</span>
+            @if($pemudaList->total() > 0)
+                <span class="text-slate-400 font-normal">| Hal. {{ $pemudaList->currentPage() }} dari {{ $pemudaList->lastPage() }}</span>
+            @endif
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+            <label for="perPageSelect" class="text-slate-500 font-medium hidden sm:inline">Tampilkan:</label>
+            <select id="perPageSelect" onchange="changePerPage(this.value)" class="py-1 px-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 font-semibold focus:ring-red-500 focus:border-red-500 text-xs">
+                @foreach([10, 15, 25, 50, 100] as $option)
+                    <option value="{{ $option }}" {{ (request('per_page', 15) == $option) ? 'selected' : '' }}>{{ $option }} / hal</option>
+                @endforeach
+            </select>
         </div>
     </div>
 
@@ -228,9 +240,6 @@
                         </td>
                         <td class="py-3 px-4">
                             <div class="font-bold text-slate-900">{{ $p->name }}</div>
-                            @if($p->nik)
-                                <div class="text-[11px] text-slate-400 font-mono">NIK: {{ $p->nik }}</div>
-                            @endif
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-1.5">
@@ -337,6 +346,12 @@
                 })
                 .catch(err => console.error(err));
         });
+    }
+    function changePerPage(val) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', val);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
     }
 </script>
 @endsection

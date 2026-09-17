@@ -21,6 +21,7 @@ use App\Models\Village;
 use App\Services\PemudaImportService;
 use App\Services\PemudaExportService;
 use App\Services\PemudaBackupService;
+use App\Services\MtaSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -151,6 +152,16 @@ class PemudaController extends Controller
         }
         $cabangList = $cabangQuery->get();
 
+        $defaultOrgs = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
+        $customOrgs  = Organisasi::select('organization_name')
+            ->distinct()
+            ->whereNotIn('organization_name', $defaultOrgs)
+            ->whereNotNull('organization_name')
+            ->where('organization_name', '!=', '')
+            ->orderBy('organization_name', 'ASC')
+            ->pluck('organization_name')
+            ->toArray();
+
         return view('admin.pemuda.form', [
             'title'           => 'Tambah Data Pemuda',
             'isEdit'          => false,
@@ -162,6 +173,7 @@ class PemudaController extends Controller
             'jobStatuses'     => JobStatus::orderBy('id', 'ASC')->get(),
             'skills'          => Skill::orderBy('name', 'ASC')->get(),
             'interests'       => Interest::orderBy('name', 'ASC')->get(),
+            'customOrgs'      => $customOrgs,
             'user'            => session()->all(),
             'scope'           => $scope,
         ]);
@@ -208,7 +220,8 @@ class PemudaController extends Controller
             $fotoFilename = null;
             if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
                 $fotoFile = $request->file('foto');
-                $fotoFilename = 'foto_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $fotoFile->getClientOriginalExtension();
+                $ext = strtolower($fotoFile->extension() ?: $fotoFile->getClientOriginalExtension());
+                $fotoFilename = 'foto_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
                 $fotoFile->move(public_path('uploads/pemuda'), $fotoFilename);
             }
 
@@ -230,7 +243,7 @@ class PemudaController extends Controller
                 'birth_date'          => $birthDate,
                 'phone'               => $request->input('phone'),
                 'email'               => $request->input('email') ?: null,
-                'status_verifikasi'   => $request->input('status_verifikasi', 'verified'),
+                'status_verifikasi'   => 'pending',
                 'status_data'         => 'active',
                 'foto'                => $fotoFilename,
                 'created_by'          => auth()->id(),
@@ -269,11 +282,19 @@ class PemudaController extends Controller
                 'business_social'  => $request->input('business_social') ?: null,
             ]);
 
-            $orgs = $request->input('organizations', []);
-            if (is_array($orgs)) {
+            Organisasi::where('pemuda_id', $pemuda->id)->delete();
+            $orgs = (array) $request->input('organizations', []);
+            $customOrg = trim((string) $request->input('custom_organization', ''));
+            if (!empty($customOrg) && !in_array($customOrg, $orgs, true)) {
+                $orgs[] = $customOrg;
+            }
+            if (!empty($orgs)) {
+                $seenOrgs = [];
                 foreach ($orgs as $orgName) {
                     $cleanOrg = trim((string) $orgName);
-                    if (!empty($cleanOrg)) {
+                    $cleanKey = mb_strtoupper($cleanOrg);
+                    if (!empty($cleanOrg) && !isset($seenOrgs[$cleanKey])) {
+                        $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemuda->id,
                             'organization_name' => $cleanOrg,
@@ -343,6 +364,16 @@ class PemudaController extends Controller
         $selectedDistrictId = $pemuda->alamat->district_id ?? 1;
         $villages = Village::where('district_id', $selectedDistrictId)->orderBy('name', 'ASC')->get();
 
+        $defaultOrgs = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
+        $customOrgs  = Organisasi::select('organization_name')
+            ->distinct()
+            ->whereNotIn('organization_name', $defaultOrgs)
+            ->whereNotNull('organization_name')
+            ->where('organization_name', '!=', '')
+            ->orderBy('organization_name', 'ASC')
+            ->pluck('organization_name')
+            ->toArray();
+
         return view('admin.pemuda.form', [
             'title'           => 'Edit Data Pemuda: ' . $pemuda->name,
             'isEdit'          => true,
@@ -355,6 +386,7 @@ class PemudaController extends Controller
             'jobStatuses'     => JobStatus::orderBy('id', 'ASC')->get(),
             'skills'          => Skill::orderBy('name', 'ASC')->get(),
             'interests'       => Interest::orderBy('name', 'ASC')->get(),
+            'customOrgs'      => $customOrgs,
             'user'            => session()->all(),
             'scope'           => $scope,
         ]);
@@ -401,7 +433,8 @@ class PemudaController extends Controller
             $fotoFilename = $pemuda->foto;
             if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
                 $fotoFile = $request->file('foto');
-                $fotoFilename = 'foto_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $fotoFile->getClientOriginalExtension();
+                $ext = strtolower($fotoFile->extension() ?: $fotoFile->getClientOriginalExtension());
+                $fotoFilename = 'foto_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
                 $fotoFile->move(public_path('uploads/pemuda'), $fotoFilename);
             }
 
@@ -420,7 +453,7 @@ class PemudaController extends Controller
                 'birth_date'        => $request->input('birth_date'),
                 'phone'             => $request->input('phone'),
                 'email'             => $request->input('email') ?: null,
-                'status_verifikasi' => $request->input('status_verifikasi', $pemuda->status_verifikasi),
+                'status_verifikasi' => $pemuda->status_verifikasi, // Immutable manually per AGENTS.md Rule 16
                 'foto'              => $fotoFilename,
             ]);
 
@@ -464,11 +497,18 @@ class PemudaController extends Controller
             );
 
             Organisasi::where('pemuda_id', $pemuda->id)->delete();
-            $orgs = $request->input('organizations', []);
-            if (is_array($orgs)) {
+            $orgs = (array) $request->input('organizations', []);
+            $customOrg = trim((string) $request->input('custom_organization', ''));
+            if (!empty($customOrg) && !in_array($customOrg, $orgs, true)) {
+                $orgs[] = $customOrg;
+            }
+            if (!empty($orgs)) {
+                $seenOrgs = [];
                 foreach ($orgs as $orgName) {
                     $cleanOrg = trim((string) $orgName);
-                    if (!empty($cleanOrg)) {
+                    $cleanKey = mb_strtoupper($cleanOrg);
+                    if (!empty($cleanOrg) && !isset($seenOrgs[$cleanKey])) {
+                        $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemuda->id,
                             'organization_name' => $cleanOrg,
@@ -513,7 +553,7 @@ class PemudaController extends Controller
         }
     }
 
-    public function verifikasi(Request $request, int $id)
+    public function verifikasi(Request $request, int $id, MtaSyncService $syncService)
     {
         $scope  = $this->getScope();
         $pemuda = Pemuda::getPemudaDetail($id, $scope);
@@ -522,15 +562,15 @@ class PemudaController extends Controller
             return redirect()->back()->with('error', 'Data pemuda tidak ditemukan atau akses ditolak.');
         }
 
-        $status = $request->input('status', 'verified');
-        if (!in_array($status, ['verified', 'pending', 'rejected'], true)) {
-            $status = 'verified';
+        // Per Rule 16: Status verifikasi ditentukan secara otomatis melalui sinkronisasi API MTA Pusat
+        $syncResult = $syncService->syncSinglePemuda($pemuda->id, auth()->id());
+
+        if (($syncResult['success'] ?? false) && ($syncResult['matched'] ?? false)) {
+            return redirect()->back()->with('success', "Verifikasi Berhasil: Data pemuda '{$pemuda->name}' telah sinkron dan terverifikasi dengan database MTA Pusat.");
         }
 
-        $pemuda->update(['status_verifikasi' => $status]);
-
-        $label = $status === 'verified' ? 'diverifikasi' : ($status === 'rejected' ? 'ditolak' : 'diubah ke pending');
-        return redirect()->back()->with('success', "Status data pemuda berhasil {$label}.");
+        $detailMsg = $syncResult['message'] ?? "Data '{$pemuda->name}' tidak ditemukan atau belum tercatat di database MTA Pusat.";
+        return redirect()->back()->with('warning', "Verifikasi Sistem: {$detailMsg} Status data tetap Belum Terverifikasi (pending).");
     }
 
     public function archive(Request $request, int $id)

@@ -20,7 +20,7 @@ class MtaApiService
         $this->apiToken       = config('mta.apiToken', '');
         $this->timeout        = (int) config('mta.timeout', 15);
         $this->enabled        = (bool) config('mta.enabled', true);
-        $this->perwakilanUuid = config('mta.perwakilanUuid', '0190a61a-053a-73d7-8495-2fe9b50ae338');
+        $this->perwakilanUuid = config('mta.perwakilanUuid', '3246792b-f0a7-48ca-95fa-379e3bee777d');
     }
 
     public function isEnabled(): bool
@@ -214,7 +214,7 @@ class MtaApiService
 
     public function getWargaList(array $params = []): array
     {
-        $allowedParams = ['page', 'per_page', 'search', 'kelamin', 'status', 'perwakilan', 'cabang', 'order_by', 'direction'];
+        $allowedParams = ['page', 'per_page', 'search', 'kelamin', 'status', 'cabang', 'order_by', 'direction'];
         $query = [];
 
         foreach ($allowedParams as $param) {
@@ -223,9 +223,8 @@ class MtaApiService
             }
         }
 
-        if (!isset($query['perwakilan']) && !isset($query['cabang'])) {
-            $query['perwakilan'] = $this->getSragenUuid();
-        }
+        // Always enforce Perwakilan Sragen
+        $query['perwakilan'] = $this->getSragenUuid();
 
         return $this->request('GET', 'warga', ['query' => $query]);
     }
@@ -248,7 +247,8 @@ class MtaApiService
             $queryParams['cabang'] = $params['cabang_uuid'];
         }
 
-        $queryParams['perwakilan'] = !empty($params['perwakilan']) ? $params['perwakilan'] : $this->getSragenUuid();
+        // Always enforce Perwakilan Sragen
+        $queryParams['perwakilan'] = $this->getSragenUuid();
 
         return $this->request('GET', 'warga/search', ['query' => $queryParams]);
     }

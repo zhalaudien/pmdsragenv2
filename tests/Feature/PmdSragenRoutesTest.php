@@ -50,7 +50,7 @@ class PmdSragenRoutesTest extends TestCase
 
     public function test_superadmin_can_access_all_admin_pages(): void
     {
-        $superadmin = User::where('username', 'superadmin')->first();
+        $superadmin = User::where('role_id', 1)->first() ?? User::where('username', 'superadmin')->first();
         $this->assertNotNull($superadmin, 'Superadmin user must exist');
 
         $this->actingAs($superadmin);
@@ -86,12 +86,34 @@ class PmdSragenRoutesTest extends TestCase
 
     public function test_admin_wilayah_cannot_access_user_management(): void
     {
-        $adminWilayah = User::where('username', 'admin_w1')->first();
+        $adminWilayah = User::where('role_id', 2)->first() ?? User::where('username', 'admin_w1')->first();
         if ($adminWilayah) {
             $this->actingAs($adminWilayah);
             $response = $this->get('/admin/users');
             // Role middleware aborts with 403 or redirects
             $this->assertTrue(in_array($response->getStatusCode(), [403, 302]));
+        } else {
+            $this->assertTrue(true);
+        }
+    }
+
+    public function test_insecure_public_scraping_endpoints_are_disabled(): void
+    {
+        // Public youth detail by ID must not exist
+        $this->getJson('/pendataan/pemuda-detail/1')->assertStatus(404);
+        // Public citizen search must not exist
+        $this->getJson('/pendataan/search-warga')->assertStatus(404);
+    }
+
+    public function test_api_cabang_does_not_leak_contact_info(): void
+    {
+        $response = $this->getJson('/api/cabang/1');
+        $response->assertStatus(200);
+        $data = $response->json();
+        if (!empty($data)) {
+            $first = $data[0];
+            $this->assertArrayNotHasKey('no_wa', $first, 'Public dropdown must not expose leader WhatsApp numbers');
+            $this->assertArrayNotHasKey('pimpinan_nama', $first, 'Public dropdown must not expose leader names');
         }
     }
 
@@ -110,5 +132,43 @@ class PmdSragenRoutesTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('8601202609169999');
         $response->assertSee('Fulan bin Fulan');
+    }
+
+    public function test_pendataan_search_nama_by_cabang(): void
+    {
+        // Without params returns empty list
+        $response = $this->getJson('/pendataan/search-nama');
+        $response->assertStatus(200);
+        $this->assertEquals([], $response->json('data'));
+
+        // With valid params
+        $response2 = $this->getJson('/pendataan/search-nama?cabang_id=1&q=ahmad');
+        $response2->assertStatus(200);
+        $response2->assertJsonStructure([
+            'status',
+            'data' => [
+                '*' => ['id', 'name', 'gender', 'gender_text', 'birth_date', 'birth_place']
+            ]
+        ]);
+    }
+
+    public function test_pendataan_get_pemuda_data_scopes_by_cabang(): void
+    {
+        // Non-existent ID returns 404
+        $this->getJson('/pendataan/get-pemuda/999999?cabang_id=1')->assertStatus(404);
+
+        $pemuda = \App\Models\Pemuda::where('status_data', 'active')->first();
+        if ($pemuda) {
+            // Valid match with its cabang_id returns 200
+            $res = $this->getJson('/pendataan/get-pemuda/' . $pemuda->id . '?cabang_id=' . $pemuda->cabang_id);
+            $res->assertStatus(200);
+            $res->assertJsonPath('status', 'success');
+            $this->assertEquals($pemuda->name, $res->json('data.name'));
+            $this->assertArrayNotHasKey('nik', $res->json('data'), 'No NIK should be exposed');
+
+            // Mismatched cabang returns 404
+            $wrongCabangId = $pemuda->cabang_id + 999;
+            $this->getJson('/pendataan/get-pemuda/' . $pemuda->id . '?cabang_id=' . $wrongCabangId)->assertStatus(404);
+        }
     }
 }

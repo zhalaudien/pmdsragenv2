@@ -84,6 +84,7 @@
             </select>
         </div>
 
+        <input type="hidden" name="per_page" value="{{ request('per_page', 20) }}">
         <div class="flex gap-2">
             <button type="submit" class="flex-1 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-sm flex items-center justify-center gap-1.5">
                 <i class="bi bi-filter"></i> Saring
@@ -97,6 +98,22 @@
 
 <!-- CABANG LIST TABLE -->
 <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap gap-3 items-center justify-between">
+        <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+            <span>Ditemukan <span class="text-red-600 font-extrabold">{{ number_format($cabangList->total()) }}</span> cabang</span>
+            @if($cabangList->total() > 0)
+                <span class="text-slate-400 font-normal">| Hal. {{ $cabangList->currentPage() }} dari {{ $cabangList->lastPage() }}</span>
+            @endif
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+            <label for="perPageCabang" class="text-slate-500 font-medium hidden sm:inline">Tampilkan:</label>
+            <select id="perPageCabang" onchange="changePerPageCabang(this.value)" class="py-1 px-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 font-semibold focus:ring-red-500 focus:border-red-500 text-xs">
+                @foreach([10, 20, 50, 100] as $opt)
+                    <option value="{{ $opt }}" {{ (request('per_page', 20) == $opt) ? 'selected' : '' }}>{{ $opt }} / hal</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
             <thead>
@@ -408,6 +425,12 @@
                     openModal('modalDetailCabang');
                 }
             });
+    }
+    function changePerPageCabang(val) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', val);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
     }
 </script>
 @endsection

@@ -22,16 +22,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('pendataan')->name('pendataan.')->group(function () {
     Route::get('/', [PendataanController::class, 'index'])->name('index');
-    Route::get('/search-warga', [PendataanController::class, 'searchWarga'])->name('search-warga');
-    Route::get('/warga-detail/{uuid}', [PendataanController::class, 'wargaDetail'])->name('warga-detail');
-    Route::get('/pemuda-detail/{id}', [PendataanController::class, 'pemudaDetail'])->name('pemuda-detail');
+    Route::get('/search-nama', [PendataanController::class, 'searchNama'])->middleware('throttle:60,1')->name('search-nama');
+    Route::get('/get-pemuda/{id}', [PendataanController::class, 'getPemudaData'])->middleware('throttle:60,1')->name('get-pemuda');
+    Route::get('/get-warga/{uuid}', [PendataanController::class, 'getWargaData'])->middleware('throttle:60,1')->name('get-warga');
     Route::post('/simpan', [PendataanController::class, 'simpan'])->name('simpan');
-    Route::post('/check-data', [PendataanController::class, 'checkData'])->name('check-data');
-    Route::post('/check-duplicate', [PendataanController::class, 'checkData'])->name('check-duplicate');
     Route::get('/sukses', [PendataanController::class, 'sukses'])->name('sukses');
 });
 
-// Public API for dropdowns
+// Public API for form dropdowns
 Route::get('api/cabang/{wilayahId}', [AjaxController::class, 'getCabangByWilayah'])->name('api.cabang');
 Route::get('api/villages/{districtId}', [AjaxController::class, 'getVillagesByDistrict'])->name('api.villages');
 
@@ -40,7 +38,8 @@ Route::get('api/villages/{districtId}', [AjaxController::class, 'getVillagesByDi
 // ==========================================
 Route::get('admin/login', [AuthController::class, 'login'])->name('login');
 Route::post('admin/login', [AuthController::class, 'authenticate'])->name('login.post');
-Route::match(['get', 'post'], 'admin/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('admin/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('admin/logout', fn () => redirect()->route('login'));
 
 // ==========================================
 // 3. ADMIN PANEL (PROTECTED)

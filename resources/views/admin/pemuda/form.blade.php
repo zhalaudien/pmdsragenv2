@@ -111,12 +111,6 @@
                     <input type="text" name="name" value="{{ old('name', $pemuda->name ?? '') }}" placeholder="Sesuai KTP" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>
                 </div>
 
-                <!-- NIK -->
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">NIK (Nomor Induk Kependudukan)</label>
-                    <input type="text" name="nik" value="{{ old('nik', $pemuda->nik ?? '') }}" placeholder="16 digit NIK" maxlength="16" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
-                </div>
-
                 <!-- Gender -->
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
@@ -325,15 +319,26 @@
             </div>
 
             @php
-                $orgOptions = ['SATGAS', 'BANKOM', 'IKHROM', 'TIM MEDIS', 'SAR MTA', 'TAPAK SUCI', 'PANAHAN', 'PENGURUS CABANG', 'RELAWAN LAINNYA'];
+                $defaultOrgs = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
+                $allOrgOptions = array_values(array_unique(array_merge($defaultOrgs, $customOrgs ?? [], $selectedOrgs ?? [])));
             @endphp
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
-                @foreach($orgOptions as $org)
+                @foreach($allOrgOptions as $org)
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
                         <input type="checkbox" name="organizations[]" value="{{ $org }}" {{ in_array($org, $selectedOrgs) ? 'checked' : '' }} class="rounded border-slate-300 text-red-600 focus:ring-red-500">
                         <span class="font-semibold text-slate-700">{{ $org }}</span>
+                        @if(!in_array($org, $defaultOrgs))
+                            <span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold ml-auto">Kustom</span>
+                        @endif
                     </label>
                 @endforeach
+            </div>
+            
+            <div class="mt-3 flex items-center gap-2 text-xs">
+                <div class="relative w-full sm:w-96">
+                    <input type="text" name="custom_organization" placeholder="Ketik nama elemen lainnya jika tidak ada di atas..." class="w-full py-2 pl-3 pr-3 text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-red-500 focus:border-red-500">
+                </div>
+                <span class="text-[11px] text-slate-400">Otomatis tersimpan &amp; terpilih jika diisi</span>
             </div>
         </div>
 

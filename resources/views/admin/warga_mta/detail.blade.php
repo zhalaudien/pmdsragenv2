@@ -95,10 +95,6 @@
                 <dd class="col-span-2 font-medium text-slate-800">{{ $warga['tempat_lahir'] ?? '-' }}, {{ $warga['tanggal_lahir'] ?? $warga['lahir'] ?? '-' }}</dd>
             </div>
             <div class="py-2.5 grid grid-cols-3">
-                <dt class="text-slate-400">Nomor Induk (NIK)</dt>
-                <dd class="col-span-2 font-mono font-bold text-slate-800">{{ $warga['nik'] ?? '-' }}</dd>
-            </div>
-            <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Nomor Kontak / HP</dt>
                 <dd class="col-span-2 font-semibold text-slate-800">{{ $warga['nohp'] ?? '-' }}</dd>
             </div>
@@ -136,24 +132,37 @@
             @csrf
             <input type="hidden" name="warga_uuid" value="{{ $warga['uuid'] ?? $warga['id'] ?? '' }}">
 
-            <div>
-                <span class="text-slate-400 block mb-1">Nama Warga:</span>
-                <div class="font-bold text-slate-900 text-sm">{{ $warga['nama'] ?? '-' }}</div>
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Nama Warga:</span>
+                    <span class="font-bold text-slate-900">{{ $warga['nama'] ?? '-' }}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Cabang (MTA Pusat):</span>
+                    <span class="font-bold text-emerald-700 flex items-center gap-1">
+                        <i class="bi bi-geo-alt-fill text-emerald-500"></i>
+                        <span>{{ $warga['cabang'] ?? '-' }}</span>
+                    </span>
+                </div>
+                @if(!empty($warga['nomor']))
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">No. Warga:</span>
+                    <span class="font-mono font-bold text-slate-700">{{ $warga['nomor'] }}</span>
+                </div>
+                @endif
             </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Cabang Pemuda Lokal <span class="text-red-500">*</span></label>
-                <select name="cabang_id" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">-- Pilih Cabang --</option>
-                    @foreach($localCabang as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->wilayah->name ?? '' }})</option>
-                    @endforeach
-                </select>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] flex items-start gap-2">
+                <i class="bi bi-info-circle-fill text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span>Data pemuda akan otomatis dimasukkan ke cabang <strong>{{ $warga['cabang'] ?? 'MTA Pusat' }}</strong> sesuai basis data pusat tanpa perlu memilih cabang secara manual.</span>
             </div>
 
             <div class="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onclick="closeModal('modalImportSingle')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-md">Daftarkan Sekarang</button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-md flex items-center gap-1.5">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Daftarkan Sekarang</span>
+                </button>
             </div>
         </form>
     </div>

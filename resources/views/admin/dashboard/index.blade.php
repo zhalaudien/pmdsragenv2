@@ -184,30 +184,73 @@
     </div>
 </div>
 
+@php
+    $isWilayahRole = in_array($userRole, ['admin_wilayah', 'admin_wilayah_pemuda'], true);
+    $isCabangRole  = ($userRole === 'admin_cabang');
+@endphp
+
 <!-- CHARTS SECTION (GRID 2 COLUMNS) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-    <!-- Chart Sebaran Wilayah -->
-    <div class="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
+    <!-- Chart Sebaran Wilayah / Cabang -->
+    <div class="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-bar-chart-fill text-red-600"></i>
-                <span>Sebaran Pemuda per Wilayah</span>
+                <span id="wilayahChartTitle">
+                    @if($isWilayahRole)
+                        Sebaran Pemuda per Cabang ({{ $wilayahName }})
+                    @elseif($isCabangRole)
+                        Statistik Pemuda Cabang ({{ $cabangName }})
+                    @else
+                        Sebaran Pemuda per Wilayah
+                    @endif
+                </span>
             </h3>
-            <span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-600">Sragen</span>
+            <div class="flex items-center gap-1.5">
+                @if(!$isWilayahRole && !$isCabangRole)
+                    <div class="inline-flex rounded-xl p-0.5 bg-slate-100 border border-slate-200 text-[11px] font-semibold">
+                        <button type="button" id="btnChartWilayah" onclick="switchWilayahChart('wilayah')" class="px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs">
+                            Wilayah
+                        </button>
+                        <button type="button" id="btnChartCabang" onclick="switchWilayahChart('cabang')" class="px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-800">
+                            Top 10 Cabang
+                        </button>
+                    </div>
+                @else
+                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-600">
+                        {{ $isWilayahRole ? $wilayahName : $cabangName }}
+                    </span>
+                @endif
+            </div>
         </div>
+
         <div class="h-64 sm:h-72">
             <canvas id="chartWilayah"></canvas>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-            @php $palette = ['text-blue-600', 'text-emerald-600', 'text-amber-600', 'text-purple-600']; @endphp
-            @foreach($stats['wilayahStats'] ?? [] as $idx => $w)
-                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                    <div class="text-[11px] font-bold {{ $palette[$idx % 4] }}">{{ $w['name'] }}</div>
-                    <div class="text-lg font-black text-slate-900">{{ number_format($w['total']) }}</div>
-                    <div class="text-[10px] text-slate-400">{{ $w['code'] }}</div>
-                </div>
-            @endforeach
-        </div>
+
+        <!-- Summary Grid under chart -->
+        @if($isWilayahRole)
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4">
+                @foreach(array_slice($stats['topCabangStats'] ?? [], 0, 5) as $idx => $c)
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                        <div class="text-[11px] font-bold text-slate-700 truncate" title="{{ $c['name'] }}">{{ $c['name'] }}</div>
+                        <div class="text-base font-black text-red-600">{{ number_format($c['total']) }}</div>
+                        <div class="text-[10px] text-slate-400">Pemuda</div>
+                    </div>
+                @endforeach
+            </div>
+        @elseif(!$isCabangRole)
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4" id="wilayahSummaryGrid">
+                @php $palette = ['text-blue-600', 'text-emerald-600', 'text-amber-600', 'text-purple-600']; @endphp
+                @foreach($stats['wilayahStats'] ?? [] as $idx => $w)
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                        <div class="text-[11px] font-bold {{ $palette[$idx % 4] }}">{{ $w['name'] }}</div>
+                        <div class="text-lg font-black text-slate-900">{{ number_format($w['total']) }}</div>
+                        <div class="text-[10px] text-slate-400">{{ $w['code'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <!-- Chart Gender & Status Pernikahan -->
@@ -217,6 +260,7 @@
                 <i class="bi bi-pie-chart-fill text-sky-600"></i>
                 <span>Gender &amp; Status Pernikahan</span>
             </h3>
+            <span class="text-[11px] text-slate-400 font-medium">Demografi</span>
         </div>
         <div class="grid grid-cols-2 gap-4 items-center">
             <div class="text-center">
@@ -225,18 +269,21 @@
                 </div>
                 <div class="mt-2 text-xs font-bold text-slate-700">Jenis Kelamin</div>
                 <div class="flex justify-center gap-3 text-[11px] mt-1">
-                    <span class="text-blue-600 font-semibold">L: {{ $stats['genderData']['L'] ?? 0 }}</span>
-                    <span class="text-pink-600 font-semibold">P: {{ $stats['genderData']['P'] ?? 0 }}</span>
+                    <span class="text-blue-600 font-semibold">L: {{ number_format($stats['genderData']['L'] ?? 0) }}</span>
+                    <span class="text-pink-600 font-semibold">P: {{ number_format($stats['genderData']['P'] ?? 0) }}</span>
                 </div>
             </div>
             <div class="text-center border-l border-slate-100 pl-4">
                 <div class="h-36 sm:h-44">
                     <canvas id="chartMarital"></canvas>
                 </div>
-                <div class="mt-2 text-xs font-bold text-slate-700">Status Nikah</div>
-                <div class="flex justify-center gap-2 text-[11px] mt-1">
-                    <span class="text-emerald-600 font-semibold">Lajang: {{ $stats['maritalData']['lajang'] ?? 0 }}</span>
-                    <span class="text-amber-600 font-semibold">Menikah: {{ $stats['maritalData']['menikah'] ?? 0 }}</span>
+                <div class="mt-2 text-xs font-bold text-slate-700">Status Pernikahan</div>
+                <div class="flex flex-wrap justify-center gap-2 text-[10px] mt-1">
+                    <span class="text-emerald-600 font-semibold">Belum: {{ number_format($stats['maritalData']['belum_menikah'] ?? $stats['maritalData']['lajang'] ?? 0) }}</span>
+                    <span class="text-amber-600 font-semibold">Nikah: {{ number_format($stats['maritalData']['sudah_menikah'] ?? $stats['maritalData']['menikah'] ?? 0) }}</span>
+                    @if((($stats['maritalData']['duda'] ?? 0) + ($stats['maritalData']['janda'] ?? 0)) > 0)
+                        <span class="text-purple-600 font-semibold">Duda/Janda: {{ number_format(($stats['maritalData']['duda'] ?? 0) + ($stats['maritalData']['janda'] ?? 0)) }}</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -251,6 +298,7 @@
                 <i class="bi bi-mortarboard-fill text-indigo-600"></i>
                 <span>Distribusi Tingkat Pendidikan</span>
             </h3>
+            <span class="text-[11px] text-slate-400 font-medium">Jenjang</span>
         </div>
         <div class="h-64 sm:h-72">
             <canvas id="chartEducation"></canvas>
@@ -263,6 +311,7 @@
                 <i class="bi bi-briefcase-fill text-emerald-600"></i>
                 <span>Status Pekerjaan</span>
             </h3>
+            <span class="text-[11px] text-slate-400 font-medium">Profesi</span>
         </div>
         <div class="h-64 sm:h-72">
             <canvas id="chartJob"></canvas>
@@ -300,7 +349,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                @forelse($stats['recentPemuda'] ?? [] as $p)
+                @forelse($stats['recentPemuda'] ?? $stats['recentRegistrations'] ?? $stats['recentUpdates'] ?? [] as $p)
                     <tr class="hover:bg-slate-50/60 transition">
                         <td class="py-3 px-4 font-mono font-bold text-red-600">{{ $p['registration_number'] }}</td>
                         <td class="py-3 px-4 font-semibold text-slate-900">{{ $p['name'] }}</td>
@@ -352,82 +401,199 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Data Wilayah
-        const wilayahLabels = {!! json_encode(array_column($stats['wilayahStats'] ?? [], 'name')) !!};
-        const wilayahTotals = {!! json_encode(array_column($stats['wilayahStats'] ?? [], 'total')) !!};
+        const isWilayahRole = {{ in_array($userRole, ['admin_wilayah', 'admin_wilayah_pemuda'], true) ? 'true' : 'false' }};
+        const isCabangRole  = {{ $userRole === 'admin_cabang' ? 'true' : 'false' }};
 
+        // 1. Data Wilayah & Top Cabang
+        const wilayahLabels   = @json(array_column($stats['wilayahStats'] ?? [], 'name'));
+        const wilayahTotals   = @json(array_column($stats['wilayahStats'] ?? [], 'total'));
+        const topCabangLabels = @json(array_column($stats['topCabangStats'] ?? [], 'name'));
+        const topCabangTotals = @json(array_column($stats['topCabangStats'] ?? [], 'total'));
+
+        let chartWilayahInstance = null;
         const ctxWilayah = document.getElementById('chartWilayah');
+
         if (ctxWilayah) {
-            new Chart(ctxWilayah, {
+            const initialLabels = isWilayahRole ? topCabangLabels : wilayahLabels;
+            const initialTotals = isWilayahRole ? topCabangTotals : wilayahTotals;
+            const initialColors = isWilayahRole 
+                ? ['#dc2626', '#059669', '#d97706', '#7c3aed', '#0284c7', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16']
+                : ['#dc2626', '#059669', '#d97706', '#7c3aed'];
+
+            chartWilayahInstance = new Chart(ctxWilayah, {
                 type: 'bar',
                 data: {
-                    labels: wilayahLabels,
+                    labels: initialLabels,
                     datasets: [{
                         label: 'Jumlah Pemuda',
-                        data: wilayahTotals,
-                        backgroundColor: ['#dc2626', '#059669', '#d97706', '#7c3aed'],
+                        data: initialTotals,
+                        backgroundColor: initialColors.slice(0, initialLabels.length),
                         borderRadius: 8,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.parsed.y} Pemuda`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 11 },
+                                maxRotation: isWilayahRole ? 45 : 0
+                            }
+                        }
                     }
                 }
             });
         }
 
-        // Gender Chart
+        window.switchWilayahChart = function(type) {
+            if (!chartWilayahInstance) return;
+
+            const btnW = document.getElementById('btnChartWilayah');
+            const btnC = document.getElementById('btnChartCabang');
+            const titleEl = document.getElementById('wilayahChartTitle');
+
+            if (type === 'cabang') {
+                chartWilayahInstance.data.labels = topCabangLabels;
+                chartWilayahInstance.data.datasets[0].data = topCabangTotals;
+                chartWilayahInstance.data.datasets[0].backgroundColor = [
+                    '#dc2626', '#059669', '#d97706', '#7c3aed', '#0284c7',
+                    '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'
+                ].slice(0, topCabangLabels.length);
+                chartWilayahInstance.options.scales.x.ticks.maxRotation = 45;
+                if (titleEl) titleEl.textContent = 'Top 10 Cabang dengan Pemuda Terbanyak';
+
+                if (btnW && btnC) {
+                    btnC.className = 'px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs';
+                    btnW.className = 'px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-800';
+                }
+            } else {
+                chartWilayahInstance.data.labels = wilayahLabels;
+                chartWilayahInstance.data.datasets[0].data = wilayahTotals;
+                chartWilayahInstance.data.datasets[0].backgroundColor = ['#dc2626', '#059669', '#d97706', '#7c3aed'];
+                chartWilayahInstance.options.scales.x.ticks.maxRotation = 0;
+                if (titleEl) titleEl.textContent = 'Sebaran Pemuda per Wilayah';
+
+                if (btnW && btnC) {
+                    btnW.className = 'px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs';
+                    btnC.className = 'px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-800';
+                }
+            }
+            chartWilayahInstance.update();
+        };
+
+        // 2. Gender Chart
         const ctxGender = document.getElementById('chartGender');
         if (ctxGender) {
+            const lCount = {{ (int) ($stats['genderData']['L'] ?? 0) }};
+            const pCount = {{ (int) ($stats['genderData']['P'] ?? 0) }};
+            const genderTotal = lCount + pCount;
+
             new Chart(ctxGender, {
                 type: 'doughnut',
                 data: {
                     labels: ['Laki-laki', 'Perempuan'],
                     datasets: [{
-                        data: [{{ $stats['genderData']['L'] ?? 0 }}, {{ $stats['genderData']['P'] ?? 0 }}],
-                        backgroundColor: ['#2563eb', '#ec4899'],
+                        data: genderTotal > 0 ? [lCount, pCount] : [1],
+                        backgroundColor: genderTotal > 0 ? ['#2563eb', '#ec4899'] : ['#e2e8f0'],
                         borderWidth: 0,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: genderTotal > 0,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed;
+                                    const pct = genderTotal > 0 ? ((val / genderTotal) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
                     cutout: '68%'
                 }
             });
         }
 
-        // Marital Chart
+        // 3. Marital Chart
         const ctxMarital = document.getElementById('chartMarital');
         if (ctxMarital) {
+            const belumMenikah = {{ (int) ($stats['maritalData']['belum_menikah'] ?? $stats['maritalData']['lajang'] ?? 0) }};
+            const sudahMenikah = {{ (int) ($stats['maritalData']['sudah_menikah'] ?? $stats['maritalData']['menikah'] ?? 0) }};
+            const duda = {{ (int) ($stats['maritalData']['duda'] ?? 0) }};
+            const janda = {{ (int) ($stats['maritalData']['janda'] ?? 0) }};
+            const maritalTotal = belumMenikah + sudahMenikah + duda + janda;
+
+            const maritalLabels = ['Belum Menikah', 'Sudah Menikah'];
+            const maritalTotals = [belumMenikah, sudahMenikah];
+            const maritalColors = ['#10b981', '#f59e0b'];
+
+            if (duda > 0) {
+                maritalLabels.push('Duda');
+                maritalTotals.push(duda);
+                maritalColors.push('#8b5cf6');
+            }
+            if (janda > 0) {
+                maritalLabels.push('Janda');
+                maritalTotals.push(janda);
+                maritalColors.push('#ec4899');
+            }
+
             new Chart(ctxMarital, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Lajang', 'Menikah'],
+                    labels: maritalTotal > 0 ? maritalLabels : ['Belum Ada Data'],
                     datasets: [{
-                        data: [{{ $stats['maritalData']['lajang'] ?? 0 }}, {{ $stats['maritalData']['menikah'] ?? 0 }}],
-                        backgroundColor: ['#10b981', '#f59e0b'],
+                        data: maritalTotal > 0 ? maritalTotals : [1],
+                        backgroundColor: maritalTotal > 0 ? maritalColors : ['#e2e8f0'],
                         borderWidth: 0,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: maritalTotal > 0,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed;
+                                    const pct = maritalTotal > 0 ? ((val / maritalTotal) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
                     cutout: '68%'
                 }
             });
         }
 
-        // Education Chart
-        const eduLabels = {!! json_encode(array_column($stats['educationStats'] ?? [], 'name')) !!};
-        const eduTotals = {!! json_encode(array_column($stats['educationStats'] ?? [], 'total')) !!};
+        // 4. Education Chart
+        const eduLabels = @json(array_column($stats['educationStats'] ?? [], 'name'));
+        const eduTotals = @json(array_column($stats['educationStats'] ?? [], 'total'));
         const ctxEducation = document.getElementById('chartEducation');
         if (ctxEducation) {
             new Chart(ctxEducation, {
@@ -438,6 +604,7 @@
                         label: 'Pemuda',
                         data: eduTotals,
                         backgroundColor: '#4f46e5',
+                        hoverBackgroundColor: '#4338ca',
                         borderRadius: 6,
                     }]
                 },
@@ -445,18 +612,34 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.parsed.x} Pemuda`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        y: { grid: { display: false } }
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
+                        }
                     }
                 }
             });
         }
 
-        // Job Chart
-        const jobLabels = {!! json_encode(array_column($stats['jobStats'] ?? [], 'name')) !!};
-        const jobTotals = {!! json_encode(array_column($stats['jobStats'] ?? [], 'total')) !!};
+        // 5. Job Chart
+        const jobLabels = @json(array_column($stats['jobStats'] ?? [], 'name'));
+        const jobTotals = @json(array_column($stats['jobStats'] ?? [], 'total'));
         const ctxJob = document.getElementById('chartJob');
         if (ctxJob) {
             new Chart(ctxJob, {
@@ -467,6 +650,7 @@
                         label: 'Pemuda',
                         data: jobTotals,
                         backgroundColor: '#059669',
+                        hoverBackgroundColor: '#047857',
                         borderRadius: 6,
                     }]
                 },
@@ -474,10 +658,26 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.parsed.x} Pemuda`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        y: { grid: { display: false } }
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
+                        }
                     }
                 }
             });

@@ -113,7 +113,7 @@ class MtaSyncService
         ];
     }
 
-    public function syncWargaToPemuda(array $wargaData, int $cabangId, ?int $userId = null): array
+    public function syncWargaToPemuda(array $wargaData, ?int $cabangId = null, ?int $userId = null): array
     {
         $wargaUuid = $wargaData['uuid'] ?? '';
         $nama      = trim($wargaData['nama'] ?? '');
@@ -127,6 +127,29 @@ class MtaSyncService
             if (($detailRes['success'] ?? false) && !empty($detailRes['data'])) {
                 $wargaData = array_merge($wargaData, $detailRes['data']);
             }
+        }
+
+        // Resolusi cabang otomatis sesuai basis data cabang MTA Pusat
+        if (!$cabangId || $cabangId <= 0) {
+            $cabangUuid = $wargaData['cabang_uuid'] ?? null;
+            $cabangName = trim($wargaData['cabang'] ?? ($wargaData['cabang_nama'] ?? ''));
+
+            $cabang = null;
+            if (!empty($cabangUuid)) {
+                $cabang = Cabang::where('mta_uuid', $cabangUuid)->first();
+            }
+            if (!$cabang && !empty($cabangName)) {
+                $cabang = Cabang::whereRaw('LOWER(TRIM(name)) = ?', [strtolower($cabangName)])->first();
+            }
+
+            if (!$cabang) {
+                return [
+                    'success' => false,
+                    'message' => "Cabang MTA '{$cabangName}' tidak ditemukan di database cabang lokal.",
+                ];
+            }
+
+            $cabangId = (int) $cabang->id;
         }
 
         $gender    = in_array(strtoupper($wargaData['kelamin'] ?? 'L'), ['L', 'P'], true) ? strtoupper($wargaData['kelamin']) : 'L';

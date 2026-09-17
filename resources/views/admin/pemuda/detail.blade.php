@@ -108,10 +108,6 @@
                 <dd class="font-bold text-slate-900">{{ $pemuda->name }}</dd>
             </div>
             <div class="py-2 flex justify-between">
-                <dt class="text-slate-500">NIK</dt>
-                <dd class="font-mono text-slate-800 font-semibold">{{ $pemuda->nik ?? '-' }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
                 <dt class="text-slate-500">Tempat, Tanggal Lahir</dt>
                 <dd class="text-slate-800 font-medium">
                     {{ $pemuda->birth_place ?? '-' }}, {{ $pemuda->birth_date ? \Carbon\Carbon::parse($pemuda->birth_date)->format('d F Y') : '-' }}

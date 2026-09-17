@@ -1316,6 +1316,27 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-17 — Alur Pendataan Pemuda: Pemilihan Langsung Cabang Saja, Autocomplete Pencarian Nama, & Pembaruan Navigasi Form
+
+- **Alur Baru Form Pendataan Publik (`/pendataan`):**
+  - **Pemilihan Langsung Cabang (Tanpa Wilayah):** Menghapus dropdown filter Wilayah pada formulir pendataan publik. Pengguna langsung memilih **Cabang MTA** binaan/domisili. Disediakan kolom saring cepat (*quick search filter*) nama cabang untuk memudahkan pencarian di antara 70 cabang se-Sragen tanpa perlu me-reload halaman.
+  - **Autocomplete Pencarian Nama Berdasarkan Cabang:** Saat Cabang telah dipilih dan pemuda mengetikkan nama (minimal 2 karakter), sistem secara real-time (debounced 250ms) mencari data pemuda yang aktif dan terdaftar khusus di cabang tersebut melalui endpoint `GET /pendataan/search-nama?cabang_id=...&q=...`.
+  - **Mode Pembaruan Data (Update):** Jika nama dipilih dari daftar hasil pencarian, sistem mengambil detail lengkap via endpoint terisolasi `GET /pendataan/get-pemuda/{id}?cabang_id=...` dan otomatis mengisi (pre-populate) seluruh field formulir (Data Diri, Alamat Domisili, Pendidikan, Pekerjaan, Organisasi/Element Dakwah, Keahlian, dan Minat). Ditampilkan banner status mode update berwarna hijau dengan opsi tombol *"Bukan Anda? / Daftar Baru"* jika ingin membatalkan.
+  - **Mode Pendaftaran Baru:** Jika nama tidak ditemukan dalam cabang tersebut atau pemuda memilih mendaftar baru, sistem mengosongkan `existing_pemuda_id` dan memproses pendaftaran baru seperti biasa.
+  - **Peningkatan Navigasi & UX Form Wizard:**
+    - Penambahan atribut `novalidate` pada form agar browser tidak memblokir tombol submit secara diam-diam akibat constraint validation native pada input di step-step yang tersembunyi.
+    - Navigasi stepper yang fleksibel: pengguna dapat melompat kembali ke langkah sebelumnya secara bebas untuk memeriksa isian.
+    - Indikator langkah visual dengan nomor langkah aktif dan ikon centang hijau (`bi bi-check-lg`) pada langkah yang telah selesai.
+    - Tombol navigasi bawah interaktif dengan teks dinamis ("Kembali ke Data Diri", "Lanjut ke Alamat", dsb.), penghitung langkah (*step counter*), serta tombol submit yang dilengkapi pencegah klik ganda (*double-submit prevention*) dengan animasi loading spinner.
+    - Alert banner notifikasi visual lembut (`#step_alert_box`) di dalam form menggantikan `alert()` browser pop-up.
+    - Tampilan ringkasan data pendaftaran (*summary card*) secara dinamis di Langkah 7 sebelum pengguna menyetujui pernyataan dan mengirim formulir.
+    - *Smooth scroll* otomatis ke bagian atas formulir setiap kali berganti langkah.
+  - **Keamanan & Isolasi Data:**
+    - Endpoint `search-nama` dan `get-pemuda` dibatasi rate limiter (`throttle:60,1`).
+    - Endpoint `get-pemuda` dan method `simpan` mewajibkan validasi pencocokan ID pemuda terhadap `cabang_id` terpilih, mencegah modifikasi lintas cabang (cross-cabang isolation).
+    - Tidak ada data NIK yang diekspos maupun disimpan (telah dihapus total dari database dan formulir).
+  - **Pengujian Otomatis:** Seluruh 25 unit/feature tests di `tests/Feature/PendataanFlowTest.php` dan `tests/Feature/PmdSragenRoutesTest.php` lulus 100% (110 assertions).
+
 ### 2026-09-16 — Peningkatan Tampilan & Dashboard Admin Menjadi AdminLTE 4 (Bootstrap 5)
 
 - **Migrasi Arsitektur Layout Admin (`app/Views/admin/layouts/main.php`):**
@@ -2211,3 +2232,68 @@ Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
   - Memperbarui dictionary desa dropdown publik pada key `"7"` (Masaran), mengubah `{ id: 75, name: "Pilangsari" }` menjadi `{ id: 75, name: "Pilang" }`.
 - **Pengujian Unit (`tests/unit/PendataanFormTest.php`):**
   - Menambahkan unit test `testKecamatanMasaranDesaPilang()` untuk memastikan desa `Pilang` terdaftar di database, seeder, dan form JavaScript, serta memastikan `Pilangsari` tidak ada di Masaran namun tetap ada di Ngrampal.
+
+### 2026-09-17 — Penguatan Keamanan Data & Isolasi Ketat Warga MTA Perwakilan Sragen
+
+- **Audit & Keamanan Data Sensitif:**
+  - Menutup dan menghapus rute serta endpoint publik tanpa proteksi yang rentan scraping/IDOR: `pemuda-detail/{id}`, `warga-detail/{uuid}`, `search-warga`, `check-data`, dan `check-duplicate`.
+  - Menerapkan pembatasan kolom (*whitelist*) pada endpoint AJAX (`getCabangByWilayah` dan `getVillagesByDistrict`) guna mencegah kebocoran data sensitif operasional dan kontak cabang.
+  - Membatasi visibilitas kontak nomor telepon pimpinan cabang hanya untuk peran administratif yang berhak.
+  - Menambahkan file `public/uploads/.htaccess` untuk menonaktifkan eksekusi skrip PHP/CGI dan directory indexing di folder upload foto.
+  - Memperkuat mekanisme backup di `PemudaBackupService` dengan sanitasi ketat nama file, validasi ekstensi (`sql`, `json`, `xlsx`), serta verifikasi direktori berbasis `realpath()`.
+  - Memperbarui model `User`: penambahan `remember_token` pada `$hidden` dan casting `password => 'hashed'`. Menambahkan proteksi penonaktifan diri sendiri dan pencegahan penghapusan superadmin aktif terakhir di `UsersController`.
+  - Mengubah metode rute `admin/logout` menjadi HTTP `POST` dengan proteksi token CSRF.
+  - Menyesuaikan validasi Rule 16: `status_verifikasi` hanya memiliki status `verified` dan `pending` yang diperbarui secara otomatis lewat sinkronisasi API MTA Pusat (`MtaSyncService::syncSinglePemuda`), tidak dapat dimanipulasi manual.
+
+- **Isolasi Data Warga MTA Khusus Perwakilan Sragen:**
+  - Mengoreksi UUID Perwakilan Sragen pada `config/mta.php`, `.env`, `.env.example`, dan `MtaApiService` menjadi UUID resmi: `3246792b-f0a7-48ca-95fa-379e3bee777d` (Kode 86, Perwakilan Sragen).
+  - Mengunci parameter `perwakilan` secara mutlak di `MtaApiService::getWargaList()` dan `MtaApiService::searchWarga()` pada UUID Perwakilan Sragen.
+  - Menerapkan filter keamanan berlapis (*security safeguard*) pada `WargaMtaController` dan `MtaSyncController` untuk memverifikasi bahwa seluruh data warga yang diambil, ditampilkan, dilihat detailnya, maupun diimpor berasal dari Perwakilan Sragen.
+  - Menerapkan pengecekan scope RBAC ketat pada proses import warga ke data pemuda lokal, memastikan Admin Cabang dan Admin Wilayah tidak dapat memanipulasi cabang target di luar wewenang mereka.
+  - Menstandarkan daftar pilihan cabang Sragen pada view `admin/warga_mta/index.blade.php` dan memperbaiki kartu metrik statistik integrasi database lokal PMD.
+  - **Import Otomatis Sesuai Cabang MTA Pusat:** Mengubah alur import warga ke data pemuda (`WargaMtaController`, `MtaSyncController`, `MtaSyncService`, serta modal pada index dan detail) sehingga sistem secara otomatis memetakan dan menentukan cabang lokal berdasarkan `cabang_uuid` atau nama cabang resmi dari MTA Pusat tanpa mengharuskan admin memilih cabang secara manual.
+  - **Penghapusan Total Data NIK:** Menghapus seluruh atribut dan input NIK dari basis data (`2026_09_17_060000_drop_nik_from_pemuda_table.php`), formulir pendaftaran publik (`pendataan/form.blade.php`), formulir admin (`admin/pemuda/form.blade.php`), tampilan detail pemuda (`admin/pemuda/detail.blade.php`), cetak lembar profil (`admin/pemuda/cetak.blade.php`), tabel index pemuda (`admin/pemuda/index.blade.php`), serta tampilan data warga MTA (`admin/warga_mta/index.blade.php` dan `detail.blade.php`) demi privasi data pemuda.
+  - Menambahkan suite pengujian otomatis `tests/Feature/WargaMtaSecurityTest.php` (5 test cases) untuk memvalidasi isolasi data, auto-resolusi cabang, dan keamanan endpoint MTA Sragen (seluruh 18 tests fitur lulus 100%).
+
+### 2026-09-17 — Formulir Pendataan Terintegrasi: Dropdown Pencarian Cabang Langsung, Autocomplete Gabungan (Pemuda + Warga MTA Pusat), Auto-Verifikasi, & 6 Elemen Dakwah
+
+- **Dropdown Cabang Terintegrasi (Search Inside Dropdown):**
+  - Mengubah dropdown Cabang pada formulir pendataan publik (`/pendataan`) menjadi komponen interaktif dengan kotak pencarian instan langsung di dalam dropdown menu (*trigger button + dropdown panel with internal search box*).
+  - Pengguna dapat mengetik nama cabang langsung di dalam menu dropdown dan opsi terfilter secara real-time dari 70 cabang se-Sragen tanpa input terpisah di luar.
+- **Autocomplete Cerdas Gabungan (Data Pemuda & Warga MTA Pusat):**
+  - Autocomplete nama pemuda di Step 1 terkunci secara ketat hanya pada cabang yang dipilih (`cabang_id`).
+  - Menggabungkan data dari 2 sumber:
+    1. **Data Pemuda Lokal** (label hijau zamrud: `Data Pemuda`),
+    2. **Warga MTA Pusat** via API MTA Sragen (label biru langit: `Warga MTA Pusat`).
+  - Jika nama yang dipilih berasal dari **Data Pemuda**: formulir beralih ke mode update (`is_update`), data profil lengkap dimuat via endpoint `GET /pendataan/get-pemuda/{id}?cabang_id=...`, dan `existing_pemuda_id` dipasang.
+  - Jika nama yang dipilih berasal dari **Warga MTA Pusat**: data warga diambil via endpoint terlindungi `GET /pendataan/get-warga/{uuid}?cabang_id=...` (dilengkapi validasi otorisasi cabang), formulir otomatis mengisi nama, kelamin, tanggal/tempat lahir, HP, status pernikahan, golongan darah, alamat, dan foto. Saat disimpan, data otomatis terverifikasi (`status_verifikasi = 'verified'`) dan tercatat waktu sinkronisasinya (`mta_synced_at`).
+  - Jika nama diketik manual dan tidak ada di daftar: formulir berjalan dalam mode pendaftaran baru (*new registration*).
+- **Pembaruan 6 Elemen Dakwah Resmi:**
+  - Menstandarkan opsi checkbox elemen dakwah baik pada form publik (`resources/views/pendataan/form.blade.php`) maupun form admin (`resources/views/admin/pemuda/form.blade.php`) secara presisi ke 6 elemen:
+    1. `SATGAS`
+    2. `BANKOM`
+    3. `SAR MTA`
+    4. `TIM PARKIR`
+    5. `ELFATA`
+    6. `TIM IKHROM`
+- **Penyempurnaan Tampilan & Antarmuka Formulir (UI/UX Redesign):**
+  - **Stepper Progress Bar Interaktif:** Penambahan visual track bar penghubung antar langkah (*connecting progress track line*), indikator status (lingkaran merah untuk langkah aktif, lingkaran hijau centang untuk langkah selesai, dan nomor bersih untuk langkah berikutnya).
+  - **Komponen Dropdown Cabang Lebih Bersih:** Penambahan ikon gedung pada tombol pemicu dropdown, transisi halus, kotak pencarian instan dengan ikon kaca pembesar, dan indikator cabang tidak ditemukan yang lebih ramah.
+  - **Kartu Mode Interaktif Modern:** Tampilan banner status mode pendaftaran baru, pembaruan data pemuda, maupun integrasi warga MTA Pusat didesain ulang dengan kartu bertema warna kontras lembut (*soft tinted background*), ikon badge, dan tombol aksi "Bukan Anda? / Daftar Baru".
+  - **Elemen Dakwah Kartu Interaktif:** Checkbox 6 elemen dakwah (`SATGAS`, `BANKOM`, `SAR MTA`, `TIM PARKIR`, `ELFATA`, `TIM IKHROM`) didesain dalam bentuk kartu interaktif (*interactive selectable cards*) dengan ikon khas masing-masing elemen, deskripsi singkat peran, dan sorotan warna merah saat dipilih (`has-[:checked]`).
+  - **Tombol Navigasi Bawah Lebih Responsif:** Penataan ulang tombol kembali dan lanjut dengan padding yang nyaman untuk perangkat mobile maupun desktop, teks tombol yang dinamis sesuai nama langkah tujuan, serta animasi pemrosesan pada tombol kirim.
+- **Opsi Input Elemen Dakwah Baru & Tampilan Dinamis:**
+  - **Input Elemen Baru:** Menambahkan kotak input *"Elemen Tidak Tersedia? Tambahkan Elemen Baru"* pada formulir publik (`/pendataan`) dan formulir admin (`/admin/pemuda`), memungkinkan pendaftar atau admin menambahkan satuan tugas/elemen kustom (misal: `TIM LOGISTIK`, `KOKAM`, `PANDU`, dll.).
+  - **Tampilan Langsung di Formulir (Instant Card Generation):** Saat pengguna mengetik nama elemen dan menekan tombol *"Tambahkan"* (atau menekan tombol Enter), sistem secara dinamis menambahkan kartu elemen baru ke dalam daftar, otomatis mencentangnya, dan menampilkannya pada ringkasan Langkah 7.
+  - **Penampilan Elemen Baru yang Tersimpan (Database Persistence):** Setiap elemen baru yang tersimpan pada tabel `organisasi` secara otomatis dimuat dan ditampilkan sebagai kartu pilihan elemen tambahan pada formulir pendataan untuk seluruh pendaftar berikutnya (`Organisasi::distinct()`).
+- **Perbaikan Looping Input Nama Saat Tombol Kirim Pendaftaran Ditekan:**
+  - **Identifikasi Penyebab Utama:**
+    1. Validasi foto di server (`PendataanController::simpan()`) mewajibkan foto bagi pemuda laki-laki (`$gender === 'L' && !$hasUploadedFoto && !$hasExistingFoto`). Dari 733 data pemuda di database, terdapat 727 pemuda yang belum memiliki foto (`foto = NULL`). Akibatnya, saat pemuda laki-laki lama melakukan pembaruan data tanpa mengunggah foto baru, validasi menolak request dan me-redirect balik dengan kode 302 ke `/pendataan`.
+    2. Formulir pada `pendataan/form.blade.php` sebelumnya tidak merender notifikasi server-side `session('error')` dan `$errors->any()`, serta state JavaScript otomatis kembali ke Langkah 1 (`currentStep = 1`), sehingga tampak seolah-olah tombol kirim "looping" kembali ke input nama tanpa ada pesan kesalahan.
+  - **Penyelesaian & Peningkatan:**
+    - Mengubah aturan validasi foto profil di `PendataanController::simpan()` agar foto **hanya wajib untuk pendaftaran pemuda baru laki-laki** (`!$isUpdate && empty($mta_warga_uuid) && $gender === 'L'`). Untuk pembaruan data pemuda lama (`$isUpdate = true`) maupun sinkronisasi warga MTA Pusat, unggah foto bersifat opsional (jika diunggah diperbarui, jika tidak maka mempertahankan foto yang ada/null).
+    - Menambahkan banner notifikasi error server-side `@if(session('error') || $errors->any())` yang jelas dan menonjol di bagian atas formulir.
+    - Menambahkan deteksi otomatis langkah error (`$initialStep`) agar saat terjadi kesalahan validasi input, tampilan formulir langsung terbuka pada langkah yang bersangkutan (bukan selalu terpental ke Langkah 1).
+    - Menjaga persistensi mode pembaruan (`mode_update_existing`) dan sinkronisasi warga MTA pada `DOMContentLoaded` jika formulir di-reload dengan `old()`.
+    - Menambahkan pengujian otomatis komprehensif pada `tests/Feature/PendataanFlowTest.php` untuk memverifikasi pembaruan pemuda laki-laki tanpa foto lama berhasil dialihkan ke halaman sukses tanpa loop.
+

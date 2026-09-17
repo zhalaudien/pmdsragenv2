@@ -418,7 +418,7 @@ class Pemuda extends Model
         }
 
         // Gender stats
-        $baseQuery = (new static)->newQuery();
+        $baseQuery = (new static)->newQuery()->where('status_data', 'active');
         (new static)->scopeForUserScope($baseQuery, $scope);
 
         $genderStats = (clone $baseQuery)->select('gender', DB::raw('COUNT(id) as total'))
@@ -438,13 +438,17 @@ class Pemuda extends Model
         $maritalData = [
             'belum_menikah' => 0,
             'sudah_menikah' => 0,
-            'janda'         => 0,
             'duda'          => 0,
+            'janda'         => 0,
+            'lajang'        => 0,
+            'menikah'       => 0,
         ];
         foreach ($maritalStats as $row) {
             $key = $row->marital_status ?: 'belum_menikah';
             $maritalData[$key] = (int) $row->total;
         }
+        $maritalData['lajang']  = $maritalData['belum_menikah'];
+        $maritalData['menikah'] = $maritalData['sudah_menikah'];
 
         // Wilayah Statistics
         $genderJoin = '';
@@ -458,7 +462,8 @@ class Pemuda extends Model
             ->select('wilayah.id', 'wilayah.code', 'wilayah.name', DB::raw('COUNT(pemuda.id) as total'))
             ->leftJoin('cabang', 'cabang.wilayah_id', '=', 'wilayah.id')
             ->leftJoin('pemuda', function ($join) use ($genderJoin) {
-                $join->on('pemuda.cabang_id', '=', 'cabang.id');
+                $join->on('pemuda.cabang_id', '=', 'cabang.id')
+                     ->where('pemuda.status_data', '=', 'active');
                 if ($genderJoin !== '') {
                     $join->whereRaw("1=1 {$genderJoin}");
                 }
@@ -483,7 +488,8 @@ class Pemuda extends Model
             ->select('cabang.id', 'cabang.name', 'wilayah.name as wilayah_name', DB::raw('COUNT(pemuda.id) as total'))
             ->leftJoin('wilayah', 'wilayah.id', '=', 'cabang.wilayah_id')
             ->leftJoin('pemuda', function ($join) use ($genderJoin) {
-                $join->on('pemuda.cabang_id', '=', 'cabang.id');
+                $join->on('pemuda.cabang_id', '=', 'cabang.id')
+                     ->where('pemuda.status_data', '=', 'active');
                 if ($genderJoin !== '') {
                     $join->whereRaw("1=1 {$genderJoin}");
                 }
@@ -503,7 +509,13 @@ class Pemuda extends Model
         $eduQuery = DB::table('education_levels')
             ->select('education_levels.id', 'education_levels.name', DB::raw('COUNT(pemuda.id) as total'))
             ->leftJoin('pendidikan', 'pendidikan.education_level_id', '=', 'education_levels.id')
-            ->leftJoin('pemuda', 'pemuda.id', '=', 'pendidikan.pemuda_id')
+            ->leftJoin('pemuda', function($join) use ($genderJoin) {
+                $join->on('pemuda.id', '=', 'pendidikan.pemuda_id')
+                     ->where('pemuda.status_data', '=', 'active');
+                if ($genderJoin !== '') {
+                    $join->whereRaw("1=1 {$genderJoin}");
+                }
+            })
             ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id');
 
         (new static)->scopeForUserScopeRaw($eduQuery, $scope);
@@ -516,7 +528,13 @@ class Pemuda extends Model
         $jobQuery = DB::table('job_statuses')
             ->select('job_statuses.id', 'job_statuses.name', DB::raw('COUNT(pemuda.id) as total'))
             ->leftJoin('pekerjaan', 'pekerjaan.job_status_id', '=', 'job_statuses.id')
-            ->leftJoin('pemuda', 'pemuda.id', '=', 'pekerjaan.pemuda_id')
+            ->leftJoin('pemuda', function($join) use ($genderJoin) {
+                $join->on('pemuda.id', '=', 'pekerjaan.pemuda_id')
+                     ->where('pemuda.status_data', '=', 'active');
+                if ($genderJoin !== '') {
+                    $join->whereRaw("1=1 {$genderJoin}");
+                }
+            })
             ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id');
 
         (new static)->scopeForUserScopeRaw($jobQuery, $scope);
@@ -528,7 +546,8 @@ class Pemuda extends Model
         // Blood Stats
         $bloodQuery = DB::table('pemuda')
             ->select(DB::raw('COALESCE(NULLIF(pemuda.blood_type, ""), "Tidak Tahu") as blood_type'), DB::raw('COUNT(pemuda.id) as total'))
-            ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id');
+            ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id')
+            ->where('pemuda.status_data', 'active');
 
         (new static)->scopeForUserScopeRaw($bloodQuery, $scope);
 
@@ -561,6 +580,7 @@ class Pemuda extends Model
             'educationStats'      => $educationStats,
             'jobStats'            => $jobStats,
             'bloodStats'          => $bloodStats,
+            'recentPemuda'        => $recentUpdates,
             'recentRegistrations' => $recentUpdates,
             'recentUpdates'       => $recentUpdates,
         ];
@@ -616,14 +636,17 @@ class Pemuda extends Model
         }
 
         if (!empty($filters['blood_type'])) {
-            if ($filters['blood_type'] === 'unknown') {
+            $bt = strtolower(trim($filters['blood_type']));
+            if ($bt === 'unknown') {
                 $builder->where(function ($q) {
                     $q->whereNull('pemuda.blood_type')
                       ->orWhere('pemuda.blood_type', '')
-                      ->orWhere('pemuda.blood_type', 'tidak_tahu');
+                      ->orWhereRaw('LOWER(pemuda.blood_type) = ?', ['tidak_tahu']);
                 });
             } else {
-                $builder->where('pemuda.blood_type', $filters['blood_type']);
+                $builder->where(function ($q) use ($bt) {
+                    $q->whereRaw('LOWER(pemuda.blood_type) = ?', [$bt]);
+                });
             }
         }
 
@@ -740,19 +763,20 @@ class Pemuda extends Model
         $eduStatusRaw = $builderEduStatus->groupBy('status')->get();
 
         $eduStatusData = [
-            'sedang_sekolah' => ['label' => 'Sedang Menempuh (Aktif)', 'total' => 0, 'color' => '#17a2b8'],
-            'lulus'          => ['label' => 'Sudah Lulus / Tamat', 'total' => 0, 'color' => '#28a745'],
-            'putus_sekolah'  => ['label' => 'Putus Sekolah / Belum Lulus', 'total' => 0, 'color' => '#dc3545'],
-            'belum_diisi'    => ['label' => 'Belum Tercatat', 'total' => 0, 'color' => '#6c757d'],
+            'sedang_sekolah'  => ['label' => 'Sedang Menempuh (Aktif)', 'total' => 0, 'color' => '#17a2b8'],
+            'sedang_menempuh' => ['label' => 'Sedang Menempuh (Aktif)', 'total' => 0, 'color' => '#17a2b8'],
+            'lulus'           => ['label' => 'Sudah Lulus / Tamat', 'total' => 0, 'color' => '#28a745'],
+            'putus_sekolah'   => ['label' => 'Putus Sekolah / Belum Lulus', 'total' => 0, 'color' => '#dc3545'],
+            'belum_diisi'     => ['label' => 'Belum Tercatat', 'total' => 0, 'color' => '#6c757d'],
         ];
         foreach ($eduStatusRaw as $r) {
             $key = $r->status;
-            if ($key === 'sedang_menempuh') {
-                $key = 'sedang_sekolah';
-            } elseif ($key === 'belum_lulus') {
-                $key = 'putus_sekolah';
-            }
-            if (isset($eduStatusData[$key])) {
+            if ($key === 'sedang_menempuh' || $key === 'sedang_sekolah') {
+                $eduStatusData['sedang_sekolah']['total']  += (int) $r->total;
+                $eduStatusData['sedang_menempuh']['total'] += (int) $r->total;
+            } elseif ($key === 'belum_lulus' || $key === 'putus_sekolah') {
+                $eduStatusData['putus_sekolah']['total'] += (int) $r->total;
+            } elseif (isset($eduStatusData[$key])) {
                 $eduStatusData[$key]['total'] += (int) $r->total;
             } else {
                 $eduStatusData['belum_diisi']['total'] += (int) $r->total;
@@ -982,13 +1006,82 @@ class Pemuda extends Model
         $totalUnknownBlood = $bloodData['unknown']['total'];
         $percentWithBlood  = $totalYouth > 0 ? round(($totalWithBlood / $totalYouth) * 100, 1) : 0;
 
+        // 11. Status Pernikahan
+        $builderMarital = DB::table('pemuda')
+            ->select('pemuda.marital_status', DB::raw('COUNT(pemuda.id) as total'))
+            ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id');
+        $self->scopeAndCustomFiltersRaw($builderMarital, $scope, $filters);
+        $maritalRows = $builderMarital->groupBy('pemuda.marital_status')->get();
+
+        $maritalStats = [
+            'belum_menikah' => ['label' => 'Belum Menikah', 'total' => 0, 'color' => '#3b82f6'],
+            'sudah_menikah' => ['label' => 'Sudah Menikah', 'total' => 0, 'color' => '#10b981'],
+            'duda'          => ['label' => 'Duda',          'total' => 0, 'color' => '#8b5cf6'],
+            'janda'         => ['label' => 'Janda',         'total' => 0, 'color' => '#ec4899'],
+        ];
+        foreach ($maritalRows as $r) {
+            $ms = $r->marital_status;
+            if (isset($maritalStats[$ms])) {
+                $maritalStats[$ms]['total'] = (int) $r->total;
+            }
+        }
+        $maritalData = [
+            'belum_menikah' => $maritalStats['belum_menikah']['total'],
+            'sudah_menikah' => $maritalStats['sudah_menikah']['total'],
+            'duda'          => $maritalStats['duda']['total'],
+            'janda'         => $maritalStats['janda']['total'],
+        ];
+
+        // 12. Status Verifikasi API MTA
+        $builderVerif = DB::table('pemuda')
+            ->select('pemuda.status_verifikasi', DB::raw('COUNT(pemuda.id) as total'))
+            ->leftJoin('cabang', 'cabang.id', '=', 'pemuda.cabang_id');
+        $self->scopeAndCustomFiltersRaw($builderVerif, $scope, $filters);
+        $verifRows = $builderVerif->groupBy('pemuda.status_verifikasi')->get();
+
+        $verifStats = [
+            'verified' => ['label' => 'Terverifikasi MTA', 'total' => 0, 'color' => '#10b981'],
+            'pending'  => ['label' => 'Belum Terverifikasi', 'total' => 0, 'color' => '#f59e0b'],
+        ];
+        foreach ($verifRows as $r) {
+            $sv = $r->status_verifikasi;
+            if (isset($verifStats[$sv])) {
+                $verifStats[$sv]['total'] = (int) $r->total;
+            }
+        }
+        $verifData = [
+            'verified' => $verifStats['verified']['total'],
+            'pending'  => $verifStats['pending']['total'],
+        ];
+
+        // Aliases for convenient view consumption
+        $orgData = [];
+        foreach ($orgStats as $os) {
+            $orgData[$os['name']] = (int) $os['total'];
+        }
+
+        $ageGroups = [];
+        foreach ($ageData as $ag) {
+            $ageGroups[$ag['label']] = (int) $ag['total'];
+        }
+
+        $bloodTypeData = [
+            'A'       => $bloodData['A']['total'] ?? 0,
+            'B'       => $bloodData['B']['total'] ?? 0,
+            'AB'      => $bloodData['AB']['total'] ?? 0,
+            'O'       => $bloodData['O']['total'] ?? 0,
+            'unknown' => $bloodData['unknown']['total'] ?? 0,
+        ];
+
         return [
             'totalYouth'         => $totalYouth,
             'genderData'         => $genderData,
             'totalWithOrg'       => $totalWithOrg,
             'totalWithoutOrg'    => $totalWithoutOrg,
             'orgStats'           => $orgStats,
+            'orgData'            => $orgData,
             'eduLevelStats'      => $eduLevelStats,
+            'educationStats'     => $eduLevelStats,
             'eduStatusData'      => $eduStatusData,
             'topSchools'         => $topSchools,
             'topMajors'          => $topMajors,
@@ -1001,14 +1094,20 @@ class Pemuda extends Model
             'totalWirausaha'     => $totalWirausaha,
             'topBizFields'       => $topBizFields,
             'ageData'            => $ageData,
+            'ageGroups'          => $ageGroups,
             'avgAge'             => $avgAge,
             'districtStats'      => $districtStats,
             'wilayahStats'       => $wilayahStats,
             'topCabangStats'     => $topCabangStats,
             'bloodData'          => $bloodData,
+            'bloodTypeData'      => $bloodTypeData,
             'totalWithBlood'     => $totalWithBlood,
             'totalUnknownBlood'  => $totalUnknownBlood,
             'percentWithBlood'   => $percentWithBlood,
+            'maritalStats'       => $maritalStats,
+            'maritalData'        => $maritalData,
+            'verifStats'         => $verifStats,
+            'verifData'          => $verifData,
         ];
     }
 }

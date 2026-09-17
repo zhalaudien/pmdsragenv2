@@ -87,22 +87,26 @@
 <div class="mb-6 rounded-3xl bg-white p-5 border border-slate-200/80 shadow-sm">
     <form action="{{ route('admin.warga-mta.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs items-end">
         <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">Cari Nama / NIK</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Cari Nama Warga</label>
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                     <i class="bi bi-search"></i>
                 </span>
-                <input type="text" name="search" value="{{ $search }}" placeholder="Nama warga, NIK..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                <input type="text" name="search" value="{{ $search }}" placeholder="Nama warga..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
             </div>
         </div>
 
         <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Cabang MTA</label>
             <select name="cabang" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
-                <option value="">-- Semua Cabang --</option>
+                <option value="">-- Semua Cabang Sragen --</option>
                 @foreach($cabangList as $c)
-                    <option value="{{ $c['uuid'] ?? $c['name'] }}" {{ ($cabang === ($c['uuid'] ?? $c['name'])) ? 'selected' : '' }}>
-                        {{ $c['name'] }}
+                    @php
+                        $val = !empty($c['uuid']) ? $c['uuid'] : $c['name'];
+                        $isSelected = ($cabang === $val || $cabang === $c['name']);
+                    @endphp
+                    <option value="{{ $val }}" {{ $isSelected ? 'selected' : '' }}>
+                        {{ $c['name'] }}@if(!empty($c['code'])) ({{ $c['code'] }})@endif
                     </option>
                 @endforeach
             </select>
@@ -135,7 +139,7 @@
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                     <th class="py-3 px-4">Nama Lengkap</th>
-                    <th class="py-3 px-4">Gender &amp; TTL</th>
+                    <th class="py-3 px-4">Gender &amp; Usia</th>
                     <th class="py-3 px-4">Cabang MTA</th>
                     <th class="py-3 px-4">Alamat Domisili</th>
                     <th class="py-3 px-4">Status Sinkron PMD</th>
@@ -145,13 +149,16 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse($wargaList as $w)
                     @php
-                        $uuid = $w['uuid'] ?? $w['id'] ?? '';
-                        $isSynced = !empty($w['pemuda_id']);
+                        $uuid          = $w['uuid'] ?? $w['id'] ?? '';
+                        $isSynced      = !empty($w['is_local_registered']) || !empty($w['pemuda_id']);
+                        $localPemudaId = $w['local_pemuda_id'] ?? ($w['pemuda_id'] ?? null);
                     @endphp
                     <tr class="hover:bg-slate-50/75 transition">
                         <td class="py-3 px-4">
                             <div class="font-bold text-slate-900">{{ $w['nama'] ?? $w['name'] ?? '-' }}</div>
-                            <span class="text-[10px] font-mono text-slate-400">NIK: {{ $w['nik'] ?? '-' }}</span>
+                            @if(!empty($w['nomor']))
+                                <span class="text-[10px] font-mono text-slate-400">No Warga: {{ $w['nomor'] }}</span>
+                            @endif
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-1">
@@ -159,7 +166,7 @@
                                     {{ ($w['kelamin'] ?? 'L') === 'L' ? 'L' : 'P' }}
                                 </span>
                                 <span class="text-slate-500 text-[11px]">
-                                    &bull; {{ $w['tempat_lahir'] ?? '' }}, {{ $w['tanggal_lahir'] ?? '-' }}
+                                    &bull; {{ !empty($w['usia']) ? $w['usia'] . ' th' : (!empty($w['tanggal_lahir']) ? $w['tanggal_lahir'] : (!empty($w['lahir']) ? $w['lahir'] : '-')) }}
                                 </span>
                             </div>
                         </td>
@@ -170,7 +177,11 @@
                             {{ $w['alamat'] ?? '-' }}
                         </td>
                         <td class="py-3 px-4">
-                            @if($isSynced)
+                            @if($isSynced && $localPemudaId)
+                                <a href="{{ route('admin.pemuda.detail', $localPemudaId) }}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold hover:bg-emerald-200 transition" title="Lihat di Basis Data Pemuda">
+                                    <i class="bi bi-check-circle-fill"></i> Sudah Terdaftar
+                                </a>
+                            @elseif($isSynced)
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                                     <i class="bi bi-check-circle-fill"></i> Sudah Terdaftar
                                 </span>
@@ -188,7 +199,7 @@
                                     </a>
                                 @endif
                                 @if(!$isSynced && !empty($uuid))
-                                    <button type="button" onclick="openImportModal('{{ $uuid }}', '{{ addslashes($w['nama'] ?? '') }}')" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold transition" title="Import ke Data Pemuda">
+                                    <button type="button" onclick="openImportModal('{{ $uuid }}', '{{ addslashes($w['nama'] ?? '') }}', '{{ addslashes($w['cabang_nama'] ?? $w['cabang'] ?? '-') }}')" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold transition" title="Import ke Data Pemuda">
                                         <i class="bi bi-plus-circle-fill"></i>
                                     </button>
                                 @endif
@@ -237,26 +248,31 @@
             @csrf
             <input type="hidden" name="warga_uuid" id="importWargaUuid">
 
-            <div>
-                <span class="text-slate-400 block mb-1">Nama Warga:</span>
-                <div class="font-bold text-slate-900 text-sm" id="importWargaNama">-</div>
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Nama Warga:</span>
+                    <span class="font-bold text-slate-900" id="importWargaNama">-</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Cabang (MTA Pusat):</span>
+                    <span class="font-bold text-emerald-700 flex items-center gap-1">
+                        <i class="bi bi-geo-alt-fill text-emerald-500"></i>
+                        <span id="importWargaCabangText">-</span>
+                    </span>
+                </div>
             </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Cabang Pemuda Lokal <span class="text-red-500">*</span></label>
-                <select name="cabang_id" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">-- Pilih Cabang --</option>
-                    @foreach($cabangList as $c)
-                        @if(isset($c['id']))
-                            <option value="{{ $c['id'] }}">{{ $c['name'] }}</option>
-                        @endif
-                    @endforeach
-                </select>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] flex items-start gap-2">
+                <i class="bi bi-info-circle-fill text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span>Data pemuda akan otomatis dimasukkan ke cabang sesuai data resmi dari MTA Pusat tanpa perlu memilih cabang secara manual.</span>
             </div>
 
             <div class="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onclick="closeModal('modalImportWarga')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-md">Import Sekarang</button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-md flex items-center gap-1.5">
+                    <i class="bi bi-cloud-arrow-down-fill"></i>
+                    <span>Import Sekarang</span>
+                </button>
             </div>
         </form>
     </div>
@@ -266,9 +282,10 @@
 
 @section('scripts')
 <script>
-    function openImportModal(uuid, nama) {
+    function openImportModal(uuid, nama, cabang) {
         document.getElementById('importWargaUuid').value = uuid;
         document.getElementById('importWargaNama').textContent = nama;
+        document.getElementById('importWargaCabangText').textContent = cabang || '-';
         openModal('modalImportWarga');
     }
 </script>

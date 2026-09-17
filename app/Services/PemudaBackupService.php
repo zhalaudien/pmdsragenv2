@@ -238,11 +238,21 @@ class PemudaBackupService
 
     public function deleteBackupFile(string $filename): bool
     {
-        $clean = basename($filename);
-        $path  = $this->backupDir . $clean;
+        $clean = basename(str_replace(["\0", "\r", "\n"], '', $filename));
+        $ext   = strtolower(pathinfo($clean, PATHINFO_EXTENSION));
 
-        if (file_exists($path) && is_file($path)) {
-            return @unlink($path);
+        if (!in_array($ext, ['sql', 'json', 'xlsx'], true)) {
+            return false;
+        }
+
+        $path          = $this->backupDir . $clean;
+        $realBackupDir = realpath($this->backupDir);
+        $realPath      = realpath($path);
+
+        if ($realPath && $realBackupDir && str_starts_with($realPath, $realBackupDir . DIRECTORY_SEPARATOR)) {
+            if (is_file($realPath)) {
+                return @unlink($realPath);
+            }
         }
 
         return false;
@@ -250,11 +260,21 @@ class PemudaBackupService
 
     public function getBackupFilePath(string $filename): ?string
     {
-        $clean = basename($filename);
-        $path  = $this->backupDir . $clean;
+        $clean = basename(str_replace(["\0", "\r", "\n"], '', $filename));
+        $ext   = strtolower(pathinfo($clean, PATHINFO_EXTENSION));
 
-        if (file_exists($path) && is_file($path)) {
-            return $path;
+        if (!in_array($ext, ['sql', 'json', 'xlsx'], true)) {
+            return null;
+        }
+
+        $path          = $this->backupDir . $clean;
+        $realBackupDir = realpath($this->backupDir);
+        $realPath      = realpath($path);
+
+        if ($realPath && $realBackupDir && str_starts_with($realPath, $realBackupDir . DIRECTORY_SEPARATOR)) {
+            if (is_file($realPath)) {
+                return $realPath;
+            }
         }
 
         return null;
