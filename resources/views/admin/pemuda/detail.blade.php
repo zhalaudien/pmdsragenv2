@@ -238,8 +238,8 @@
             <h4 class="text-xs font-bold text-slate-700 mb-2">Element Dakwah Diikuti:</h4>
             <div class="flex flex-wrap gap-1.5">
                 @forelse($pemuda->organisasi ?? [] as $org)
-                    <span class="px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
-                        {{ $org->organization_name }}
+                    <span class="px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold uppercase tracking-wider">
+                        {{ strtoupper($org->organization_name) }}
                     </span>
                 @empty
                     <span class="text-xs text-slate-400 italic">Belum mengikuti element organisasi</span>

@@ -415,7 +415,7 @@ class PemudaExportService
             'business_address'    => (string) ($p->pekerjaan->business_address ?? '-'),
             'business_contact'    => (string) ($p->pekerjaan->business_contact ?? '-'),
             'business_social'     => (string) ($p->pekerjaan->business_social ?? '-'),
-            'organizations'       => $p->organisasi->pluck('organization_name')->implode(', ') ?: '-',
+            'organizations'       => $p->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->implode(', ') ?: '-',
             'skills'              => $p->skills->pluck('name')->implode(', ') ?: '-',
             'interests'           => $p->interests->pluck('name')->implode(', ') ?: '-',
             'status_verifikasi'   => $p->status_verifikasi === 'verified' ? 'Terverifikasi' : 'Pending',

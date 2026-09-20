@@ -196,7 +196,7 @@
                 <td class="w-1/4 text-slate-600">Element Dakwah Diikuti</td>
                 <td class="w-4">:</td>
                 <td>
-                    @php $orgs = $pemuda->organisasi ? $pemuda->organisasi->pluck('organization_name')->toArray() : []; @endphp
+                    @php $orgs = $pemuda->organisasi ? array_map('strtoupper', $pemuda->organisasi->pluck('organization_name')->toArray()) : []; @endphp
                     {{ !empty($orgs) ? implode(', ', $orgs) : '-' }}
                 </td>
             </tr>

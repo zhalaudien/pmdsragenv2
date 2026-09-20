@@ -297,7 +297,7 @@ class PemudaController extends Controller
                         $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemuda->id,
-                            'organization_name' => $cleanOrg,
+                            'organization_name' => $cleanKey,
                         ]);
                     }
                 }
@@ -577,7 +577,7 @@ class PemudaController extends Controller
                         $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemuda->id,
-                            'organization_name' => $cleanOrg,
+                            'organization_name' => $cleanKey,
                         ]);
                     }
                 }

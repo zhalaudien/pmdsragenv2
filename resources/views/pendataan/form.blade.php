@@ -577,39 +577,36 @@
 
                 @php
                     $orgDetails = [
-                        'SATGAS'     => ['icon' => 'bi-shield-shaded',     'color' => 'text-red-600',    'desc' => 'Satuan Tugas Pengamanan & Ketertiban Pengajian'],
-                        'BANKOM'     => ['icon' => 'bi-broadcast-pin',     'color' => 'text-blue-600',   'desc' => 'Bantuan Komunikasi Radio & Informasi Lapangan'],
-                        'SAR MTA'    => ['icon' => 'bi-heart-pulse-fill',  'color' => 'text-emerald-600','desc' => 'Relawan Search & Rescue serta Kemanusiaan'],
-                        'TIM PARKIR' => ['icon' => 'bi-p-square-fill',     'color' => 'text-amber-600',  'desc' => 'Pengaturan Kendaraan & Ketertiban Lalu Lintas'],
-                        'ELFATA'     => ['icon' => 'bi-journal-richtext',  'color' => 'text-purple-600', 'desc' => 'Majalah & Media Edukasi Generasi Muda Islam'],
-                        'TIM IKHROM' => ['icon' => 'bi-cup-hot-fill',      'color' => 'text-rose-600',   'desc' => 'Pelayanan Jamuan & Penerimaan Tamu Pengajian'],
+                        'SATGAS'     => ['icon' => 'bi-shield-shaded',     'color' => 'text-red-600'],
+                        'BANKOM'     => ['icon' => 'bi-broadcast-pin',     'color' => 'text-blue-600'],
+                        'SAR MTA'    => ['icon' => 'bi-heart-pulse-fill',  'color' => 'text-emerald-600'],
+                        'TIM PARKIR' => ['icon' => 'bi-p-square-fill',     'color' => 'text-amber-600'],
+                        'ELFATA'     => ['icon' => 'bi-journal-richtext',  'color' => 'text-purple-600'],
+                        'TIM IKHROM' => ['icon' => 'bi-cup-hot-fill',      'color' => 'text-rose-600'],
                     ];
                 @endphp
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs" id="org_checkboxes_container">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs" id="org_checkboxes_container">
                     @foreach($orgDetails as $orgName => $info)
-                        <label class="relative flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
-                            <input type="checkbox" name="organizations[]" value="{{ $orgName }}" class="mt-0.5 rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-1.5">
-                                    <i class="bi {{ $info['icon'] }} {{ $info['color'] }} text-base"></i>
-                                    <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition">{{ $orgName }}</span>
-                                </div>
-                                <p class="text-[11px] text-slate-500 mt-1 leading-snug">{{ $info['desc'] }}</p>
+                        <label class="relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
+                            <input type="checkbox" name="organizations[]" value="{{ strtoupper($orgName) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="bi {{ $info['icon'] }} {{ $info['color'] }} text-base"></i>
+                                <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">{{ strtoupper($orgName) }}</span>
                             </div>
                         </label>
                     @endforeach
 
                     @if(!empty($customOrgs))
                         @foreach($customOrgs as $cOrg)
-                            <label class="relative flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
-                                <input type="checkbox" name="organizations[]" value="{{ $cOrg }}" class="mt-0.5 rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-1.5">
-                                        <i class="bi bi-flag-fill text-red-600 text-base"></i>
-                                        <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition">{{ $cOrg }}</span>
-                                    </div>
-                                    <span class="inline-block text-[10px] text-red-700 bg-red-100 px-2 py-0.5 rounded font-bold mt-1">Elemen Tambahan</span>
+                            @php
+                                $cMeta = $orgDetails[strtoupper($cOrg)] ?? ['icon' => 'bi-flag-fill', 'color' => 'text-red-600'];
+                            @endphp
+                            <label class="relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
+                                <input type="checkbox" name="organizations[]" value="{{ strtoupper($cOrg) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <i class="bi {{ $cMeta['icon'] }} {{ $cMeta['color'] }} text-base"></i>
+                                    <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">{{ strtoupper($cOrg) }}</span>
                                 </div>
                             </label>
                         @endforeach
@@ -634,7 +631,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                 <i class="bi bi-flag text-xs"></i>
                             </div>
-                            <input type="text" id="input_new_org" name="custom_organization" placeholder="Ketik nama elemen baru (contoh: TIM LOGISTIK, KOKAM, PANDU)..." autocomplete="off" class="w-full py-2.5 pl-9 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs font-semibold text-slate-800 placeholder:text-slate-400 shadow-2xs">
+                            <input type="text" id="input_new_org" name="custom_organization" placeholder="Ketik nama elemen baru (contoh: TIM LOGISTIK, KOKAM, PANDU)..." autocomplete="off" class="w-full py-2.5 pl-9 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs font-semibold text-slate-800 uppercase placeholder:normal-case placeholder:text-slate-400 shadow-2xs">
                         </div>
                         <button type="button" onclick="addNewOrganization()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition flex-shrink-0">
                             <i class="bi bi-plus-circle"></i>
@@ -1281,11 +1278,25 @@
         }
 
         // Step 5 (Organisasi)
+        const orgList = Array.isArray(p.organisasi) ? p.organisasi : (Array.isArray(p.organizations) ? p.organizations : []);
+        const upperOrgList = orgList.map(o => String(o).trim().toUpperCase());
         orgCheckboxes.forEach(cb => {
-            cb.checked = Array.isArray(p.organizations) && p.organizations.includes(cb.value);
+            cb.checked = upperOrgList.includes(cb.value.toUpperCase());
+        });
+        upperOrgList.forEach(orgName => {
+            let found = false;
+            document.querySelectorAll('input[name="organizations[]"]').forEach(cb => {
+                if (cb.value.toUpperCase() === orgName) {
+                    cb.checked = true;
+                    found = true;
+                }
+            });
+            if (!found && orgName) {
+                addNewOrganization(orgName, true);
+            }
         });
         if (inputCustomOrg && p.custom_organization) {
-            inputCustomOrg.value = p.custom_organization;
+            inputCustomOrg.value = p.custom_organization.toUpperCase();
         }
 
         // Step 6 (Skills & Interests)
@@ -1478,7 +1489,7 @@
     function addNewOrganization(nameFromParam, silent = false) {
         const input = document.getElementById('input_new_org');
         const feedback = document.getElementById('new_org_feedback');
-        const orgName = (nameFromParam || (input ? input.value : '')).trim();
+        const orgName = (nameFromParam || (input ? input.value : '')).trim().toUpperCase();
 
         if (!orgName) {
             if (!silent && feedback) {
@@ -1514,22 +1525,24 @@
             return true;
         }
 
+        const defaultIcons = {
+            'SATGAS':     { icon: 'bi-shield-shaded',    color: 'text-red-600' },
+            'BANKOM':     { icon: 'bi-broadcast-pin',    color: 'text-blue-600' },
+            'SAR MTA':    { icon: 'bi-heart-pulse-fill', color: 'text-emerald-600' },
+            'TIM PARKIR': { icon: 'bi-p-square-fill',    color: 'text-amber-600' },
+            'ELFATA':     { icon: 'bi-journal-richtext', color: 'text-purple-600' },
+            'TIM IKHROM': { icon: 'bi-cup-hot-fill',     color: 'text-rose-600' },
+        };
+        const meta = defaultIcons[orgName] || { icon: 'bi-flag-fill', color: 'text-red-600' };
+
         // Buat kartu elemen baru secara dinamis
         const newCard = document.createElement('label');
-        newCard.className = 'relative flex items-start gap-3 p-4 rounded-2xl border-2 border-red-600 bg-red-50/40 hover:border-red-600 hover:bg-red-50/50 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40 animate-in fade-in zoom-in-95 duration-150';
+        newCard.className = 'relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40 animate-in fade-in duration-150';
         newCard.innerHTML = `
-            <input type="checkbox" name="organizations[]" value="${escapeHtml(orgName)}" checked class="mt-0.5 rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between gap-1">
-                    <div class="flex items-center gap-1.5">
-                        <i class="bi bi-flag-fill text-red-600 text-base"></i>
-                        <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition">${escapeHtml(orgName)}</span>
-                    </div>
-                    <button type="button" onclick="removeDynamicOrg(this, event)" title="Hapus elemen ini" class="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-white transition text-xs">
-                        <i class="bi bi-trash3"></i>
-                    </button>
-                </div>
-                <span class="inline-block text-[10px] text-red-700 bg-red-100 px-2 py-0.5 rounded font-bold mt-1">Elemen Baru</span>
+            <input type="checkbox" name="organizations[]" value="${escapeHtml(orgName)}" checked class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+            <div class="flex items-center gap-2 min-w-0">
+                <i class="bi ${meta.icon} ${meta.color} text-base"></i>
+                <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">${escapeHtml(orgName)}</span>
             </div>
         `;
 
@@ -1994,7 +2007,7 @@
         if (summaryOrgs) {
             const checkedOrgs = Array.from(document.querySelectorAll('input[name="organizations[]"]:checked')).map(cb => cb.value);
             if (checkedOrgs.length > 0) {
-                summaryOrgs.innerHTML = checkedOrgs.map(org => `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-red-100 text-red-800 border border-red-200"><i class="bi bi-check-circle-fill mr-1 text-red-600"></i>${org}</span>`).join('');
+                summaryOrgs.innerHTML = checkedOrgs.map(org => `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-200"><i class="bi bi-check-circle-fill mr-1 text-red-600"></i>${escapeHtml(org.toUpperCase())}</span>`).join('');
             } else {
                 summaryOrgs.innerHTML = '<span class="text-slate-400 italic">Belum memilih elemen dakwah</span>';
             }

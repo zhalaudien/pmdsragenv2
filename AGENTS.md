@@ -1316,6 +1316,31 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-21 — Standardisasi Huruf Kapital (Uppercase) Seluruh Elemen Dakwah
+
+- **Standarisasi Tipografi UPPERCASE pada Seluruh Tampilan & Input Elemen Dakwah:**
+  - **Formulir Pendataan Publik (`/pendataan`):**
+    - Seluruh kartu checkbox elemen dakwah resmi (SATGAS, BANKOM, SAR MTA, TIM PARKIR, ELFATA, TIM IKHROM) dan elemen tambahan server di Langkah 5 dirender dalam huruf besar kapital penuh (`UPPERCASE`) dengan styling Tailwind `uppercase tracking-wider`.
+    - Input penambahan elemen baru (`#input_new_org`) otomatis menampilkan huruf kapital (`uppercase placeholder:normal-case`).
+    - Penambahan kartu elemen dinamis (`addNewOrganization`) otomatis mengubah input menjadi kapital (`.toUpperCase()`) dan merender teks kartu dengan `uppercase tracking-wider`.
+    - Mode pembaruan data (`populateFormWithData`) menormalisasi pencocokan elemen dakwah secara case-insensitive / uppercase.
+    - Pratinjau tag elemen dakwah di Langkah 7 Ringkasan (`summaryOrgs`) dirender dalam format `UPPERCASE` (`uppercase tracking-wider`).
+  - **Manajemen Admin (`/admin/pemuda`):**
+    - Pada formulir tambah/edit pemuda, seluruh pilihan elemen dakwah, badge kustom, serta input elemen baru dikonversi dan ditampilkan dalam format `UPPERCASE`.
+    - Pada halaman detail pemuda (`detail.blade.php`), badge elemen dakwah yang diikuti ditampilkan dengan huruf kapital `UPPERCASE` (`uppercase tracking-wider`).
+    - Pada format cetak biodata pemuda (`cetak.blade.php`), daftar elemen dakwah diformat menggunakan `array_map('strtoupper', ...)`.
+  - **Backend Controller & Service Layer:**
+    - `PendataanController.php` (`simpan` dan `getPemudaData`): Menyimpan dan mengembalikan nama elemen dakwah dalam format `UPPERCASE` (`mb_strtoupper`).
+    - `Admin/PemudaController.php` (`store` dan `update`): Menyimpan nama elemen dakwah dalam format `UPPERCASE` (`mb_strtoupper`).
+    - `PemudaImportService.php` & `PemudaExportService.php`: Memastikan import dari Excel dan export ke spreadsheet selalu diformat dalam huruf kapital `UPPERCASE`.
+
+### 2026-09-20 — Penyeragaman Tampilan Kartu Pilihan Elemen Dakwah di Formulir Pendataan Publik (`/pendataan`)
+
+- **Penyeragaman Total Tampilan Elemen Dakwah Default & Tambahan:**
+  - Teks deskripsi subtitle panjang di bawah masing-masing nama elemen dakwah resmi (seperti *"Satuan Tugas Pengamanan & Ketertiban Pengajian"*, *"Bantuan Komunikasi Radio & Informasi Lapangan"*, dst.) telah dihapus.
+  - Tampilan kartu checkbox elemen dakwah default, elemen tambahan dari server (`$customOrgs`), serta elemen baru yang ditambahkan secara dinamis (`addNewOrganization`) diseragamkan 100% tanpa perbedaan format, badge, atau border.
+  - Seluruh kartu kini menggunakan struktur yang identik: ikon elemen, nama elemen yang tebal, layout grid (`grid-cols-2 sm:grid-cols-3`), border halus dengan sorotan merah saat dipilih (`has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40`), dan efek hover yang selaras.
+
 ### 2026-09-20 — Opsi Input Mandiri Bakat & Minat di Formulir Pendataan Publik (`/pendataan`)
 
 - **Fitur Penambahan Bakat / Keahlian & Minat di Luar Daftar Pilihan:**

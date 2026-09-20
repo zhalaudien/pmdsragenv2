@@ -348,7 +348,8 @@ class PendataanController extends Controller
                     'business_contact' => $p->pekerjaan?->business_contact,
                     'business_social'  => $p->pekerjaan?->business_social,
                 ],
-                'organisasi'         => $p->organisasi->pluck('organization_name')->values()->toArray(),
+                'organisasi'         => $p->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
+                'organizations'      => $p->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
                 'skills'             => $p->skills->pluck('id')->values()->toArray(),
                 'skills_data'        => $p->skills->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()->toArray(),
                 'interests'          => $p->interests->pluck('id')->values()->toArray(),
@@ -558,7 +559,7 @@ class PendataanController extends Controller
                         $seenOrgs[$cleanKey] = true;
                         Organisasi::create([
                             'pemuda_id'         => $pemudaId,
-                            'organization_name' => $cleanOrg,
+                            'organization_name' => $cleanKey,
                         ]);
                     }
                 }

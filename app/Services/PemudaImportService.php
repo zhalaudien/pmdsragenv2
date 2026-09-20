@@ -523,7 +523,7 @@ class PemudaImportService
                     foreach ($orgs as $orgName) {
                         Organisasi::firstOrCreate([
                             'pemuda_id'         => $pemudaId,
-                            'organization_name' => $orgName,
+                            'organization_name' => mb_strtoupper($orgName),
                         ]);
                     }
                 }

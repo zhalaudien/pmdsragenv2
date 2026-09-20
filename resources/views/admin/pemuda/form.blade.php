@@ -320,15 +320,16 @@
 
             @php
                 $defaultOrgs = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
-                $allOrgOptions = array_values(array_unique(array_merge($defaultOrgs, $customOrgs ?? [], $selectedOrgs ?? [])));
+                $allOrgOptions = array_values(array_unique(array_map('strtoupper', array_merge($defaultOrgs, $customOrgs ?? [], $selectedOrgs ?? []))));
+                $selectedOrgsUpper = array_map('strtoupper', $selectedOrgs ?? []);
             @endphp
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
                 @foreach($allOrgOptions as $org)
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                        <input type="checkbox" name="organizations[]" value="{{ $org }}" {{ in_array($org, $selectedOrgs) ? 'checked' : '' }} class="rounded border-slate-300 text-red-600 focus:ring-red-500">
-                        <span class="font-semibold text-slate-700">{{ $org }}</span>
-                        @if(!in_array($org, $defaultOrgs))
-                            <span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold ml-auto">Kustom</span>
+                        <input type="checkbox" name="organizations[]" value="{{ strtoupper($org) }}" {{ in_array(strtoupper($org), $selectedOrgsUpper) ? 'checked' : '' }} class="rounded border-slate-300 text-red-600 focus:ring-red-500">
+                        <span class="font-semibold text-slate-700 uppercase tracking-wide">{{ strtoupper($org) }}</span>
+                        @if(!in_array(strtoupper($org), $defaultOrgs))
+                            <span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold ml-auto uppercase">Kustom</span>
                         @endif
                     </label>
                 @endforeach
@@ -336,7 +337,7 @@
             
             <div class="mt-3 flex items-center gap-2 text-xs">
                 <div class="relative w-full sm:w-96">
-                    <input type="text" name="custom_organization" placeholder="Ketik nama elemen lainnya jika tidak ada di atas..." class="w-full py-2 pl-3 pr-3 text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-red-500 focus:border-red-500">
+                    <input type="text" name="custom_organization" placeholder="Ketik nama elemen lainnya jika tidak ada di atas..." class="w-full py-2 pl-3 pr-3 text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-red-500 focus:border-red-500 uppercase placeholder:normal-case">
                 </div>
                 <span class="text-[11px] text-slate-400">Otomatis tersimpan &amp; terpilih jika diisi</span>
             </div>
