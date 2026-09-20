@@ -138,6 +138,19 @@
                 <dt class="text-slate-500">Email</dt>
                 <dd class="text-slate-800">{{ $pemuda->email ?? '-' }}</dd>
             </div>
+            @if(!empty($pemuda->mta_warga_uuid))
+            <div class="py-2 flex justify-between">
+                <dt class="text-slate-500">Status Warga MTA</dt>
+                <dd class="font-bold text-sky-700 flex items-center gap-1">
+                    <i class="bi bi-patch-check-fill text-sky-600"></i>
+                    <span>{{ $pemuda->mta_status_warga ?? 'Warga' }}</span>
+                </dd>
+            </div>
+            <div class="py-2 flex justify-between">
+                <dt class="text-slate-500">Terakhir Sinkron MTA</dt>
+                <dd class="text-slate-600 font-mono text-[11px]">{{ $pemuda->mta_synced_at ? \Carbon\Carbon::parse($pemuda->mta_synced_at)->format('d/m/Y H:i') . ' WIB' : '-' }}</dd>
+            </div>
+            @endif
         </dl>
     </div>
 

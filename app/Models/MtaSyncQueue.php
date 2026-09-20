@@ -57,7 +57,9 @@ class MtaSyncQueue extends Model
         $processed = $completed + $failed;
         $percent = $total > 0 ? round(($processed / $total) * 100, 1) : 0;
 
-        $estimatedSeconds = ceil($remaining * 1.5);
+        // Laju: 40 data / menit (1.5 detik per data) + Istirahat 10 detik setiap 40 data
+        $restBatches = floor($remaining / 40);
+        $estimatedSeconds = ceil($remaining * 1.5) + ($restBatches * 10);
         $minutes = floor($estimatedSeconds / 60);
         $seconds = $estimatedSeconds % 60;
         $estimatedFormatted = $minutes > 0
@@ -78,6 +80,8 @@ class MtaSyncQueue extends Model
             'rate_per_minute'     => 40,
             'delay_seconds'       => 1.5,
             'delay_ms'            => 1500,
+            'rest_every_items'    => 40,
+            'rest_seconds'        => 10,
             'estimated_seconds'   => $estimatedSeconds,
             'estimated_formatted' => $estimatedFormatted,
         ];

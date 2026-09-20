@@ -212,18 +212,23 @@ class PendataanController extends Controller
             ], 403);
         }
 
+        // Gunakan MtaSyncService helper untuk matching yang konsisten
+        $syncService = new \App\Services\MtaSyncService($apiService);
+
         // Cari pencocokan kecamatan & desa Sragen jika ada
         $districtId = null;
         $villageId  = null;
         if (!empty($w['kecamatan'])) {
+            $cleanKec = trim(str_replace('Kec.', '', $w['kecamatan']));
             $dist = \App\Models\District::where('regency_id', 3314)
-                ->where('name', 'LIKE', '%' . trim($w['kecamatan']) . '%')
+                ->where('name', 'LIKE', '%' . $cleanKec . '%')
                 ->first();
             if ($dist) {
                 $districtId = $dist->id;
                 if (!empty($w['desa'])) {
+                    $cleanDesa = trim(str_replace(['Desa', 'Kel.', 'Kelurahan'], '', $w['desa']));
                     $vill = \App\Models\Village::where('district_id', $dist->id)
-                        ->where('name', 'LIKE', '%' . trim($w['desa']) . '%')
+                        ->where('name', 'LIKE', '%' . $cleanDesa . '%')
                         ->first();
                     if ($vill) {
                         $villageId = $vill->id;
@@ -232,56 +237,43 @@ class PendataanController extends Controller
             }
         }
 
-        // Parsing RT & RW jika ada di alamat_rtrw (contoh: "10/2")
-        $rt = null;
-        $rw = null;
-        if (!empty($w['alamat_rtrw']) && str_contains($w['alamat_rtrw'], '/')) {
-            $parts = explode('/', $w['alamat_rtrw']);
-            $rt = trim($parts[0] ?? '');
-            $rw = trim($parts[1] ?? '');
-        }
-
-        // Map status pernikahan
-        $marital = 'belum_menikah';
-        $wMenikah = strtolower(trim($w['menikah'] ?? ''));
-        if (str_contains($wMenikah, 'belum')) {
-            $marital = 'belum_menikah';
-        } elseif (str_contains($wMenikah, 'duda')) {
-            $marital = 'duda';
-        } elseif (str_contains($wMenikah, 'janda')) {
-            $marital = 'janda';
-        } elseif (str_contains($wMenikah, 'nikah')) {
-            $marital = 'sudah_menikah';
-        }
-
-        // Map golongan darah
-        $bloodType = 'tidak_tahu';
-        $wGoldar = strtoupper(trim($w['goldar'] ?? ''));
-        if (in_array($wGoldar, ['A', 'B', 'AB', 'O'], true)) {
-            $bloodType = $wGoldar;
-        }
+        $rtrw = $syncService->parseRtRw($w['alamat_rtrw'] ?? null, $w['alamat'] ?? null);
+        $marital = $syncService->matchMaritalStatus($w['menikah'] ?? '');
+        $bloodType = $syncService->matchBloodType($w['goldar'] ?? '') ?: 'tidak_tahu';
+        $eduLevelId = $syncService->matchEducationLevel($w['pendidikan'] ?? '');
+        $jobStatusId = $syncService->matchJobStatus($w['pekerjaan'] ?? '');
 
         return response()->json([
             'status' => 'success',
             'data'   => [
                 'mta_warga_uuid' => $w['uuid'],
+                'mta_ayah_uuid'  => !empty($w['ayah_uuid']) ? $w['ayah_uuid'] : null,
+                'mta_ibu_uuid'   => !empty($w['ibu_uuid']) ? $w['ibu_uuid'] : null,
+                'mta_foto_url'   => (!empty($w['foto']) && !str_contains($w['foto'], 'default.png')) ? $w['foto'] : null,
                 'name'           => $w['nama'],
                 'gender'         => strtoupper($w['kelamin'] ?? 'L'),
                 'birth_date'     => !empty($w['lahir']) ? date('Y-m-d', strtotime($w['lahir'])) : null,
-                'birth_place'    => $w['tempat_lahir'] ?? null,
-                'phone'          => $w['nohp'] ?? null,
+                'birth_place'    => $w['tempat_lahir'] ?? 'Sragen',
+                'phone'          => !empty($w['nohp']) ? preg_replace('/[^0-9+]/', '', $w['nohp']) : null,
+                'email'          => !empty($w['email']) ? trim($w['email']) : null,
                 'marital_status' => $marital,
                 'blood_type'     => $bloodType,
                 'alamat'         => [
                     'district_id'    => $districtId,
                     'village_id'     => $villageId,
-                    'dusun'          => $w['alamat'] ?? null,
-                    'rt'             => $rt,
-                    'rw'             => $rw,
+                    'dusun'          => $w['desa'] ?? ($w['alamat'] ?? null),
+                    'rt'             => $rtrw['rt'],
+                    'rw'             => $rtrw['rw'],
                     'address_detail' => $w['alamat'] ?? null,
                 ],
+                'pendidikan'     => [
+                    'education_level_id' => $eduLevelId,
+                    'school_name'        => !empty($w['sekolah']) ? $w['sekolah'] : null,
+                    'education_status'   => 'lulus',
+                ],
                 'pekerjaan'      => [
-                    'job_title' => $w['pekerjaan'] ?? null,
+                    'job_status_id' => $jobStatusId,
+                    'job_title'     => $w['pekerjaan'] ?? null,
                 ],
                 'foto'           => (!empty($w['foto']) && !str_contains($w['foto'], 'default.png')) ? $w['foto'] : null,
             ],
@@ -441,9 +433,14 @@ class PendataanController extends Controller
                 $bloodType = null;
             }
 
+            $mtaWargaUuid = $request->input('mta_warga_uuid') ?: null;
+            $mtaAyahUuid  = $request->input('mta_ayah_uuid') ?: null;
+            $mtaIbuUuid   = $request->input('mta_ibu_uuid') ?: null;
+            $mtaFotoUrl   = $request->input('mta_foto_url') ?: null;
+
             if ($isUpdate) {
                 $pemuda = $existingPemuda;
-                $hasMtaUuid = !empty($request->input('mta_warga_uuid')) || !empty($pemuda->mta_warga_uuid);
+                $hasMtaUuid = !empty($mtaWargaUuid) || !empty($pemuda->mta_warga_uuid);
                 $updateData = [
                     'name'              => $name,
                     'gender'            => $gender,
@@ -458,9 +455,12 @@ class PendataanController extends Controller
                 if ($fotoFilename) {
                     $updateData['foto'] = $fotoFilename;
                 }
-                if (!empty($request->input('mta_warga_uuid'))) {
-                    $updateData['mta_warga_uuid'] = $request->input('mta_warga_uuid');
+                if (!empty($mtaWargaUuid)) {
+                    $updateData['mta_warga_uuid'] = $mtaWargaUuid;
                     $updateData['mta_synced_at']  = now();
+                    if ($mtaAyahUuid) $updateData['mta_ayah_uuid'] = $mtaAyahUuid;
+                    if ($mtaIbuUuid) $updateData['mta_ibu_uuid'] = $mtaIbuUuid;
+                    if ($mtaFotoUrl) $updateData['mta_foto_url'] = $mtaFotoUrl;
                 }
                 $pemuda->update($updateData);
                 $pemudaId = $pemuda->id;
@@ -478,11 +478,14 @@ class PendataanController extends Controller
                     'birth_date'          => $birthDate,
                     'phone'               => $request->input('phone'),
                     'email'               => $request->input('email') ?: null,
-                    'status_verifikasi'   => !empty($request->input('mta_warga_uuid')) ? 'verified' : 'pending',
+                    'status_verifikasi'   => !empty($mtaWargaUuid) ? 'verified' : 'pending',
                     'status_data'         => 'active',
                     'foto'                => $fotoFilename,
-                    'mta_warga_uuid'      => $request->input('mta_warga_uuid') ?: null,
-                    'mta_synced_at'       => !empty($request->input('mta_warga_uuid')) ? now() : null,
+                    'mta_warga_uuid'      => $mtaWargaUuid,
+                    'mta_ayah_uuid'       => $mtaAyahUuid,
+                    'mta_ibu_uuid'        => $mtaIbuUuid,
+                    'mta_foto_url'        => $mtaFotoUrl,
+                    'mta_synced_at'       => !empty($mtaWargaUuid) ? now() : null,
                 ]);
                 $pemudaId = $pemuda->id;
             }

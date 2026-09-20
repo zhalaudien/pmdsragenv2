@@ -1316,6 +1316,50 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-20 — Tampilan Progres Real-Time Antrean Sinkronisasi MTA Pusat (Laju: 40 Data/Menit & Jeda Istirahat 10 Detik / 40 Data)
+
+- **Sistem Antrean Sinkronisasi Massal & Laju Aman API (Rate Limit & Rest Period):**
+  - **Laju Pemrosesan:** Ditetapkan secara ketat pada laju **40 data / menit** (rata-rata 1.5 detik per item) guna menghindari limit kuota (*rate limiting / HTTP 429*) dari server MTA Pusat (`api.mta.or.id`).
+  - **Jeda Istirahat Otomatis:** Setiap kali mencapai pemrosesan 40 data (`item % 40 === 0`), sistem secara otomatis melakukan jeda istirahat selama **10 detik** sebelum melanjutkan batch antrean berikutnya.
+- **Tampilan Interaktif Proses yang Sedang Berjalan (`resources/views/admin/mta_sync/index.blade.php`):**
+  - **Banner Status Dinamis:** Menampilkan status real-time (`Memproses Antrean`, `Sedang Istirahat 10 Detik`, `Dijeda`, `Selesai`, `Dibatalkan`) lengkap dengan animasi ping, countdown timer istirahat 10 detik interaktif (`10s... 1s`), dan detail laju aman.
+  - **Progress Bar Real-Time & Estimasi Waktu:** Animasi gradien warna dengan persentase real-time, counter data diproses terhadap total, serta kalkulasi sisa waktu (*estimated remaining time*) yang mengikutsertakan jeda istirahat 10 detik per 40 data.
+  - **4 KPI Metric Live Cards:** Menampilkan metrik langsung: *Sudah Diproses* (beserta *Sisa*), *Terverifikasi* (Hijau), *Belum Terdata* (Kuning), dan *Gagal/Error* (Merah).
+  - **Spotlight Item Sedang Diproses:** Menampilkan secara transparan nama pemuda, cabang asal, badge hasil verifikasi, dan pesan respons API yang sedang aktif diproses.
+  - **Kontrol Interaktif Antrean:** Tombol **Jeda Sementara (Pause)** / **Lanjutkan (Resume)**, tombol **Batalkan Antrean (Cancel)**, dan tombol **Selesai/Refresh Halaman**.
+  - **Activity Stream Log Real-Time:** Feed aktivitas bergulir yang menampilkan 50 riwayat terakhir data pemuda yang baru saja selesai diproses dengan timestamp, nama, cabang, dan badge status.
+  - **Deteksi Otomatis & Pemulihan Sesi:** Halaman secara otomatis mendeteksi jika terdapat antrean pending dari sesi sebelumnya, dan menyediakan tombol langsung *"Lanjutkan Antrean Tersisa"* tanpa harus mengulang dari awal.
+- **Dukungan Artisan CLI (`php artisan mta:sync-queue`):**
+  - Perintah konsol CLI juga diperbarui untuk mematuhi laju yang sama (1.5 detik/data) serta jeda istirahat 10 detik dengan countdown terminal interaktif setiap 40 data.
+- **Database & Model:**
+  - Migration `2026_09_20_151000_alter_result_in_mta_sync_queue_table.php` memperluas kolom `result` pada `mta_sync_queue` dari ENUM ke `VARCHAR(50)` untuk fleksibilitas status.
+  - `MtaSyncService` dilengkapi pemulihan otomatis item macet (*stuck processing recovery*) dan pengembalian detail lengkap item (`name`, `cabang_name`, `gender`, dsb.).
+  - `MtaSyncQueue::getQueueSummary()` memperhitungkan jeda istirahat 10 detik dalam penghitungan estimasi waktu.
+- **Pengujian Otomatis:**
+  - Seluruh pengujian di `tests/Feature/MtaSyncQueueFlowTest.php` dan suite lengkap aplikasi lulus 100% (42 tests, 295 assertions).
+
+### 2026-09-20 — Sinkronisasi Menyeluruh Data MTA Pusat ke Database Pemuda (Pemuda, Alamat, Pendidikan, Pekerjaan)
+
+- **Sinkronisasi Lengkap Seluruh Entitas Terkait Pemuda:**
+  - Sebelumnya, sinkronisasi MTA Pusat hanya memperbarui `mta_warga_uuid` dan `status_verifikasi = 'verified'`.
+  - Sekarang diperluas secara menyeluruh menarik seluruh field data yang tersedia dari MTA Pusat API (`api.mta.or.id/api/v1/warga/{uuid}`) dan memetakan/menyimpannya ke dalam tabel-tabel database:
+    - **Tabel `pemuda`:** `marital_status`, `blood_type`, `birth_place`, `birth_date`, `phone`, `email`, `mta_ayah_uuid`, `mta_ibu_uuid`, `mta_foto_url`, `mta_warga_uuid`, `mta_status_warga`, dan `status_verifikasi = verified`.
+    - **Tabel `alamat`:** Mencari atau membuat (`updateOrCreate`) relasi alamat dengan pencocokan nama provinsi, kabupaten/kota (misal: "KABUPATEN SRAGEN"), kecamatan (`districts`), dan desa/kelurahan (`villages`), serta mem-parsing dusun, RT, RW dari field `alamat_rtrw` / `alamat`, dan mencatat detail alamat lengkap.
+    - **Tabel `pendidikan`:** Memetakan string pendidikan MTA ke ID `education_levels` (1: SD/MI, 2: SMP/MTs, 3: SMA/SMK/MA, 4: D1-D3, 5: S1/D4, 6: S2, 7: S3), mengisi `school_name` dan `education_status = 'Lulus'`.
+    - **Tabel `pekerjaan`:** Memetakan string pekerjaan MTA ke ID `job_statuses` (1: Belum Bekerja, 2: Pelajar/Mahasiswa, 3: Karyawan Swasta, 4: PNS/ASN/TNI/Polri/Sipil, 5: Wirausaha/Toko, 6: Freelancer, 7: Petani/Peternak, 8: Lainnya) dan mengisi `job_title`.
+- **Dukungan Alur Publik & Admin:**
+  - **Formulir Pendataan Publik (`/pendataan`):** Saat warga MTA terverifikasi dipilih di form publik, endpoint `GET /pendataan/get-warga/{uuid}` kini mengembalikan seluruh field (biodata, kontak, status nikah, goldar, alamat lengkap, pendidikan, pekerjaan, foto, dan UUID orang tua). Data tersebut langsung terisi otomatis (*autofill*) ke dalam 7 langkah wizard form publik.
+  - **Verifikasi Mandiri Admin (`syncSinglePemuda`):** Admin dapat memverifikasi pemuda secara individu, dan sistem secara otomatis mengambil detail lengkap warga dari API MTA Pusat lalu menyinkronkan seluruh tabel terkait pemuda.
+  - **Import / Batch Sync Cabang (`syncWargaToPemuda`):** Sinkronisasi massal warga per cabang otomatis memanggil detail warga dan menyinkronkan data pemuda, alamat, pendidikan, dan pekerjaan.
+- **Migration Perbaikan Kolom `mta_sync_logs`:**
+  - Migration `2026_09_20_143559_alter_sync_type_in_mta_sync_logs_table.php` memperluas kolom `sync_type` dari ENUM ke `VARCHAR(50)` untuk mendukung tipe sinkronisasi baru (`pemuda_single`, dsb.) tanpa peringatan/truncation MySQL.
+- **Pembaruan Tampilan UI:**
+  - `resources/views/pendataan/form.blade.php`: Input tersembunyi `mta_ayah_uuid`, `mta_ibu_uuid`, `mta_foto_url` dan penanganan autofill JavaScript untuk alamat, pendidikan, pekerjaan, dan foto preview.
+  - `resources/views/admin/warga_mta/detail.blade.php`: Tampilan detail warga MTA lengkap dengan foto, tempat/tanggal lahir, kontak, status pernikahan, golongan darah, alamat (RT/RW, desa, kecamatan, kabupaten, provinsi), pendidikan, pekerjaan, dan nama orang tua.
+  - `resources/views/admin/pemuda/detail.blade.php`: Informasi status MTA dan timestamp sinkronisasi terakhir.
+- **Pengujian Otomatis:**
+  - Seluruh test di `tests/Feature/MtaSyncDataPullTest.php` dan suite pengujian lainnya lulus 100% (36 tests, 250 assertions).
+
 ### 2026-09-17 — Alur Pendataan Pemuda: Pemilihan Langsung Cabang Saja, Autocomplete Pencarian Nama, & Pembaruan Navigasi Form
 
 - **Alur Baru Form Pendataan Publik (`/pendataan`):**

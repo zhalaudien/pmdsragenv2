@@ -82,6 +82,9 @@
             <!-- Hidden input for existing youth update and warga uuid -->
             <input type="hidden" name="existing_pemuda_id" id="input_existing_pemuda_id" value="{{ old('existing_pemuda_id', '') }}">
             <input type="hidden" name="mta_warga_uuid" id="input_mta_warga_uuid" value="{{ old('mta_warga_uuid', '') }}">
+            <input type="hidden" name="mta_ayah_uuid" id="input_mta_ayah_uuid" value="{{ old('mta_ayah_uuid', '') }}">
+            <input type="hidden" name="mta_ibu_uuid" id="input_mta_ibu_uuid" value="{{ old('mta_ibu_uuid', '') }}">
+            <input type="hidden" name="mta_foto_url" id="input_mta_foto_url" value="{{ old('mta_foto_url', '') }}">
 
             <!-- SERVER NOTIFICATION BANNER (SESSION ERROR / VALIDATION FAILURES) -->
             @if(session('error') || $errors->any())
@@ -1263,6 +1266,9 @@
     function populateFormWithWargaData(w) {
         inputExistingId.value = '';
         inputMtaUuid.value = w.mta_warga_uuid || '';
+        if (document.getElementById('input_mta_ayah_uuid')) document.getElementById('input_mta_ayah_uuid').value = w.mta_ayah_uuid || '';
+        if (document.getElementById('input_mta_ibu_uuid')) document.getElementById('input_mta_ibu_uuid').value = w.mta_ibu_uuid || '';
+        if (document.getElementById('input_mta_foto_url')) document.getElementById('input_mta_foto_url').value = w.mta_foto_url || '';
 
         modeNewReg.classList.add('hidden');
         modeUpdate.classList.add('hidden');
@@ -1275,7 +1281,7 @@
 
         if (btnSubmitText) btnSubmitText.textContent = 'Kirim Pendaftaran (Sinkron MTA)';
 
-        // Step 1
+        // Step 1: Data Pribadi
         inputName.value = w.name || '';
         document.getElementById('input_gender').value = w.gender || 'L';
         if (w.birth_place) document.getElementById('input_birth_place').value = w.birth_place;
@@ -1283,6 +1289,7 @@
         if (w.marital_status) document.getElementById('input_marital_status').value = w.marital_status;
         if (w.blood_type) document.getElementById('input_blood_type').value = w.blood_type;
         if (w.phone) document.getElementById('input_phone').value = w.phone;
+        if (w.email && document.getElementById('input_email')) document.getElementById('input_email').value = w.email;
 
         // Foto preview if available from MTA Pusat
         if (w.foto) {
@@ -1292,7 +1299,7 @@
             existingFotoBox.classList.add('hidden');
         }
 
-        // Step 2 (Alamat)
+        // Step 2: Alamat Domisili
         if (w.alamat) {
             const distSelect = document.getElementById('public_district_id');
             if (w.alamat.district_id) {
@@ -1305,9 +1312,27 @@
             if (w.alamat.address_detail) document.getElementById('input_address_detail').value = w.alamat.address_detail;
         }
 
-        // Step 4 (Pekerjaan)
-        if (w.pekerjaan && w.pekerjaan.job_title) {
-            document.getElementById('input_job_title').value = w.pekerjaan.job_title;
+        // Step 3: Riwayat Pendidikan
+        if (w.pendidikan) {
+            if (w.pendidikan.education_level_id && document.getElementById('input_education_level_id')) {
+                document.getElementById('input_education_level_id').value = w.pendidikan.education_level_id;
+            }
+            if (w.pendidikan.school_name && document.getElementById('input_school_name')) {
+                document.getElementById('input_school_name').value = w.pendidikan.school_name;
+            }
+            if (w.pendidikan.education_status && document.getElementById('input_education_status')) {
+                document.getElementById('input_education_status').value = w.pendidikan.education_status;
+            }
+        }
+
+        // Step 4: Status Pekerjaan
+        if (w.pekerjaan) {
+            if (w.pekerjaan.job_status_id && document.getElementById('input_job_status_id')) {
+                document.getElementById('input_job_status_id').value = w.pekerjaan.job_status_id;
+            }
+            if (w.pekerjaan.job_title && document.getElementById('input_job_title')) {
+                document.getElementById('input_job_title').value = w.pekerjaan.job_title;
+            }
         }
     }
 
@@ -1316,6 +1341,9 @@
         dropdownList.classList.add('hidden');
         inputExistingId.value = '';
         inputMtaUuid.value = '';
+        if (document.getElementById('input_mta_ayah_uuid')) document.getElementById('input_mta_ayah_uuid').value = '';
+        if (document.getElementById('input_mta_ibu_uuid')) document.getElementById('input_mta_ibu_uuid').value = '';
+        if (document.getElementById('input_mta_foto_url')) document.getElementById('input_mta_foto_url').value = '';
         inputName.value = name;
         modeNewReg.classList.remove('hidden');
         modeUpdate.classList.add('hidden');
@@ -1328,6 +1356,9 @@
     function cancelUpdateMode() {
         inputExistingId.value = '';
         inputMtaUuid.value = '';
+        if (document.getElementById('input_mta_ayah_uuid')) document.getElementById('input_mta_ayah_uuid').value = '';
+        if (document.getElementById('input_mta_ibu_uuid')) document.getElementById('input_mta_ibu_uuid').value = '';
+        if (document.getElementById('input_mta_foto_url')) document.getElementById('input_mta_foto_url').value = '';
         modeUpdate.classList.add('hidden');
         if (modeWarga) modeWarga.classList.add('hidden');
 

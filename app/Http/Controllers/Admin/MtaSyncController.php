@@ -282,8 +282,8 @@ class MtaSyncController extends Controller
 
     public function queueInit(Request $request)
     {
-        $cabangId    = $request->input('cabang_id') ? (int) $request->input('cabang_id') : null;
-        $onlyPending = (bool) $request->input('only_pending', true);
+        $cabangId    = $request->filled('cabang_id') ? (int) $request->input('cabang_id') : null;
+        $onlyPending = $request->has('only_pending') ? $request->boolean('only_pending') : true;
 
         $result = $this->syncService->initSyncQueue($cabangId, $onlyPending, auth()->id(), true);
         return response()->json($result);

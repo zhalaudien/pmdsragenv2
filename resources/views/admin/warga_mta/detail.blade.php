@@ -35,9 +35,13 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <!-- LEFT: PROFILE CARD -->
     <div class="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm text-center">
-        <div class="w-24 h-24 mx-auto mb-4 rounded-3xl bg-slate-50 border-2 {{ $isMale ? 'border-blue-500/20 text-blue-600' : 'border-pink-500/20 text-pink-600' }} flex items-center justify-center text-4xl shadow-sm">
-            <i class="bi bi-person-fill"></i>
-        </div>
+        @if(!empty($warga['foto']) && !str_contains($warga['foto'], 'default.png'))
+            <img src="{{ $warga['foto'] }}" alt="{{ $warga['nama'] ?? 'MTA' }}" class="w-24 h-24 mx-auto mb-4 rounded-3xl object-cover shadow-sm border-2 {{ $isMale ? 'border-blue-500/20' : 'border-pink-500/20' }}">
+        @else
+            <div class="w-24 h-24 mx-auto mb-4 rounded-3xl bg-slate-50 border-2 {{ $isMale ? 'border-blue-500/20 text-blue-600' : 'border-pink-500/20 text-pink-600' }} flex items-center justify-center text-4xl shadow-sm">
+                <i class="bi bi-person-fill"></i>
+            </div>
+        @endif
 
         <h3 class="text-lg font-black text-slate-900 tracking-tight mb-1">{{ $warga['nama'] ?? '-' }}</h3>
         <div class="flex items-center justify-center gap-1.5 mb-4">
@@ -92,24 +96,61 @@
         <dl class="divide-y divide-slate-100 text-xs">
             <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Tempat, Tanggal Lahir</dt>
-                <dd class="col-span-2 font-medium text-slate-800">{{ $warga['tempat_lahir'] ?? '-' }}, {{ $warga['tanggal_lahir'] ?? $warga['lahir'] ?? '-' }}</dd>
+                <dd class="col-span-2 font-medium text-slate-800">
+                    {{ $warga['tempat_lahir'] ?? 'Sragen' }}, {{ !empty($warga['lahir']) ? \Carbon\Carbon::parse($warga['lahir'])->format('d F Y') : ($warga['tanggal_lahir'] ?? '-') }}
+                    @if(!empty($warga['usia'])) <span class="text-slate-500 font-normal">({{ $warga['usia'] }} tahun)</span> @endif
+                </dd>
             </div>
             <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Nomor Kontak / HP</dt>
                 <dd class="col-span-2 font-semibold text-slate-800">{{ $warga['nohp'] ?? '-' }}</dd>
             </div>
             <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Status Pernikahan</dt>
+                <dd class="col-span-2 text-slate-800 font-medium">{{ $warga['menikah'] ?? 'Belum Menikah' }}</dd>
+            </div>
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Golongan Darah</dt>
+                <dd class="col-span-2 text-slate-800 font-bold {{ !empty($warga['goldar']) ? 'text-red-600' : '' }}">{{ $warga['goldar'] ?? '-' }}</dd>
+            </div>
+            <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Alamat Lengkap</dt>
                 <dd class="col-span-2 text-slate-700 leading-relaxed">{{ $warga['alamat'] ?? '-' }}</dd>
             </div>
+            @if(!empty($warga['alamat_rtrw']))
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">RT / RW</dt>
+                <dd class="col-span-2 text-slate-800">{{ $warga['alamat_rtrw'] }}</dd>
+            </div>
+            @endif
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Desa &amp; Kecamatan</dt>
+                <dd class="col-span-2 text-slate-800">{{ $warga['desa'] ?? '-' }}, Kec. {{ $warga['kecamatan'] ?? '-' }}</dd>
+            </div>
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Kabupaten &amp; Provinsi</dt>
+                <dd class="col-span-2 text-slate-800">{{ $warga['kabupaten'] ?? 'Sragen' }}, {{ $warga['provinsi'] ?? 'Jawa Tengah' }}</dd>
+            </div>
             <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Pendidikan Terakhir</dt>
-                <dd class="col-span-2 text-slate-800">{{ $warga['pendidikan'] ?? '-' }}</dd>
+                <dd class="col-span-2 text-slate-800">{{ $warga['pendidikan'] ?? '-' }} @if(!empty($warga['sekolah'])) ({{ $warga['sekolah'] }}) @endif</dd>
             </div>
             <div class="py-2.5 grid grid-cols-3">
                 <dt class="text-slate-400">Pekerjaan</dt>
-                <dd class="col-span-2 text-slate-800">{{ $warga['pekerjaan'] ?? '-' }}</dd>
+                <dd class="col-span-2 text-slate-800 font-medium">{{ $warga['pekerjaan'] ?? '-' }}</dd>
             </div>
+            @if(!empty($warga['ayah']))
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Nama Ayah</dt>
+                <dd class="col-span-2 text-slate-800">{{ $warga['ayah'] }}</dd>
+            </div>
+            @endif
+            @if(!empty($warga['ibu']))
+            <div class="py-2.5 grid grid-cols-3">
+                <dt class="text-slate-400">Nama Ibu</dt>
+                <dd class="col-span-2 text-slate-800">{{ $warga['ibu'] }}</dd>
+            </div>
+            @endif
         </dl>
     </div>
 </div>

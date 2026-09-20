@@ -12,7 +12,7 @@ class MtaSyncQueueCommand extends Command
                             {--only-pending=1 : Hanya sinkronkan data yang masih berstatus pending (1/0)}
                             {--init : Inisialisasi antrian baru sebelum memproses}';
 
-    protected $description = 'Proses antrian sinkronisasi data pemuda dengan API MTA Pusat (Laju: 40 data / menit)';
+    protected $description = 'Proses antrian sinkronisasi data pemuda dengan API MTA Pusat (Laju: 40 data / menit, istirahat 10 detik setiap 40 data)';
 
     public function handle(MtaSyncService $syncService): int
     {
@@ -20,10 +20,10 @@ class MtaSyncQueueCommand extends Command
         $onlyPending = $this->option('only-pending') !== '0';
         $shouldInit  = (bool) $this->option('init');
 
-        $this->info("==================================================");
-        $this->line(" ANTRIAN SINKRONISASI PEMUDA DENGAN API MTA PUSAT ");
-        $this->comment(" Batas Laju Aman: 40 data / menit (1.5 detik/item)");
-        $this->info("==================================================");
+        $this->info("===============================================================");
+        $this->line("       ANTRIAN SINKRONISASI PEMUDA DENGAN API MTA PUSAT        ");
+        $this->comment(" Laju: 40 data/menit (1.5 dtk/item) & Istirahat 10 dtk / 40 data ");
+        $this->info("===============================================================");
 
         if ($shouldInit) {
             $this->line("Menginisialisasi antrian baru...");
@@ -89,7 +89,20 @@ class MtaSyncQueueCommand extends Command
                 $this->error($msg);
             }
 
-            usleep(1500000); // 1.5 detik
+            // Istirahat 10 detik setiap 40 data yang diproses
+            if ($processedInRun > 0 && $processedInRun % 40 === 0 && ($result['summary']['remaining'] ?? 0) > 0) {
+                $this->newLine();
+                $this->warn("☕ ISTIRAHAT 10 DETIK: Berhasil memproses 40 data. Jeda aman server pusat...");
+                for ($s = 10; $s > 0; $s--) {
+                    $this->output->write("\r  Melanjutkan antrean dalam {$s} detik...   ");
+                    sleep(1);
+                }
+                $this->output->write("\r                                            \r");
+                $this->info("Melanjutkan pemrosesan antrean...");
+                $this->newLine();
+            } else {
+                usleep(1500000); // 1.5 detik (laju 40 data / menit)
+            }
         }
 
         return 0;
