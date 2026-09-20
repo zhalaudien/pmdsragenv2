@@ -655,7 +655,8 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                    <div>
+                    <!-- KOLOM BAKAT / KEAHLIAN -->
+                    <div class="flex flex-col">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                                 <i class="bi bi-tools text-red-600"></i>
@@ -671,9 +672,26 @@
                                 </label>
                             @endforeach
                         </div>
+
+                        <!-- INPUT OPSI BAKAT / KEAHLIAN LAINNYA -->
+                        <div class="mt-3 p-3.5 rounded-2xl bg-slate-50/90 border border-dashed border-slate-300">
+                            <label for="input_new_skill" class="block font-bold text-slate-700 text-[11px] mb-1.5 flex items-center gap-1.5">
+                                <i class="bi bi-plus-circle-fill text-red-600"></i>
+                                <span>Bakat / keahlian tidak ada di daftar? Tambahkan baru:</span>
+                            </label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="input_new_skill" name="custom_skills" placeholder="Ketik keahlian Anda (contoh: Las Listrik, Desain Grafis)..." autocomplete="off" class="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 shadow-2xs">
+                                <button type="button" onclick="addNewSkill()" class="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 transition flex-shrink-0">
+                                    <i class="bi bi-plus-lg font-bold"></i>
+                                    <span>Tambah</span>
+                                </button>
+                            </div>
+                            <div id="new_skill_feedback" class="hidden text-[11px] mt-1.5 font-semibold"></div>
+                        </div>
                     </div>
 
-                    <div>
+                    <!-- KOLOM MINAT -->
+                    <div class="flex flex-col">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                                 <i class="bi bi-lightbulb text-amber-500"></i>
@@ -688,6 +706,22 @@
                                     <span class="text-slate-700 text-[11px] truncate">{{ $int->name }}</span>
                                 </label>
                             @endforeach
+                        </div>
+
+                        <!-- INPUT OPSI MINAT LAINNYA -->
+                        <div class="mt-3 p-3.5 rounded-2xl bg-slate-50/90 border border-dashed border-slate-300">
+                            <label for="input_new_interest" class="block font-bold text-slate-700 text-[11px] mb-1.5 flex items-center gap-1.5">
+                                <i class="bi bi-plus-circle-fill text-amber-500"></i>
+                                <span>Minat tidak ada di daftar? Tambahkan baru:</span>
+                            </label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="input_new_interest" name="custom_interests" placeholder="Ketik minat Anda (contoh: Robotika, Public Speaking)..." autocomplete="off" class="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 shadow-2xs">
+                                <button type="button" onclick="addNewInterest()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 transition flex-shrink-0">
+                                    <i class="bi bi-plus-lg font-bold"></i>
+                                    <span>Tambah</span>
+                                </button>
+                            </div>
+                            <div id="new_interest_feedback" class="hidden text-[11px] mt-1.5 font-semibold"></div>
                         </div>
                     </div>
                 </div>
@@ -740,6 +774,14 @@
                         <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs sm:col-span-2" id="summary_org_box">
                             <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Elemen Dakwah yang Dipilih</dt>
                             <dd id="summary_organizations" class="flex flex-wrap gap-1.5">-</dd>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs" id="summary_skills_box">
+                            <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Bakat / Keahlian yang Dipilih</dt>
+                            <dd id="summary_skills" class="flex flex-wrap gap-1.5">-</dd>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs" id="summary_interests_box">
+                            <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Minat yang Dipilih</dt>
+                            <dd id="summary_interests" class="flex flex-wrap gap-1.5">-</dd>
                         </div>
                     </dl>
                 </div>
@@ -1247,14 +1289,45 @@
         }
 
         // Step 6 (Skills & Interests)
-        skillCheckboxes.forEach(cb => {
+        const currentSkillCbs = document.querySelectorAll('#skills_container input[name="skills[]"]');
+        currentSkillCbs.forEach(cb => {
             const val = parseInt(cb.value, 10);
             cb.checked = Array.isArray(p.skills) && p.skills.includes(val);
         });
-        interestCheckboxes.forEach(cb => {
+        if (Array.isArray(p.skills_data)) {
+            p.skills_data.forEach(s => {
+                let found = false;
+                document.querySelectorAll('#skills_container input[name="skills[]"]').forEach(cb => {
+                    if (cb.value == s.id || cb.value.toLowerCase().trim() === s.name.toLowerCase().trim()) {
+                        cb.checked = true;
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    addNewSkill(s.name, true);
+                }
+            });
+        }
+
+        const currentIntCbs = document.querySelectorAll('#interests_container input[name="interests[]"]');
+        currentIntCbs.forEach(cb => {
             const val = parseInt(cb.value, 10);
             cb.checked = Array.isArray(p.interests) && p.interests.includes(val);
         });
+        if (Array.isArray(p.interests_data)) {
+            p.interests_data.forEach(i => {
+                let found = false;
+                document.querySelectorAll('#interests_container input[name="interests[]"]').forEach(cb => {
+                    if (cb.value == i.id || cb.value.toLowerCase().trim() === i.name.toLowerCase().trim()) {
+                        cb.checked = true;
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    addNewInterest(i.name, true);
+                }
+            });
+        }
     }
 
     // 6. SELECT WARGA MTA PUSAT (INTEGRATE MTA CITIZEN TO PMD)
@@ -1490,6 +1563,179 @@
         }
     }
 
+    // 8.2 MANAJEMEN BAKAT & MINAT BARU / KUSTOM
+    function addNewSkill(nameFromParam, silent = false) {
+        const input = document.getElementById('input_new_skill');
+        const feedback = document.getElementById('new_skill_feedback');
+        const skillName = (nameFromParam || (input ? input.value : '')).trim();
+
+        if (!skillName) {
+            if (!silent && feedback) {
+                feedback.className = 'text-rose-600 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+                feedback.innerHTML = '<i class="bi bi-exclamation-circle"></i> Silakan ketik nama keahlian terlebih dahulu.';
+                feedback.classList.remove('hidden');
+            }
+            return false;
+        }
+
+        const container = document.getElementById('skills_container');
+        if (!container) return false;
+
+        // Cek apakah keahlian dengan nama ini sudah ada di container (case-insensitive)
+        const existingLabels = container.querySelectorAll('label');
+        let foundLabel = null;
+        existingLabels.forEach(lbl => {
+            const text = lbl.querySelector('span')?.textContent?.trim().toLowerCase();
+            if (text === skillName.toLowerCase()) {
+                foundLabel = lbl;
+            }
+        });
+
+        if (foundLabel) {
+            const cb = foundLabel.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = true;
+            foundLabel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!silent && feedback) {
+                feedback.className = 'text-emerald-700 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+                feedback.innerHTML = `<i class="bi bi-check-circle-fill"></i> Keahlian "<strong>${escapeHtml(skillName)}</strong>" sudah ada pada daftar dan telah dicentang.`;
+                feedback.classList.remove('hidden');
+            }
+            if (input) input.value = '';
+            updateStep7Summary();
+            return true;
+        }
+
+        // Buat item keahlian baru secara dinamis
+        const newLabel = document.createElement('label');
+        newLabel.className = 'flex items-center justify-between gap-1.5 p-2 rounded-xl bg-red-50/60 border border-red-200 hover:bg-white cursor-pointer transition select-none has-[:checked]:bg-white has-[:checked]:shadow-sm has-[:checked]:font-bold group animate-in fade-in duration-150';
+        newLabel.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+                <input type="checkbox" name="skills[]" value="${escapeHtml(skillName)}" checked class="rounded border-slate-300 text-red-600 focus:ring-red-500 w-3.5 h-3.5">
+                <span class="text-slate-800 text-[11px] truncate">${escapeHtml(skillName)}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-100 text-red-700 flex-shrink-0">Baru</span>
+            </div>
+            <button type="button" onclick="removeDynamicSkill(this, event)" title="Hapus keahlian ini" class="text-slate-400 hover:text-rose-600 p-0.5 rounded hover:bg-slate-100 transition text-[11px]">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+
+        const cb = newLabel.querySelector('input[type="checkbox"]');
+        if (cb) {
+            cb.addEventListener('change', () => updateStep7Summary());
+        }
+
+        container.appendChild(newLabel);
+        newLabel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        if (input) input.value = '';
+        if (!silent && feedback) {
+            feedback.className = 'text-emerald-700 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+            feedback.innerHTML = `<i class="bi bi-check-circle-fill"></i> Keahlian "<strong>${escapeHtml(skillName)}</strong>" berhasil ditambahkan &amp; dicentang.`;
+            feedback.classList.remove('hidden');
+        }
+
+        updateStep7Summary();
+        return true;
+    }
+
+    function removeDynamicSkill(btn, e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const label = btn.closest('label');
+        if (label) {
+            label.remove();
+            updateStep7Summary();
+        }
+    }
+
+    function addNewInterest(nameFromParam, silent = false) {
+        const input = document.getElementById('input_new_interest');
+        const feedback = document.getElementById('new_interest_feedback');
+        const interestName = (nameFromParam || (input ? input.value : '')).trim();
+
+        if (!interestName) {
+            if (!silent && feedback) {
+                feedback.className = 'text-rose-600 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+                feedback.innerHTML = '<i class="bi bi-exclamation-circle"></i> Silakan ketik nama minat terlebih dahulu.';
+                feedback.classList.remove('hidden');
+            }
+            return false;
+        }
+
+        const container = document.getElementById('interests_container');
+        if (!container) return false;
+
+        // Cek apakah minat dengan nama ini sudah ada di container (case-insensitive)
+        const existingLabels = container.querySelectorAll('label');
+        let foundLabel = null;
+        existingLabels.forEach(lbl => {
+            const text = lbl.querySelector('span')?.textContent?.trim().toLowerCase();
+            if (text === interestName.toLowerCase()) {
+                foundLabel = lbl;
+            }
+        });
+
+        if (foundLabel) {
+            const cb = foundLabel.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = true;
+            foundLabel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!silent && feedback) {
+                feedback.className = 'text-emerald-700 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+                feedback.innerHTML = `<i class="bi bi-check-circle-fill"></i> Minat "<strong>${escapeHtml(interestName)}</strong>" sudah ada pada daftar dan telah dicentang.`;
+                feedback.classList.remove('hidden');
+            }
+            if (input) input.value = '';
+            updateStep7Summary();
+            return true;
+        }
+
+        // Buat item minat baru secara dinamis
+        const newLabel = document.createElement('label');
+        newLabel.className = 'flex items-center justify-between gap-1.5 p-2 rounded-xl bg-amber-50/60 border border-amber-200 hover:bg-white cursor-pointer transition select-none has-[:checked]:bg-white has-[:checked]:shadow-sm has-[:checked]:font-bold group animate-in fade-in duration-150';
+        newLabel.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+                <input type="checkbox" name="interests[]" value="${escapeHtml(interestName)}" checked class="rounded border-slate-300 text-red-600 focus:ring-red-500 w-3.5 h-3.5">
+                <span class="text-slate-800 text-[11px] truncate">${escapeHtml(interestName)}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-700 flex-shrink-0">Baru</span>
+            </div>
+            <button type="button" onclick="removeDynamicInterest(this, event)" title="Hapus minat ini" class="text-slate-400 hover:text-rose-600 p-0.5 rounded hover:bg-slate-100 transition text-[11px]">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+
+        const cb = newLabel.querySelector('input[type="checkbox"]');
+        if (cb) {
+            cb.addEventListener('change', () => updateStep7Summary());
+        }
+
+        container.appendChild(newLabel);
+        newLabel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        if (input) input.value = '';
+        if (!silent && feedback) {
+            feedback.className = 'text-emerald-700 text-[11px] mt-1.5 font-semibold flex items-center gap-1';
+            feedback.innerHTML = `<i class="bi bi-check-circle-fill"></i> Minat "<strong>${escapeHtml(interestName)}</strong>" berhasil ditambahkan &amp; dicentang.`;
+            feedback.classList.remove('hidden');
+        }
+
+        updateStep7Summary();
+        return true;
+    }
+
+    function removeDynamicInterest(btn, e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const label = btn.closest('label');
+        if (label) {
+            label.remove();
+            updateStep7Summary();
+        }
+    }
+
     // 9. UPDATE STEP VIEW & NAVIGATION
     function updateStepView() {
         hideStepAlert();
@@ -1655,6 +1901,18 @@
             return true;
         }
 
+        if (stepNumber === 6) {
+            const inputNewSkill = document.getElementById('input_new_skill');
+            if (inputNewSkill && inputNewSkill.value.trim() !== '') {
+                addNewSkill();
+            }
+            const inputNewInterest = document.getElementById('input_new_interest');
+            if (inputNewInterest && inputNewInterest.value.trim() !== '') {
+                addNewInterest();
+            }
+            return true;
+        }
+
         return true;
     }
 
@@ -1739,6 +1997,32 @@
                 summaryOrgs.innerHTML = checkedOrgs.map(org => `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-red-100 text-red-800 border border-red-200"><i class="bi bi-check-circle-fill mr-1 text-red-600"></i>${org}</span>`).join('');
             } else {
                 summaryOrgs.innerHTML = '<span class="text-slate-400 italic">Belum memilih elemen dakwah</span>';
+            }
+        }
+
+        // Selected skills preview
+        const summarySkills = document.getElementById('summary_skills');
+        if (summarySkills) {
+            const checkedSkills = Array.from(document.querySelectorAll('#skills_container input[name="skills[]"]:checked')).map(cb => {
+                return cb.closest('label')?.querySelector('span')?.textContent?.trim() || cb.value;
+            });
+            if (checkedSkills.length > 0) {
+                summarySkills.innerHTML = checkedSkills.map(sk => `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 text-slate-800 border border-slate-200"><i class="bi bi-tools text-red-600 mr-1 text-[9px]"></i>${escapeHtml(sk)}</span>`).join('');
+            } else {
+                summarySkills.innerHTML = '<span class="text-slate-400 italic">Belum memilih keahlian</span>';
+            }
+        }
+
+        // Selected interests preview
+        const summaryInterests = document.getElementById('summary_interests');
+        if (summaryInterests) {
+            const checkedInterests = Array.from(document.querySelectorAll('#interests_container input[name="interests[]"]:checked')).map(cb => {
+                return cb.closest('label')?.querySelector('span')?.textContent?.trim() || cb.value;
+            });
+            if (checkedInterests.length > 0) {
+                summaryInterests.innerHTML = checkedInterests.map(int => `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200"><i class="bi bi-lightbulb text-amber-500 mr-1 text-[9px]"></i>${escapeHtml(int)}</span>`).join('');
+            } else {
+                summaryInterests.innerHTML = '<span class="text-slate-400 italic">Belum memilih minat</span>';
             }
         }
     }
@@ -1871,6 +2155,30 @@
                 }
             });
         }
+
+        const inputNewSkill = document.getElementById('input_new_skill');
+        if (inputNewSkill) {
+            inputNewSkill.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewSkill();
+                }
+            });
+        }
+
+        const inputNewInterest = document.getElementById('input_new_interest');
+        if (inputNewInterest) {
+            inputNewInterest.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewInterest();
+                }
+            });
+        }
+
+        document.querySelectorAll('#skills_container input[name="skills[]"], #interests_container input[name="interests[]"]').forEach(cb => {
+            cb.addEventListener('change', () => updateStep7Summary());
+        });
 
         @if($errors->any() || session('error'))
             updateStepView();

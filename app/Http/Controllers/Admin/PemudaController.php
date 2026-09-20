@@ -304,24 +304,90 @@ class PemudaController extends Controller
             }
 
             $skillsInput = $request->input('skills', []);
+            $customSkillsInput = $request->input('custom_skills', []);
+            $selectedSkillIds = [];
+            $customSkillNames = [];
+
             if (is_array($skillsInput)) {
-                foreach ($skillsInput as $skId) {
-                    PemudaSkill::create([
-                        'pemuda_id' => $pemuda->id,
-                        'skill_id'  => (int) $skId,
-                        'level'     => 'menengah',
-                    ]);
+                foreach ($skillsInput as $item) {
+                    if (is_numeric($item)) {
+                        $skId = (int) $item;
+                        if ($skId > 0) $selectedSkillIds[] = $skId;
+                    } else {
+                        $cleanName = trim((string) $item);
+                        if ($cleanName !== '') $customSkillNames[] = $cleanName;
+                    }
                 }
+            }
+            if (!empty($customSkillsInput)) {
+                $rawList = is_array($customSkillsInput) ? $customSkillsInput : explode(',', (string) $customSkillsInput);
+                foreach ($rawList as $rawName) {
+                    $cleanName = trim((string) $rawName);
+                    if ($cleanName !== '') $customSkillNames[] = $cleanName;
+                }
+            }
+            foreach ($customSkillNames as $name) {
+                $cleanName = trim($name);
+                if ($cleanName === '') continue;
+                $existingSkill = Skill::where('name', $cleanName)
+                    ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($cleanName)])
+                    ->first();
+                if (!$existingSkill) {
+                    $existingSkill = Skill::create(['name' => ucwords($cleanName)]);
+                }
+                if ($existingSkill && !in_array($existingSkill->id, $selectedSkillIds, true)) {
+                    $selectedSkillIds[] = $existingSkill->id;
+                }
+            }
+            foreach (array_unique($selectedSkillIds) as $skId) {
+                PemudaSkill::create([
+                    'pemuda_id' => $pemuda->id,
+                    'skill_id'  => $skId,
+                    'level'     => 'menengah',
+                ]);
             }
 
             $interestsInput = $request->input('interests', []);
+            $customInterestsInput = $request->input('custom_interests', []);
+            $selectedInterestIds = [];
+            $customInterestNames = [];
+
             if (is_array($interestsInput)) {
-                foreach ($interestsInput as $intId) {
-                    PemudaInterest::create([
-                        'pemuda_id'   => $pemuda->id,
-                        'interest_id' => (int) $intId,
-                    ]);
+                foreach ($interestsInput as $item) {
+                    if (is_numeric($item)) {
+                        $intId = (int) $item;
+                        if ($intId > 0) $selectedInterestIds[] = $intId;
+                    } else {
+                        $cleanName = trim((string) $item);
+                        if ($cleanName !== '') $customInterestNames[] = $cleanName;
+                    }
                 }
+            }
+            if (!empty($customInterestsInput)) {
+                $rawList = is_array($customInterestsInput) ? $customInterestsInput : explode(',', (string) $customInterestsInput);
+                foreach ($rawList as $rawName) {
+                    $cleanName = trim((string) $rawName);
+                    if ($cleanName !== '') $customInterestNames[] = $cleanName;
+                }
+            }
+            foreach ($customInterestNames as $name) {
+                $cleanName = trim($name);
+                if ($cleanName === '') continue;
+                $existingInt = Interest::where('name', $cleanName)
+                    ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($cleanName)])
+                    ->first();
+                if (!$existingInt) {
+                    $existingInt = Interest::create(['name' => ucwords($cleanName)]);
+                }
+                if ($existingInt && !in_array($existingInt->id, $selectedInterestIds, true)) {
+                    $selectedInterestIds[] = $existingInt->id;
+                }
+            }
+            foreach (array_unique($selectedInterestIds) as $intId) {
+                PemudaInterest::create([
+                    'pemuda_id'   => $pemuda->id,
+                    'interest_id' => $intId,
+                ]);
             }
 
             DB::commit();
@@ -519,25 +585,91 @@ class PemudaController extends Controller
 
             PemudaSkill::where('pemuda_id', $pemuda->id)->delete();
             $skillsInput = $request->input('skills', []);
+            $customSkillsInput = $request->input('custom_skills', []);
+            $selectedSkillIds = [];
+            $customSkillNames = [];
+
             if (is_array($skillsInput)) {
-                foreach ($skillsInput as $skId) {
-                    PemudaSkill::create([
-                        'pemuda_id' => $pemuda->id,
-                        'skill_id'  => (int) $skId,
-                        'level'     => 'menengah',
-                    ]);
+                foreach ($skillsInput as $item) {
+                    if (is_numeric($item)) {
+                        $skId = (int) $item;
+                        if ($skId > 0) $selectedSkillIds[] = $skId;
+                    } else {
+                        $cleanName = trim((string) $item);
+                        if ($cleanName !== '') $customSkillNames[] = $cleanName;
+                    }
                 }
+            }
+            if (!empty($customSkillsInput)) {
+                $rawList = is_array($customSkillsInput) ? $customSkillsInput : explode(',', (string) $customSkillsInput);
+                foreach ($rawList as $rawName) {
+                    $cleanName = trim((string) $rawName);
+                    if ($cleanName !== '') $customSkillNames[] = $cleanName;
+                }
+            }
+            foreach ($customSkillNames as $name) {
+                $cleanName = trim($name);
+                if ($cleanName === '') continue;
+                $existingSkill = Skill::where('name', $cleanName)
+                    ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($cleanName)])
+                    ->first();
+                if (!$existingSkill) {
+                    $existingSkill = Skill::create(['name' => ucwords($cleanName)]);
+                }
+                if ($existingSkill && !in_array($existingSkill->id, $selectedSkillIds, true)) {
+                    $selectedSkillIds[] = $existingSkill->id;
+                }
+            }
+            foreach (array_unique($selectedSkillIds) as $skId) {
+                PemudaSkill::create([
+                    'pemuda_id' => $pemuda->id,
+                    'skill_id'  => $skId,
+                    'level'     => 'menengah',
+                ]);
             }
 
             PemudaInterest::where('pemuda_id', $pemuda->id)->delete();
             $interestsInput = $request->input('interests', []);
+            $customInterestsInput = $request->input('custom_interests', []);
+            $selectedInterestIds = [];
+            $customInterestNames = [];
+
             if (is_array($interestsInput)) {
-                foreach ($interestsInput as $intId) {
-                    PemudaInterest::create([
-                        'pemuda_id'   => $pemuda->id,
-                        'interest_id' => (int) $intId,
-                    ]);
+                foreach ($interestsInput as $item) {
+                    if (is_numeric($item)) {
+                        $intId = (int) $item;
+                        if ($intId > 0) $selectedInterestIds[] = $intId;
+                    } else {
+                        $cleanName = trim((string) $item);
+                        if ($cleanName !== '') $customInterestNames[] = $cleanName;
+                    }
                 }
+            }
+            if (!empty($customInterestsInput)) {
+                $rawList = is_array($customInterestsInput) ? $customInterestsInput : explode(',', (string) $customInterestsInput);
+                foreach ($rawList as $rawName) {
+                    $cleanName = trim((string) $rawName);
+                    if ($cleanName !== '') $customInterestNames[] = $cleanName;
+                }
+            }
+            foreach ($customInterestNames as $name) {
+                $cleanName = trim($name);
+                if ($cleanName === '') continue;
+                $existingInt = Interest::where('name', $cleanName)
+                    ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($cleanName)])
+                    ->first();
+                if (!$existingInt) {
+                    $existingInt = Interest::create(['name' => ucwords($cleanName)]);
+                }
+                if ($existingInt && !in_array($existingInt->id, $selectedInterestIds, true)) {
+                    $selectedInterestIds[] = $existingInt->id;
+                }
+            }
+            foreach (array_unique($selectedInterestIds) as $intId) {
+                PemudaInterest::create([
+                    'pemuda_id'   => $pemuda->id,
+                    'interest_id' => $intId,
+                ]);
             }
 
             DB::commit();

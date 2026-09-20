@@ -1316,6 +1316,26 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-20 — Opsi Input Mandiri Bakat & Minat di Formulir Pendataan Publik (`/pendataan`)
+
+- **Fitur Penambahan Bakat / Keahlian & Minat di Luar Daftar Pilihan:**
+  - Pada Langkah 6 formulir pendataan publik (*Potensi Bakat, Keahlian & Minat Diri*), ditambahkan opsi input mandiri di bawah masing-masing kolom:
+    - **Bakat / Keahlian:** Input teks `input_new_skill` (`name="custom_skills"`) dilengkapi tombol "+ Tambah".
+    - **Minat Diri:** Input teks `input_new_interest` (`name="custom_interests"`) dilengkapi tombol "+ Tambah".
+  - Pengguna dapat mengetik nama keahlian atau minat baru dan menekan tombol Tambah atau menekan tombol Enter:
+    - Jika keahlian/minat yang diketik sudah tersedia di daftar pilihan, sistem secara cerdas mencentang pilihan yang ada, menggulir ke item tersebut, dan menampilkan umpan balik sukses.
+    - Jika benar-benar baru, sistem menambahkan elemen checkbox baru secara dinamis ke dalam kontainer pilihan lengkap dengan badge `(Baru)` dan tombol hapus silang (`x`).
+  - **Pencegah Lupa Input:** Jika pengguna mengetik nama di kolom input lalu langsung menekan tombol "Lanjutkan" atau mengirim form tanpa menekan tombol "Tambah", validasi form secara otomatis memasukkan keahlian/minat tersebut ke dalam data pendaftaran.
+- **Pembaruan Backend Controller (`PendataanController` & `Admin/PemudaController`):**
+  - Parameter `custom_skills` dan `custom_interests` (serta nilai string baru di dalam array `skills[]` / `interests[]`) diproses secara otomatis.
+  - Menggunakan pencarian case-insensitive ke tabel master `skills` dan `interests`, dan otomatis membuat record baru (`firstOrCreate`) jika belum tercatat di database.
+  - Mengaitkan relasi ke tabel pivot `pemuda_skills` dan `pemuda_interests`.
+  - Endpoint `GET /pendataan/get-pemuda/{id}` kini mengembalikan `skills_data` dan `interests_data` (objek id dan nama) sehingga saat mode pembaruan (update) aktif, seluruh keahlian/minat kustom tetap terpilih dan ter-render sempurna di form.
+- **Ringkasan Formulir Langkah 7:**
+  - Ditambahkan kartu pratinjau ringkasan pilihan Bakat/Keahlian (`#summary_skills`) dan Minat (`#summary_interests`) sebelum pengiriman formulir.
+- **Pengujian Otomatis:**
+  - Ditambahkan automated feature test `test_custom_skills_and_interests_can_be_submitted_and_persisted` di `tests/Feature/PendataanFlowTest.php`. Seluruh 43 tests lulus 100% (307 assertions).
+
 ### 2026-09-20 — Tampilan Progres Real-Time Antrean Sinkronisasi MTA Pusat (Laju: 40 Data/Menit & Jeda Istirahat 10 Detik / 40 Data)
 
 - **Sistem Antrean Sinkronisasi Massal & Laju Aman API (Rate Limit & Rest Period):**

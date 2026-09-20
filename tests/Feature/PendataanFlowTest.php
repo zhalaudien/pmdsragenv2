@@ -518,6 +518,71 @@ class PendataanFlowTest extends TestCase
         $follow->assertStatus(200);
         $follow->assertSee('Pas foto profil wajib diunggah untuk pendaftaran pemuda baru laki-laki.');
     }
+
+    public function test_custom_skills_and_interests_can_be_submitted_and_persisted(): void
+    {
+        $cabang = Cabang::first();
+        $eduLevel = EducationLevel::first() ?? EducationLevel::create(['name' => 'S1', 'level_order' => 1]);
+        $jobStatus = JobStatus::first() ?? JobStatus::create(['name' => 'Wiraswasta']);
+        $district = \App\Models\District::first();
+        $village = \App\Models\Village::where('district_id', $district->id)->first();
+
+        // Existing skill & interest
+        $existingSkill = Skill::first() ?? Skill::create(['name' => 'Pemasaran']);
+        $existingInterest = Interest::first() ?? Interest::create(['name' => 'Teknologi Informasi']);
+
+        $customSkill1 = 'Keahlian Unik ' . uniqid();
+        $customSkill2 = 'Keahlian String ' . uniqid();
+        $customInterest1 = 'Minat Unik ' . uniqid();
+        $customInterest2 = 'Minat String ' . uniqid();
+
+        $payload = [
+            'cabang_id'          => $cabang->id,
+            'name'               => 'Pemudi Bakat Minat ' . uniqid(),
+            'gender'             => 'P',
+            'marital_status'     => 'belum_menikah',
+            'birth_place'        => 'Sragen',
+            'birth_date'         => '2001-03-03',
+            'phone'              => '081234567999',
+            'district_id'        => $district->id,
+            'village_id'         => $village->id,
+            'address_detail'     => 'Alamat RT 05 RW 01',
+            'education_level_id' => $eduLevel->id,
+            'school_name'        => 'Universitas Sebelas Maret',
+            'education_status'   => 'lulus',
+            'job_status_id'      => $jobStatus->id,
+            'skills'             => [$existingSkill->id, $customSkill2],
+            'custom_skills'      => $customSkill1,
+            'interests'          => [$existingInterest->id, $customInterest2],
+            'custom_interests'   => $customInterest1,
+        ];
+
+        $response = $this->post('/pendataan/simpan', $payload);
+        $response->assertRedirect('/pendataan/sukses');
+
+        $created = Pemuda::where('phone', '081234567999')->first();
+        $this->assertNotNull($created);
+
+        // Assert skills persisted
+        $pemudaSkills = $created->skills->pluck('name')->toArray();
+        $this->assertContains($existingSkill->name, $pemudaSkills);
+        $this->assertContains(ucwords($customSkill1), $pemudaSkills);
+        $this->assertContains(ucwords($customSkill2), $pemudaSkills);
+
+        // Assert interests persisted
+        $pemudaInterests = $created->interests->pluck('name')->toArray();
+        $this->assertContains($existingInterest->name, $pemudaInterests);
+        $this->assertContains(ucwords($customInterest1), $pemudaInterests);
+        $this->assertContains(ucwords($customInterest2), $pemudaInterests);
+
+        // Check get-pemuda JSON contains skills_data and interests_data
+        $getRes = $this->getJson("/pendataan/get-pemuda/{$created->id}?cabang_id={$cabang->id}");
+        $getRes->assertStatus(200);
+        $skillsData = collect($getRes->json('data.skills_data'))->pluck('name')->toArray();
+        $this->assertContains(ucwords($customSkill1), $skillsData);
+        $interestsData = collect($getRes->json('data.interests_data'))->pluck('name')->toArray();
+        $this->assertContains(ucwords($customInterest1), $interestsData);
+    }
 }
 
 
