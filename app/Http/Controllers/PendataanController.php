@@ -74,9 +74,13 @@ class PendataanController extends Controller
         }
 
         // 1. Data Pemuda Lokal (khusus cabang ini)
+        $cleanQuery = strtolower($query);
         $pemudaResults = Pemuda::where('cabang_id', $cabangId)
             ->where('status_data', 'active')
-            ->where('name', 'LIKE', '%' . $query . '%')
+            ->where(function ($q) use ($query, $cleanQuery) {
+                $q->where('name', 'LIKE', '%' . $query . '%')
+                  ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $cleanQuery . '%']);
+            })
             ->orderBy('name', 'ASC')
             ->limit(10)
             ->get(['id', 'name', 'gender', 'birth_date', 'birth_place', 'mta_warga_uuid', 'registration_number']);
@@ -110,6 +114,10 @@ class PendataanController extends Controller
         $apiService = new \App\Services\MtaApiService();
         if ($apiService->isEnabled()) {
             try {
+                // Gunakan timeout singkat (3 detik) agar jika server hosting mengalami kendala koneksi ke MTA Pusat,
+                // proses autocomplete lokal tetap cepat dan tidak hanging/504 gateway timeout.
+                $apiService->setTimeout(3);
+
                 $cabangParam = $cabang->mta_uuid ?: $cabang->name;
                 $wargaRes = $apiService->getWargaList([
                     'cabang'   => $cabangParam,

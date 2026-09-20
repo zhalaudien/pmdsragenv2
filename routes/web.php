@@ -22,9 +22,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('pendataan')->name('pendataan.')->group(function () {
     Route::get('/', [PendataanController::class, 'index'])->name('index');
-    Route::get('/search-nama', [PendataanController::class, 'searchNama'])->middleware('throttle:60,1')->name('search-nama');
-    Route::get('/get-pemuda/{id}', [PendataanController::class, 'getPemudaData'])->middleware('throttle:60,1')->name('get-pemuda');
-    Route::get('/get-warga/{uuid}', [PendataanController::class, 'getWargaData'])->middleware('throttle:60,1')->name('get-warga');
+    Route::get('/search-nama', [PendataanController::class, 'searchNama'])->middleware('throttle:120,1')->name('search-nama');
+    Route::get('/get-pemuda/{id}', [PendataanController::class, 'getPemudaData'])->middleware('throttle:120,1')->name('get-pemuda');
+    Route::get('/get-warga/{uuid}', [PendataanController::class, 'getWargaData'])->middleware('throttle:120,1')->name('get-warga');
     Route::post('/simpan', [PendataanController::class, 'simpan'])->name('simpan');
     Route::get('/sukses', [PendataanController::class, 'sukses'])->name('sukses');
 });

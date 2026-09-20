@@ -22,5 +22,16 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('vendor.pagination.tailwind');
         Paginator::defaultSimpleView('vendor.pagination.simple-tailwind');
+
+        // Force HTTPS URL generation in production or behind an SSL reverse proxy (Nginx, Cloudflare, etc.)
+        if (
+            app()->environment('production') ||
+            str_starts_with((string) config('app.url'), 'https://') ||
+            request()->header('X-Forwarded-Proto') === 'https' ||
+            request()->server('HTTPS') === 'on' ||
+            request()->server('SERVER_PORT') == 443
+        ) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 }

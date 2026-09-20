@@ -1017,19 +1017,41 @@
         });
     }
 
+    // Helper URL HTTPS Auto-Resolver
+    function resolveFetchUrl(rawUrl) {
+        if (window.location.protocol === 'https:' && rawUrl.startsWith('http:')) {
+            return rawUrl.replace(/^http:/, 'https:');
+        }
+        return rawUrl;
+    }
+
     function performSearch(cabangId, query) {
         searchSpinner.classList.remove('hidden');
 
-        fetch(`{{ route('pendataan.search-nama') }}?cabang_id=${cabangId}&q=${encodeURIComponent(query)}`)
-            .then(res => res.json())
+        const searchUrl = resolveFetchUrl(`{{ route('pendataan.search-nama') }}?cabang_id=${cabangId}&q=${encodeURIComponent(query)}`);
+
+        fetch(searchUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
             .then(response => {
                 searchSpinner.classList.add('hidden');
                 const items = response.data || [];
                 renderDropdown(items, query);
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('[Autocomplete Search Error]:', err);
                 searchSpinner.classList.add('hidden');
-                dropdownList.classList.add('hidden');
+                // Tampilkan opsi pendaftaran pemuda baru agar alur tidak terhenti
+                renderDropdown([], query);
             });
     }
 
@@ -1126,8 +1148,20 @@
         dropdownList.classList.add('hidden');
         searchSpinner.classList.remove('hidden');
 
-        fetch(`{{ url('pendataan/get-pemuda') }}/${id}?cabang_id=${cabangId}`)
-            .then(res => res.json())
+        const pemudaUrl = resolveFetchUrl(`{{ url('pendataan/get-pemuda') }}/${id}?cabang_id=${cabangId}`);
+
+        fetch(pemudaUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
             .then(res => {
                 searchSpinner.classList.add('hidden');
                 if (res.status === 'success') {
@@ -1136,7 +1170,8 @@
                     showStepAlert(res.message || 'Gagal mengambil data pemuda.');
                 }
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('[Load Pemuda Error]:', err);
                 searchSpinner.classList.add('hidden');
                 showStepAlert('Terjadi gangguan koneksi saat memuat data pemuda.');
             });
@@ -1179,6 +1214,7 @@
             const distSelect = document.getElementById('public_district_id');
             distSelect.value = p.alamat.district_id || '';
             loadVillagesAndSet(p.alamat.district_id, p.alamat.village_id);
+
             document.getElementById('input_dusun').value = p.alamat.dusun || '';
             document.getElementById('input_rt').value = p.alamat.rt || '';
             document.getElementById('input_rw').value = p.alamat.rw || '';
@@ -1190,51 +1226,31 @@
             document.getElementById('input_education_level_id').value = p.pendidikan.education_level_id || '';
             document.getElementById('input_school_name').value = p.pendidikan.school_name || '';
             document.getElementById('input_major').value = p.pendidikan.major || '';
-            document.getElementById('input_education_status').value = p.pendidikan.education_status || 'lulus';
             document.getElementById('input_graduation_year').value = p.pendidikan.graduation_year || '';
+            document.getElementById('input_education_status').value = p.pendidikan.education_status || 'Lulus';
         }
 
         // Step 4 (Pekerjaan)
         if (p.pekerjaan) {
             document.getElementById('input_job_status_id').value = p.pekerjaan.job_status_id || '';
-            document.getElementById('input_job_title').value = p.pekerjaan.job_title || '';
             document.getElementById('input_company_name').value = p.pekerjaan.company_name || '';
-            document.getElementById('input_business_field').value = p.pekerjaan.business_field || '';
-            document.getElementById('input_business_name').value = p.pekerjaan.business_name || '';
-            document.getElementById('input_business_contact').value = p.pekerjaan.business_contact || '';
+            document.getElementById('input_job_title').value = p.pekerjaan.job_title || '';
+            document.getElementById('input_income_range').value = p.pekerjaan.income_range || '';
         }
 
-        // Step 5 (Elemen Dakwah)
-        const orgCheckboxes = document.querySelectorAll('input[name="organizations[]"]');
+        // Step 5 (Organisasi)
         orgCheckboxes.forEach(cb => {
-            cb.checked = Array.isArray(p.organisasi) && p.organisasi.includes(cb.value);
+            cb.checked = Array.isArray(p.organizations) && p.organizations.includes(cb.value);
         });
-        if (Array.isArray(p.organisasi)) {
-            p.organisasi.forEach(orgName => {
-                const cleanName = (orgName || '').trim();
-                if (!cleanName) return;
-                let found = false;
-                const currentCbs = document.querySelectorAll('input[name="organizations[]"]');
-                currentCbs.forEach(cb => {
-                    if (cb.value.toLowerCase().trim() === cleanName.toLowerCase()) {
-                        cb.checked = true;
-                        found = true;
-                    }
-                });
-                if (!found) {
-                    addNewOrganization(cleanName, true);
-                }
-            });
+        if (inputCustomOrg && p.custom_organization) {
+            inputCustomOrg.value = p.custom_organization;
         }
 
         // Step 6 (Skills & Interests)
-        const skillCheckboxes = document.querySelectorAll('input[name="skills[]"]');
         skillCheckboxes.forEach(cb => {
             const val = parseInt(cb.value, 10);
             cb.checked = Array.isArray(p.skills) && p.skills.includes(val);
         });
-
-        const interestCheckboxes = document.querySelectorAll('input[name="interests[]"]');
         interestCheckboxes.forEach(cb => {
             const val = parseInt(cb.value, 10);
             cb.checked = Array.isArray(p.interests) && p.interests.includes(val);
@@ -1247,8 +1263,20 @@
         dropdownList.classList.add('hidden');
         searchSpinner.classList.remove('hidden');
 
-        fetch(`{{ url('pendataan/get-warga') }}/${uuid}?cabang_id=${cabangId}`)
-            .then(res => res.json())
+        const wargaUrl = resolveFetchUrl(`{{ url('pendataan/get-warga') }}/${uuid}?cabang_id=${cabangId}`);
+
+        fetch(wargaUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
             .then(res => {
                 searchSpinner.classList.add('hidden');
                 if (res.status === 'success') {
@@ -1257,7 +1285,8 @@
                     showStepAlert(res.message || 'Gagal memuat data warga MTA.');
                 }
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('[Load Warga Error]:', err);
                 searchSpinner.classList.add('hidden');
                 showStepAlert('Terjadi gangguan koneksi saat memuat data warga MTA.');
             });
@@ -1731,8 +1760,17 @@
             return;
         }
 
-        fetch(`{{ url('api/villages') }}/${districtId}`)
-            .then(res => res.json())
+        const villageUrl = resolveFetchUrl(`{{ url('api/villages') }}/${districtId}`);
+        fetch(villageUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.json();
+            })
             .then(data => {
                 villSelect.innerHTML = '<option value="">-- Pilih Desa / Kelurahan --</option>';
                 data.forEach(v => {
@@ -1745,10 +1783,12 @@
                     villSelect.appendChild(opt);
                 });
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('[Pendataan] Error loading villages:', err);
                 villSelect.innerHTML = '<option value="">-- Gagal Memuat Desa --</option>';
             });
     }
+    const loadVillages = loadVillagesAndSet;
 
     // 13. FORM SUBMIT HANDLER
     const pendataanForm = document.getElementById('pendataanForm');

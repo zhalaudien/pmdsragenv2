@@ -28,6 +28,12 @@ class MtaApiService
         return $this->enabled && !empty($this->apiToken);
     }
 
+    public function setTimeout(int $timeout): self
+    {
+        $this->timeout = $timeout;
+        return $this;
+    }
+
     public function getLastRateLimit(): ?array
     {
         return $this->lastRateLimit;
