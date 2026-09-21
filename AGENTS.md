@@ -1316,6 +1316,43 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-21 — Implementasi REST API Mobile "Presensi PMD" & Fitur Pengaturan API Superadmin
+
+- **Pembangunan Modul REST API Backend untuk Aplikasi Mobile Android Flutter (`Presensi PMD`):**
+  - **Database Migration:**
+    - Tabel `kegiatan_presensi`: Menyimpan sesi kegiatan/pengajian presensi cabang (nama kegiatan, tanggal, jam mulai/selesai, lokasi, pemateri, target peserta, status, catatan, pembuat, cabang_id).
+    - Tabel `presensi_detail`: Menyimpan catatan kehadiran anggota per kegiatan (`pemuda_id`, `kegiatan_presensi_id`, `status_kehadiran` ENUM `hadir`, `izin`, `sakit`, `alpa`, `keterangan`, `waktu_presensi`, `device_info`, `created_by`).
+    - Tabel `api_settings`: Pengaturan konfigurasi, status API, maintenance mode, versi minimum aplikasi, download URL APK, dan preset chips izin/sakit.
+    - Tabel `personal_access_tokens`: Migrasi Laravel Sanctum untuk autentikasi Bearer Token mobile.
+  - **Model Eloquent & Business Logic:**
+    - Model `KegiatanPresensi`: Relasi ke `Cabang`, `User` (creator), `PresensiDetail`. Method `getRekapSummary()` untuk kalkulasi kehadiran realtime, dan `generateWhatsAppText()` untuk menghasilkan format laporan teks WhatsApp siap kirim ke pengurus.
+    - Model `PresensiDetail`: Relasi ke `KegiatanPresensi`, `Pemuda`, dan `User`.
+    - Model `ApiSetting`: Key-value configuration helper dengan method `get()`, `set()`, `getAllSettings()`, dan `seedDefaults()`.
+    - Update Model `User`, `Cabang`, dan `Pemuda` dengan trait `HasApiTokens` dan relasi presensi.
+  - **REST API Endpoints (`routes/api.php`):**
+    - `GET /api/v1/config`: Konfigurasi publik aplikasi mobile (status online, min app version, broadcast banner, quick chips).
+    - `POST /api/v1/auth/login`: Otentikasi petugas presensi/sekretaris cabang, mengembalikan profil user, info cabang, dan Sanctum Bearer Token.
+    - `POST /api/v1/auth/logout`: Revoke token aktif pada perangkat.
+    - `GET /api/v1/auth/me`: Informasi user login dan cabang yang dikelola.
+    - `GET /api/v1/cabang/pemuda`: Pengambilan data pemuda cabang untuk instant search & cache lokal SQLite/Hive.
+    - `GET /api/v1/kegiatan`: Daftar sesi kegiatan presensi cabang.
+    - `POST /api/v1/kegiatan`: Pembuatan sesi kegiatan presensi baru.
+    - `GET /api/v1/kegiatan/{id}`: Detail kegiatan presensi beserta seluruh checklist anggota pemuda.
+    - `PUT /api/v1/kegiatan/{id}/status`: Kunci/selesaikan sesi kegiatan presensi (`selesai`).
+    - `POST /api/v1/kegiatan/{id}/presensi/single`: Pencatatan realtime presensi per individu (Hadir/Izin/Sakit/Alpa).
+    - `POST /api/v1/kegiatan/{id}/presensi/bulk`: Sinkronisasi massal antrean presensi offline ponsel.
+    - `GET /api/v1/kegiatan/{id}/rekap`: Data statistik & teks generator laporan WhatsApp.
+  - **Security & Middleware:**
+    - `CheckApiMaintenance`: Menolak request dengan HTTP 503 jika status API dinonaktifkan oleh Superadmin.
+    - `EnforceCabangScope`: Memastikan petugas cabang hanya dapat mengakses data pemuda dan kegiatan milik cabangnya sendiri.
+- **Fitur Pengaturan API (API Settings) pada Panel Superadmin:**
+  - Menambahkan menu **Seting API Presensi** pada sidebar menu Superadmin (kelompok Integrasi & Web).
+  - Controller `Admin/ApiSettingController.php` dan View `resources/views/admin/api_settings/index.blade.php`:
+    - Dashboard statistik API: Status API, jumlah token mobile aktif, total sesi kegiatan, dan total kehadiran tercatat.
+    - Form konfigurasi: Status API (Online vs Maintenance Mode), custom pesan pemeliharaan, siaran pengumuman mobile (broadcast message), versi minimum aplikasi (force update), versi rilis terkini, URL download APK, izin sinkronisasi offline, batas bulk sync, dan editor preset tombol cepat (quick chips) izin/sakit.
+    - Manajemen Token Aktif: Menampilkan daftar perangkat terhubung, akun sekretaris, nama cabang, waktu aktif, tombol cabut sesi individu, serta tombol cabut seluruh sesi (force logout semua perangkat).
+    - Katalog & Dokumentasi Endpoint: Tabel dokumentasi lengkap seluruh endpoint REST API mobile disertai badge HTTP method, otorisasi, deskripsi, dan tombol salin URL endpoint.
+
 ### 2026-09-21 — Standardisasi Huruf Kapital (Uppercase) Seluruh Elemen Dakwah
 
 - **Standarisasi Tipografi UPPERCASE pada Seluruh Tampilan & Input Elemen Dakwah:**

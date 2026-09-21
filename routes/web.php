@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\WargaMtaController;
 use App\Http\Controllers\Admin\MtaSyncController;
 use App\Http\Controllers\Admin\HomepageSettingController;
+use App\Http\Controllers\Admin\ApiSettingController;
 use App\Http\Controllers\Admin\AjaxController;
 
 // ==========================================
@@ -135,6 +136,15 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::get('/', [HomepageSettingController::class, 'index'])->name('index');
         Route::post('update', [HomepageSettingController::class, 'update'])->name('update');
         Route::post('reset', [HomepageSettingController::class, 'reset'])->name('reset');
+    });
+
+    // Pengaturan API Mobile Presensi PMD (Superadmin)
+    Route::prefix('api-settings')->middleware('role:superadmin')->name('api-settings.')->group(function () {
+        Route::get('/', [ApiSettingController::class, 'index'])->name('index');
+        Route::post('update', [ApiSettingController::class, 'update'])->name('update');
+        Route::post('revoke-token/{id}', [ApiSettingController::class, 'revokeToken'])->name('revoke-token');
+        Route::post('revoke-all-tokens', [ApiSettingController::class, 'revokeAllTokens'])->name('revoke-all-tokens');
+        Route::post('reset', [ApiSettingController::class, 'resetDefaults'])->name('reset');
     });
 
     // Ajax Helpers

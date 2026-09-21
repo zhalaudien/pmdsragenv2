@@ -47,6 +47,11 @@ class Cabang extends Model
         return $this->hasMany(User::class, 'cabang_id');
     }
 
+    public function kegiatanPresensi()
+    {
+        return $this->hasMany(KegiatanPresensi::class, 'cabang_id');
+    }
+
     /**
      * Ambil cabang dengan join data wilayah
      */

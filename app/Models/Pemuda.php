@@ -91,6 +91,11 @@ class Pemuda extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function presensiDetails()
+    {
+        return $this->hasMany(PresensiDetail::class, 'pemuda_id');
+    }
+
     /**
      * Generate unique registration number
      * Format: IdPerwakilanIdCabangtanggallahirRandomNomor
