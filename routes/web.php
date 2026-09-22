@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\WargaMtaController;
 use App\Http\Controllers\Admin\MtaSyncController;
 use App\Http\Controllers\Admin\HomepageSettingController;
 use App\Http\Controllers\Admin\ApiSettingController;
+use App\Http\Controllers\Admin\KegiatanPerwakilanController;
 use App\Http\Controllers\Admin\AjaxController;
 
 // ==========================================
@@ -145,6 +146,16 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('revoke-token/{id}', [ApiSettingController::class, 'revokeToken'])->name('revoke-token');
         Route::post('revoke-all-tokens', [ApiSettingController::class, 'revokeAllTokens'])->name('revoke-all-tokens');
         Route::post('reset', [ApiSettingController::class, 'resetDefaults'])->name('reset');
+    });
+
+    // Kelola Info Kegiatan Pemuda Perwakilan untuk Mobile Presensi
+    Route::prefix('kegiatan-perwakilan')->name('kegiatan-perwakilan.')->group(function () {
+        Route::get('/', [KegiatanPerwakilanController::class, 'index'])->name('index');
+        Route::post('simpan', [KegiatanPerwakilanController::class, 'simpan'])->name('simpan');
+        Route::post('update/{id}', [KegiatanPerwakilanController::class, 'update'])->name('update');
+        Route::post('toggle/{id}', [KegiatanPerwakilanController::class, 'toggleStatus'])->name('toggle');
+        Route::post('delete/{id}', [KegiatanPerwakilanController::class, 'delete'])->name('delete');
+        Route::post('broadcast', [KegiatanPerwakilanController::class, 'updateBroadcast'])->name('broadcast');
     });
 
     // Ajax Helpers

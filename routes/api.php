@@ -18,6 +18,7 @@ use App\Http\Middleware\EnforceCabangScope;
 Route::prefix('v1')->group(function () {
     // 1. Endpoint Publik & Konfigurasi Aplikasi Mobile
     Route::get('config', [AuthController::class, 'config'])->name('api.v1.config');
+    Route::get('perwakilan/kegiatan', [AuthController::class, 'kegiatanPerwakilan'])->name('api.v1.perwakilan.kegiatan');
     Route::post('auth/login', [AuthController::class, 'login'])
         ->middleware(CheckApiMaintenance::class)
         ->name('api.v1.auth.login');
@@ -27,6 +28,8 @@ Route::prefix('v1')->group(function () {
         // Otentikasi & Profil Sesi
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
         Route::get('auth/me', [AuthController::class, 'me'])->name('api.v1.auth.me');
+        Route::put('auth/password', [AuthController::class, 'updatePassword'])->name('api.v1.auth.password');
+        Route::put('auth/profile', [AuthController::class, 'updateProfile'])->name('api.v1.auth.profile');
 
         // Scope Cabang (Isolasi data antar cabang server-side)
         Route::middleware([EnforceCabangScope::class])->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\ApiSetting;
+use App\Models\KegiatanPerwakilan;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -170,6 +171,79 @@ class AuthController extends BaseApiController
     }
 
     /**
+     * PUT /api/v1/auth/password
+     * Ubah kata sandi user
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password'      => 'required|string',
+            'new_password'          => 'required|string|min:6|confirmed',
+        ], [
+            'current_password.required' => 'Kata sandi saat ini wajib diisi.',
+            'new_password.required'     => 'Kata sandi baru wajib diisi.',
+            'new_password.min'          => 'Kata sandi baru minimal 6 karakter.',
+            'new_password.confirmed'    => 'Konfirmasi kata sandi baru tidak cocok.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Validasi gagal.', 422, $validator->errors()->toArray());
+        }
+
+        $user = $request->user();
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return $this->errorResponse('Kata sandi saat ini tidak cocok.', 422, [
+                'current_password' => ['Kata sandi saat ini salah.'],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->input('new_password')),
+        ]);
+
+        return $this->successResponse(null, 'Kata sandi berhasil diperbarui.');
+    }
+
+    /**
+     * PUT /api/v1/auth/profile
+     * Ubah profil user login (nama, email)
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|string|max:100',
+            'email' => 'nullable|email|max:100|unique:users,email,' . $user->id,
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.email'   => 'Format email tidak valid.',
+            'email.unique'  => 'Email sudah digunakan oleh akun lain.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Validasi gagal.', 422, $validator->errors()->toArray());
+        }
+
+        $user->update([
+            'name'  => $request->input('name'),
+            'email' => $request->input('email'),
+        ]);
+
+        return $this->successResponse([
+            'user' => [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'email'      => $user->email,
+                'username'   => $user->username,
+                'role'       => $user->role_name,
+                'role_id'    => $user->role_id,
+                'cabang_id'  => $user->cabang_id,
+                'wilayah_id' => $user->wilayah_id,
+            ]
+        ], 'Profil berhasil diperbarui.');
+    }
+
+    /**
      * GET /api/v1/config
      * Konfigurasi umum aplikasi mobile (Publik)
      */
@@ -191,5 +265,45 @@ class AuthController extends BaseApiController
         ];
 
         return $this->successResponse($data, 'Konfigurasi aplikasi mobile.');
+    }
+
+    /**
+     * GET /api/v1/perwakilan/kegiatan
+     * Daftar kegiatan pemuda perwakilan yang aktif & akan datang
+     */
+    public function kegiatanPerwakilan(Request $request): JsonResponse
+    {
+        KegiatanPerwakilan::seedDefaults();
+
+        $query = KegiatanPerwakilan::where('is_active', true);
+
+        if ($request->filled('kategori') && $request->kategori !== 'semua') {
+            $query->where('kategori', $request->kategori);
+        }
+
+        $items = $query->orderBy('tanggal', 'ASC')->get();
+
+        $data = $items->map(function ($item) {
+            return [
+                'id'                => $item->id,
+                'nama_kegiatan'     => $item->nama_kegiatan,
+                'kategori'          => $item->kategori,
+                'tanggal'           => $item->tanggal ? $item->tanggal->format('Y-m-d') : '',
+                'hari_tanggal'      => $item->hari_tanggal,
+                'jam'               => $item->jam,
+                'lokasi'            => $item->lokasi,
+                'alamat_detail'     => $item->alamat_detail,
+                'pemateri'          => $item->pemateri,
+                'target_peserta'    => $item->target_peserta,
+                'penyelenggara'     => $item->penyelenggara,
+                'deskripsi'         => $item->deskripsi,
+                'catatan_ketentuan' => $item->catatan_ketentuan,
+                'narahubung'        => $item->narahubung,
+                'status'            => $item->status,
+                'hari_tersisa'      => $item->hari_tersisa,
+            ];
+        });
+
+        return $this->successResponse($data, 'Daftar kegiatan pemuda perwakilan.');
     }
 }

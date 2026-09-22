@@ -195,6 +195,11 @@
                     <span>Konten Beranda</span>
                 </a>
 
+                <a href="{{ route('admin.kegiatan-perwakilan.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.kegiatan-perwakilan*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <i class="bi bi-calendar-event-fill text-base"></i>
+                    <span>Info Kegiatan Mobile</span>
+                </a>
+
                 <a href="{{ route('admin.api-settings.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.api-settings*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <i class="bi bi-phone-fill text-base"></i>
                     <span>Seting API Presensi</span>
