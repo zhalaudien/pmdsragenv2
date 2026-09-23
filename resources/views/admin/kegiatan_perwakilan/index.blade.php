@@ -27,6 +27,22 @@
                 <i class="bi bi-phone"></i>
                 <span>Simulasi HP</span>
             </button>
+            <form action="{{ route('admin.kegiatan-perwakilan.reset-defaults') }}" method="POST" class="m-0" onsubmit="return confirm('Muat ulang 5 template agenda kegiatan resmi perwakilan?')">
+                @csrf
+                <button type="submit" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center gap-1.5" title="Muat template agenda bawaan">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Template Bawaan</span>
+                </button>
+            </form>
+            @if($totalKegiatan > 0)
+            <form action="{{ route('admin.kegiatan-perwakilan.hapus-semua') }}" method="POST" class="m-0" onsubmit="return confirm('Peringatan: Apakah Anda yakin ingin menghapus SELURUH agenda kegiatan? Data yang dihapus tidak dapat dikembalikan.')">
+                @csrf
+                <button type="submit" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1.5" title="Hapus semua agenda kegiatan">
+                    <i class="bi bi-trash3"></i>
+                    <span>Hapus Semua</span>
+                </button>
+            </form>
+            @endif
             <button type="button" onclick="openModal('modalTambah')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-md shadow-red-600/20 flex items-center gap-2 transition">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>Tambah Agenda Kegiatan</span>
@@ -386,10 +402,31 @@
                     </div>
                 </div>
             @empty
-                <div class="p-8 text-center text-slate-500">
-                    <i class="bi bi-calendar-x text-3xl text-slate-400 block mb-2"></i>
-                    <div class="font-bold text-slate-700 text-xs">Tidak Ada Agenda Kegiatan</div>
-                    <p class="text-[11px] text-slate-400 mt-1">Belum ada agenda yang sesuai kriteria.</p>
+                <div class="p-12 text-center text-slate-500">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mx-auto mb-3">
+                        <i class="bi bi-calendar-x"></i>
+                    </div>
+                    <div class="font-bold text-slate-800 text-sm">Tidak Ada Agenda Kegiatan</div>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        @if(request()->filled('q') || request()->filled('kategori') || request()->filled('status') || request()->filled('is_active'))
+                            Tidak ada agenda kegiatan yang cocok dengan kriteria pencarian atau filter Anda.
+                        @else
+                            Seluruh agenda kegiatan telah dihapus atau belum ditambahkan ke dalam sistem.
+                        @endif
+                    </p>
+                    <div class="flex items-center justify-center gap-2.5 mt-4">
+                        <button type="button" onclick="openModal('modalTambah')" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition flex items-center gap-2">
+                            <i class="bi bi-plus-circle-fill"></i>
+                            <span>Tambah Agenda Baru</span>
+                        </button>
+                        <form action="{{ route('admin.kegiatan-perwakilan.reset-defaults') }}" method="POST" onsubmit="return confirm('Muat ulang 5 template agenda kegiatan resmi perwakilan?')">
+                            @csrf
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center gap-1.5">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                                <span>Muat Template Bawaan</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             @endforelse
         </div>

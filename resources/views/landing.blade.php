@@ -28,11 +28,15 @@
                     {!! nl2br(e($settings['hero_subtitle'] ?? 'Pusat basis data terpadu pemuda dan pemudi di 4 Wilayah dan 61 Cabang se-Kabupaten Sragen. Wadah pemetaan potensi, kaderisasi dakwah, dan kesiapsiagaan pengabdian.')) !!}
                 </p>
 
-                <!-- Tombol Tunggal Utama (Satu Aksi Jelas) -->
+                <!-- Tombol Utama & Akses Guru Daerah -->
                 <div class="d-flex flex-column flex-sm-row align-items-center align-items-lg-start gap-3 mb-3">
                     <a href="{{ route('pendataan.index') }}" class="hero-btn-primary">
                         <span>{{ $settings['hero_btn_text'] ?? 'Mulai Isi Formulir Pendataan' }}</span>
                         <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="{{ route('guru-daerah.index') }}" class="btn btn-outline-light rounded-pill px-3.5 py-2.5 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm" style="backdrop-filter: blur(8px); background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); font-size: 0.92rem;">
+                        <i class="bi bi-person-check text-warning fs-5"></i>
+                        <span>Pantau Cabang (Guru Daerah)</span>
                     </a>
                 </div>
 

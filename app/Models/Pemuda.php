@@ -1115,4 +1115,273 @@ class Pemuda extends Model
             'verifData'          => $verifData,
         ];
     }
+
+    /**
+     * Accessor untuk progres dan kelengkapan data pemuda
+     */
+    public function getCompletenessAttribute(): array
+    {
+        return static::evaluateCompleteness($this);
+    }
+
+    /**
+     * Evaluasi kelengkapan data pemuda (Progres Pengisian Data)
+     * Menghasilkan persentase, status komplit/belum komplit, rincian per aspek, dan daftar item yang masih kurang.
+     */
+    public static function evaluateCompleteness($pemuda): array
+    {
+        if (!$pemuda) {
+            return [
+                'percentage'      => 0,
+                'is_complete'     => false,
+                'status_label'    => 'Belum Komplit',
+                'badge_class'     => 'bg-rose-500 text-white',
+                'badge_bootstrap' => 'bg-danger',
+                'color_hex'       => '#ef4444',
+                'aspects'         => [],
+                'missing_items'   => ['Data pemuda tidak valid'],
+            ];
+        }
+
+        $aspects = [
+            'biodata'    => ['name' => 'Biodata Pribadi', 'max' => 30, 'score' => 0, 'filled' => false, 'missing' => []],
+            'alamat'     => ['name' => 'Alamat Lengkap', 'max' => 20, 'score' => 0, 'filled' => false, 'missing' => []],
+            'pendidikan' => ['name' => 'Pendidikan', 'max' => 20, 'score' => 0, 'filled' => false, 'missing' => []],
+            'pekerjaan'  => ['name' => 'Pekerjaan', 'max' => 15, 'score' => 0, 'filled' => false, 'missing' => []],
+            'organisasi' => ['name' => 'Elemen Dakwah', 'max' => 10, 'score' => 0, 'filled' => false, 'missing' => []],
+            'minat_skill'=> ['name' => 'Keahlian & Minat', 'max' => 5, 'score' => 0, 'filled' => false, 'missing' => []],
+        ];
+
+        $missingItems = [];
+
+        // 1. BIODATA (Max: 30 poin)
+        // Nama (5 poin)
+        $cleanName = trim((string) ($pemuda->name ?? ''));
+        if (!empty($cleanName) && mb_strlen($cleanName) >= 3) {
+            $aspects['biodata']['score'] += 5;
+        } else {
+            $aspects['biodata']['missing'][] = 'Nama lengkap belum valid (minimal 3 karakter)';
+            $missingItems[] = 'Nama lengkap belum valid';
+        }
+
+        // Jenis Kelamin (5 poin)
+        if (in_array($pemuda->gender, ['L', 'P'], true)) {
+            $aspects['biodata']['score'] += 5;
+        } else {
+            $aspects['biodata']['missing'][] = 'Jenis kelamin belum dipilih';
+            $missingItems[] = 'Jenis kelamin belum dipilih';
+        }
+
+        // Tempat & Tanggal Lahir (5 poin)
+        $hasBirthDate  = !empty($pemuda->birth_date);
+        $hasBirthPlace = !empty(trim((string) ($pemuda->birth_place ?? '')));
+        if ($hasBirthDate && $hasBirthPlace) {
+            $aspects['biodata']['score'] += 5;
+        } elseif ($hasBirthDate || $hasBirthPlace) {
+            $aspects['biodata']['score'] += 3;
+            $missingDesc = !$hasBirthDate ? 'Tanggal lahir belum diisi' : 'Tempat lahir belum diisi';
+            $aspects['biodata']['missing'][] = $missingDesc;
+            $missingItems[] = $missingDesc;
+        } else {
+            $aspects['biodata']['missing'][] = 'Tempat dan tanggal lahir belum diisi';
+            $missingItems[] = 'Tempat & tanggal lahir belum diisi';
+        }
+
+        // Kontak No WA / HP (5 poin)
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string) ($pemuda->phone ?? ''));
+        if (!empty($cleanPhone) && mb_strlen($cleanPhone) >= 9) {
+            $aspects['biodata']['score'] += 5;
+        } else {
+            $aspects['biodata']['missing'][] = 'Nomor WhatsApp / HP belum diisi atau kurang valid';
+            $missingItems[] = 'Nomor WhatsApp / HP belum diisi';
+        }
+
+        // Status Pernikahan (3 poin)
+        if (!empty($pemuda->marital_status)) {
+            $aspects['biodata']['score'] += 3;
+        } else {
+            $aspects['biodata']['missing'][] = 'Status pernikahan belum ditentukan';
+            $missingItems[] = 'Status pernikahan belum ditentukan';
+        }
+
+        // Golongan Darah (2 poin)
+        $cleanBlood = strtoupper(trim((string) ($pemuda->blood_type ?? '')));
+        if (!empty($cleanBlood) && !in_array($cleanBlood, ['-', 'TIDAK_TAHU', 'TIDAK TAHU'], true)) {
+            $aspects['biodata']['score'] += 2;
+        } else {
+            $aspects['biodata']['missing'][] = 'Golongan darah belum diisi';
+        }
+
+        // Pas Foto Profil (5 poin)
+        $hasFoto = !empty($pemuda->foto) || (!empty($pemuda->mta_foto_url) && !str_contains($pemuda->mta_foto_url, 'default.png'));
+        if ($hasFoto) {
+            $aspects['biodata']['score'] += 5;
+        } else {
+            $aspects['biodata']['missing'][] = 'Pas foto profil belum diunggah';
+            $missingItems[] = 'Pas foto profil belum diunggah';
+        }
+        $aspects['biodata']['filled'] = ($aspects['biodata']['score'] >= 23);
+
+        // 2. ALAMAT (Max: 20 poin)
+        $alamat = $pemuda->alamat;
+        if ($alamat) {
+            // Kecamatan (7 poin)
+            if (!empty($alamat->district_id)) {
+                $aspects['alamat']['score'] += 7;
+            } else {
+                $aspects['alamat']['missing'][] = 'Kecamatan tempat tinggal belum dipilih';
+                $missingItems[] = 'Kecamatan belum dipilih';
+            }
+
+            // Desa / Kelurahan (7 poin)
+            if (!empty($alamat->village_id)) {
+                $aspects['alamat']['score'] += 7;
+            } else {
+                $aspects['alamat']['missing'][] = 'Desa / kelurahan tempat tinggal belum dipilih';
+                $missingItems[] = 'Desa belum dipilih';
+            }
+
+            // Detail Alamat / RT RW / Dukuh (6 poin)
+            $detailAlamat = trim((string) ($alamat->address_detail ?: $alamat->dusun));
+            if (!empty($detailAlamat) && mb_strlen($detailAlamat) >= 3 && $detailAlamat !== '-') {
+                $aspects['alamat']['score'] += 6;
+            } else {
+                $aspects['alamat']['missing'][] = 'Detail alamat (jalan, RT/RW, dukuh) belum lengkap';
+                $missingItems[] = 'Detail alamat/dukuh belum lengkap';
+            }
+        } else {
+            $aspects['alamat']['missing'][] = 'Data alamat belum tersimpan';
+            $missingItems[] = 'Data alamat belum tersimpan';
+        }
+        $aspects['alamat']['filled'] = ($aspects['alamat']['score'] >= 14);
+
+        // 3. PENDIDIKAN (Max: 20 poin)
+        $pendidikan = $pemuda->pendidikan;
+        if ($pendidikan) {
+            // Jenjang Pendidikan (8 poin)
+            if (!empty($pendidikan->education_level_id)) {
+                $aspects['pendidikan']['score'] += 8;
+            } else {
+                $aspects['pendidikan']['missing'][] = 'Jenjang pendidikan belum dipilih';
+                $missingItems[] = 'Jenjang pendidikan belum dipilih';
+            }
+
+            // Nama Sekolah / Perguruan Tinggi (8 poin)
+            $schoolName = trim((string) ($pendidikan->school_name ?? ''));
+            if (!empty($schoolName) && $schoolName !== '-' && mb_strlen($schoolName) >= 2) {
+                $aspects['pendidikan']['score'] += 8;
+            } else {
+                $aspects['pendidikan']['missing'][] = 'Nama sekolah / institusi masih kosong atau tanda strip (-)';
+                $missingItems[] = 'Nama sekolah / kampus belum diisi';
+            }
+
+            // Status Kelulusan (4 poin)
+            if (!empty($pendidikan->education_status)) {
+                $aspects['pendidikan']['score'] += 4;
+            } else {
+                $aspects['pendidikan']['missing'][] = 'Status pendidikan belum dipilih';
+                $missingItems[] = 'Status pendidikan belum dipilih';
+            }
+        } else {
+            $aspects['pendidikan']['missing'][] = 'Data pendidikan belum diisi';
+            $missingItems[] = 'Data pendidikan belum diisi';
+        }
+        $aspects['pendidikan']['filled'] = ($aspects['pendidikan']['score'] >= 16);
+
+        // 4. PEKERJAAN (Max: 15 poin)
+        $pekerjaan = $pemuda->pekerjaan;
+        if ($pekerjaan) {
+            // Status Pekerjaan (8 poin)
+            if (!empty($pekerjaan->job_status_id)) {
+                $aspects['pekerjaan']['score'] += 8;
+            } else {
+                $aspects['pekerjaan']['missing'][] = 'Status pekerjaan belum dipilih';
+                $missingItems[] = 'Status pekerjaan belum dipilih';
+            }
+
+            // Profesi / Nama Usaha / Pekerjaan (7 poin)
+            $jobTitle = trim((string) ($pekerjaan->job_title ?: $pekerjaan->business_name));
+            if (!empty($jobTitle) && $jobTitle !== '-' && mb_strlen($jobTitle) >= 2) {
+                $aspects['pekerjaan']['score'] += 7;
+            } else {
+                // Untuk status pelajar/belum bekerja, diberi skor jika job_status_id sudah valid
+                if (in_array((int) $pekerjaan->job_status_id, [1, 2], true)) {
+                    $aspects['pekerjaan']['score'] += 7;
+                } else {
+                    $aspects['pekerjaan']['missing'][] = 'Nama profesi / bidang pekerjaan belum diisi';
+                    $missingItems[] = 'Profesi / bidang pekerjaan belum diisi';
+                }
+            }
+        } else {
+            $aspects['pekerjaan']['missing'][] = 'Data pekerjaan belum diisi';
+            $missingItems[] = 'Data pekerjaan belum diisi';
+        }
+        $aspects['pekerjaan']['filled'] = ($aspects['pekerjaan']['score'] >= 12);
+
+        // 5. ELEMEN DAKWAH / ORGANISASI (Max: 10 poin)
+        $orgCount = $pemuda->organisasi ? $pemuda->organisasi->count() : 0;
+        if ($orgCount > 0) {
+            $aspects['organisasi']['score'] = 10;
+            $aspects['organisasi']['filled'] = true;
+        } else {
+            $aspects['organisasi']['missing'][] = 'Belum terdaftar di elemen dakwah MTA (SATGAS, Bankom, Tim Parkir, SAR MTA, Elfata, Ikhrom, dll)';
+            $missingItems[] = 'Belum memilih elemen dakwah / organisasi';
+        }
+
+        // 6. KEAHLIAN & MINAT (Max: 5 poin)
+        $skillsCount    = $pemuda->skills ? $pemuda->skills->count() : 0;
+        $interestsCount = $pemuda->interests ? $pemuda->interests->count() : 0;
+        if ($skillsCount > 0 || $interestsCount > 0) {
+            $aspects['minat_skill']['score'] = 5;
+            $aspects['minat_skill']['filled'] = true;
+        } else {
+            $aspects['minat_skill']['missing'][] = 'Belum memilih minat atau keahlian pemuda';
+            $missingItems[] = 'Belum memilih minat atau keahlian';
+        }
+
+        $totalScore = (int) array_sum(array_column($aspects, 'score'));
+        $totalScore = min(100, max(0, $totalScore));
+
+        // Kriteria Komplit: Skor >= 80% DAN data inti (nama, kontak, alamat, pendidikan, pekerjaan) terisi
+        $hasCoreData = ($aspects['biodata']['score'] >= 20)
+            && ($aspects['alamat']['score'] >= 14)
+            && ($aspects['pendidikan']['score'] >= 12)
+            && ($aspects['pekerjaan']['score'] >= 8);
+
+        $isComplete = ($totalScore >= 80 && $hasCoreData);
+
+        if ($totalScore >= 95) {
+            $statusLabel    = 'Komplit Sempurna';
+            $badgeClass     = 'bg-emerald-600 text-white';
+            $badgeBootstrap = 'bg-success';
+            $colorHex       = '#10b981';
+        } elseif ($isComplete) {
+            $statusLabel    = 'Komplit';
+            $badgeClass     = 'bg-green-600 text-white';
+            $badgeBootstrap = 'bg-success';
+            $colorHex       = '#16a34a';
+        } elseif ($totalScore >= 60) {
+            $statusLabel    = 'Belum Komplit';
+            $badgeClass     = 'bg-amber-500 text-white';
+            $badgeBootstrap = 'bg-warning text-dark';
+            $colorHex       = '#f59e0b';
+        } else {
+            $statusLabel    = 'Data Kurang';
+            $badgeClass     = 'bg-rose-500 text-white';
+            $badgeBootstrap = 'bg-danger';
+            $colorHex       = '#ef4444';
+        }
+
+        return [
+            'percentage'      => $totalScore,
+            'is_complete'     => $isComplete,
+            'status_label'    => $statusLabel,
+            'badge_class'     => $badgeClass,
+            'badge_bootstrap' => $badgeBootstrap,
+            'color_hex'       => $colorHex,
+            'aspects'         => $aspects,
+            'missing_items'   => $missingItems,
+        ];
+    }
 }
+

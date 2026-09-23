@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\HomepageSettingController;
 use App\Http\Controllers\Admin\ApiSettingController;
 use App\Http\Controllers\Admin\KegiatanPerwakilanController;
 use App\Http\Controllers\Admin\AjaxController;
+use App\Http\Controllers\GuruDaerahController;
 
 // ==========================================
 // 1. PUBLIC ROUTES
@@ -30,6 +31,18 @@ Route::prefix('pendataan')->name('pendataan.')->group(function () {
     Route::post('/simpan', [PendataanController::class, 'simpan'])->name('simpan');
     Route::get('/sukses', [PendataanController::class, 'sukses'])->name('sukses');
 });
+
+// Portal Pemantauan Pendataan Guru Daerah
+Route::prefix('pantau-pemuda')->name('guru-daerah.')->group(function () {
+    Route::get('/', [GuruDaerahController::class, 'index'])->name('index');
+    Route::post('/verify', [GuruDaerahController::class, 'verify'])->name('verify');
+    Route::post('/switch-cabang', [GuruDaerahController::class, 'switchCabang'])->name('switch-cabang');
+    Route::post('/logout', [GuruDaerahController::class, 'logout'])->name('logout');
+    Route::get('/logout', fn () => redirect()->route('guru-daerah.index'));
+    Route::get('/detail/{id}', [GuruDaerahController::class, 'detailPemuda'])->name('detail');
+});
+Route::get('guru-daerah', fn () => redirect()->route('guru-daerah.index'));
+Route::get('monitoring-cabang', fn () => redirect()->route('guru-daerah.index'));
 
 // Public API for form dropdowns
 Route::get('api/cabang/{wilayahId}', [AjaxController::class, 'getCabangByWilayah'])->name('api.cabang');
@@ -155,6 +168,8 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('update/{id}', [KegiatanPerwakilanController::class, 'update'])->name('update');
         Route::post('toggle/{id}', [KegiatanPerwakilanController::class, 'toggleStatus'])->name('toggle');
         Route::post('delete/{id}', [KegiatanPerwakilanController::class, 'delete'])->name('delete');
+        Route::post('hapus-semua', [KegiatanPerwakilanController::class, 'hapusSemua'])->name('hapus-semua');
+        Route::post('reset-defaults', [KegiatanPerwakilanController::class, 'resetDefaults'])->name('reset-defaults');
         Route::post('broadcast', [KegiatanPerwakilanController::class, 'updateBroadcast'])->name('broadcast');
     });
 

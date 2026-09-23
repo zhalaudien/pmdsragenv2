@@ -2423,3 +2423,70 @@ Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
     - Menjaga persistensi mode pembaruan (`mode_update_existing`) dan sinkronisasi warga MTA pada `DOMContentLoaded` jika formulir di-reload dengan `old()`.
     - Menambahkan pengujian otomatis komprehensif pada `tests/Feature/PendataanFlowTest.php` untuk memverifikasi pembaruan pemuda laki-laki tanpa foto lama berhasil dialihkan ke halaman sukses tanpa loop.
 
+### 2026-09-23 — Portal Pemantauan Pendataan Pemuda untuk Guru Daerah & Indikator Kelengkapan Data
+
+- **Fitur Baru: Portal Pemantauan Guru Daerah (`/pantau-pemuda`):**
+  - Dibuat khusus untuk Guru Daerah dan Pembina Cabang guna memantau progres pendataan pemuda di tingkat cabang tanpa memerlukan akun user/password admin.
+  - **Alur Akses (Gerbang Verifikasi):**
+    - Sebelum masuk, pengguna memasukkan **Kode Akses Guru Daerah** (default: `GURUPMD` atau `PMDSRAGEN`, dapat diubah oleh Superadmin pada menu Kelola Konten Beranda) serta memilih Cabang yang ingin dipantau (dropdown terstruktur per Wilayah).
+    - Dilengkapi rate limiting untuk mencegah brute force percobaan kode akses.
+    - Sesi otentikasi disimpan dengan aman (`session('guru_daerah_authenticated')`), memungkinkan Guru Daerah beralih antar cabang via switcher instan tanpa memasukkan ulang kode akses.
+  - **Tampilan Dashboard Pemantauan Cabang (`resources/views/guru_daerah/monitoring.blade.php`):**
+    - **Header Informasi Cabang:** Menampilkan nama cabang, kode cabang, wilayah binaan, pimpinan, kontak WA, tombol switcher cepat cabang, dan tombol keluar.
+    - **6 Kartu Ringkasan Metrik:**
+      1. Total Pemuda Terdata
+      2. Jumlah & Persentase Data Sudah Komplit (≥ 80%)
+      3. Jumlah & Persentase Belum Komplit (< 80%)
+      4. Rata-Rata Progres Kelengkapan Cabang (Visual progress bar)
+      5. Komposisi Gender (Laki-laki vs Perempuan)
+      6. Status Sinkronisasi Database MTA Pusat (Terverifikasi vs Pending)
+    - **Rangkuman Kebutuhan Follow Up:** Peringatan otomatis menampilkan aspek yang paling banyak belum diisi oleh pemuda cabang tersebut (misal: jumlah pemuda belum unggah foto, belum isi pendidikan, belum isi pekerjaan, dsb).
+    - **Toolbar Interaktif:**
+      - Pencarian instan (nama, nomor registrasi, nomor telepon, dusun/alamat).
+      - Filter status kelengkapan data (Semua, Komplit, Belum Komplit).
+      - Filter jenis kelamin (Semua, Laki-laki, Perempuan).
+      - Tombol salin tautan formulir pendaftaran khusus cabang tersebut (`/pendataan?cabang_id=...`).
+      - Tombol cetak lembar rekapitulasi ramah printer (`@media print`).
+    - **Daftar Tabel Pemuda & Progres Data:**
+      - Menampilkan foto profil/avatar, nama, nomor registrasi, status verifikasi MTA.
+      - Gender dan usia.
+      - Kontak WhatsApp dan alamat dusun/desa/kecamatan.
+      - **Indikator Progres Kelengkapan Data:**
+        - Persentase kelengkapan data (%) dan status badge (`Komplit` vs `Belum Komplit`).
+        - Progress bar dinamis (hijau, kuning, merah).
+        - 7 mini checklist badges (Biodata, Alamat, Pendidikan, Pekerjaan, Elemen Dakwah, Keahlian/Minat, Pas Foto).
+        - Rincian item data yang masih kurang.
+      - **Aksi Cepat Guru Daerah:**
+        - Tombol **Detail:** Membuka modal interaktif yang menampilkan checklist lengkap data pemuda serta item yang belum diisi.
+        - Tombol **WA Pengingat:** Otomatis membuka aplikasi WhatsApp dengan template pesan sopan dan terformat rapi yang merinci apa saja kekurangan data pemuda tersebut dan link untuk memperbaruinya.
+- **Logika Penilaian Kelengkapan Data (`Pemuda::evaluateCompleteness`):**
+  - Menghitung skor kelengkapan data pemuda secara komprehensif (0-100 poin):
+    - Biodata pribadi (30 poin): Nama, gender, tempat/tanggal lahir, no HP/WA, status nikah, golongan darah, foto profil.
+    - Alamat lengkap (20 poin): Kecamatan, desa, detail alamat/dukuh/RT/RW.
+    - Riwayat pendidikan (20 poin): Jenjang, nama sekolah/kampus (bukan strip `-`), status kelulusan.
+    - Pekerjaan (15 poin): Status pekerjaan, profesi/usaha.
+    - Elemen dakwah (10 poin): Keikutsertaan SATGAS, Bankom, Tim Parkir, SAR MTA, Elfata, Tim Ikhrom, dsb.
+    - Keahlian & minat (5 poin): Skill dan ketertarikan bidang dakwah/pengembangan diri.
+- **Integrasi Navigasi & Admin Setting:**
+  - Menambahkan tautan *"Guru Daerah"* pada top utility bar, navbar publik, dan footer.
+  - Menambahkan tombol aksi *"Pantau Cabang (Guru Daerah)"* pada hero section landing page.
+  - Menambahkan pengaturan `kode_akses_guru_daerah` pada `HomepageSetting` dan form kelola konten beranda admin (`admin.homepage.index`).
+- **Pengujian Otomatis:**
+  - Menambahkan test suite `tests/Feature/GuruDaerahMonitoringTest.php` (10 test cases, 62 assertions) yang memvalidasi auth gate, validasi kode akses, evaluasi kelengkapan, pergantian cabang, endpoint detail modal, dan logout. Seluruh 64 tests di repository lulus 100%.
+
+### 2026-09-23 — Perbaikan Bug Penghapusan Info Kegiatan Mobile Perwakilan (Data Tidak Kembali Lagi)
+
+- **Identifikasi Penyebab Bug:**
+  - Pada `KegiatanPerwakilanController::index()` dan `AuthController::kegiatanPerwakilan()`, terdapat pemanggilan otomatis `KegiatanPerwakilan::seedDefaults();`.
+  - Di dalam fungsi `seedDefaults()`, terdapat pengecekan `if (static::count() > 0) return;`.
+  - Akibatnya, saat admin menghapus seluruh agenda kegiatan hingga tabel kosong (`count() === 0`), sistem secara otomatis menganggap basis data belum diinisialisasi dan langsung men-generate ulang 5 data bawaan. Hal ini menyebabkan data yang telah dihapus muncul kembali secara otomatis dan tidak bisa dikosongkan sepenuhnya.
+- **Langkah Perbaikan:**
+  - Menghapus pemanggilan otomatis `KegiatanPerwakilan::seedDefaults()` dari siklus HTTP request di `KegiatanPerwakilanController::index()` dan endpoint API mobile `AuthController::kegiatanPerwakilan()`.
+  - Mengubah fungsi `KegiatanPerwakilan::seedDefaults(bool $force = false)` agar proses seeding hanya berjalan jika dipanggil secara eksplisit (seeder atau tombol reset bawaan).
+  - Membuat seeder tersendiri `database/seeders/KegiatanPerwakilanSeeder.php` dan mendaftarkannya pada `DatabaseSeeder.php`.
+  - Menambahkan endpoint dan tombol **"Hapus Semua"** (`hapusSemua()`) dengan dialog konfirmasi untuk mempermudah admin membersihkan seluruh agenda kegiatan sekaligus.
+  - Menambahkan endpoint dan tombol **"Template Bawaan"** (`resetDefaults()`) agar admin tetap memiliki opsi memuat ulang 5 template kegiatan resmi perwakilan kapan saja saat dibutuhkan.
+  - Memperbaiki tampilan kondisi kosong (*empty state*) pada halaman admin agar menampilkan pesan ramah serta tombol aksi yang jelas.
+  - Menambahkan test suite pengujian otomatis `tests/Feature/KegiatanPerwakilanDeletionBugTest.php` (4 test cases, 22 assertions) yang memvalidasi bahwa setelah seluruh kegiatan dihapus, basis data tetap kosong dan API mobile mengembalikan array kosong tanpa melakukan auto-reseed (seluruh 68 tests lulus 100%).
+
+

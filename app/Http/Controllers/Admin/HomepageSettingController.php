@@ -44,6 +44,7 @@ class HomepageSettingController extends Controller
             'alur_tag', 'alur_title', 'alur_desc', 'cta_title', 'cta_desc', 'cta_btn_text',
             'faq_tag', 'faq_title', 'faq_desc',
             'kontak_tag', 'kontak_title', 'kontak_desc', 'alamat_kantor', 'whatsapp_number', 'whatsapp_label',
+            'kode_akses_guru_daerah',
         ];
 
         foreach ($fields as $field) {

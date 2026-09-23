@@ -50,6 +50,8 @@
                 <span><i class="bi bi-patch-check-fill text-warning me-1"></i> Sistem Basis Data Resmi Pemuda</span>
             </div>
             <div class="d-flex align-items-center gap-3 top-utility-right">
+                <a href="{{ route('guru-daerah.index') }}" class="top-utility-link"><i class="bi bi-person-check me-1 text-warning"></i> Guru Daerah</a>
+                <span class="opacity-50">|</span>
                 <a href="{{ route('login') }}" class="top-utility-link"><i class="bi bi-person-lock me-1"></i> Portal Admin</a>
                 <span class="opacity-50">|</span>
                 <a href="https://wa.me/6281234567890" target="_blank" class="top-utility-link"><i class="bi bi-whatsapp text-success me-1"></i> Bantuan WA</a>
@@ -92,6 +94,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url('/#bantuan') }}">
                             <i class="bi bi-headset me-1"></i> Bantuan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('pantau-pemuda*') ? 'active fw-semibold text-warning' : '' }}" href="{{ route('guru-daerah.index') }}">
+                            <i class="bi bi-person-check me-1"></i> Pantau Cabang
                         </a>
                     </li>
                     <li class="nav-item ms-lg-2 my-1 my-lg-0">
@@ -153,6 +160,7 @@
                     <h6 class="fw-bold text-dark mb-3">Layanan & Akses</h6>
                     <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
                         <li><a href="{{ route('pendataan.index') }}" class="text-decoration-none text-danger fw-semibold"><i class="bi bi-pencil-square me-1"></i> Form Pendataan Pemuda</a></li>
+                        <li><a href="{{ route('guru-daerah.index') }}" class="text-decoration-none text-muted hover-red"><i class="bi bi-person-check me-1 text-danger small"></i> Pemantauan Guru Daerah</a></li>
                         <li><a href="{{ url('/#alur') }}" class="text-decoration-none text-muted hover-red"><i class="bi bi-chevron-right me-1 text-danger small"></i> Alur Pendaftaran</a></li>
                         <li><a href="{{ route('login') }}" class="text-decoration-none text-muted hover-red"><i class="bi bi-shield-lock me-1 text-danger small"></i> Login Pengurus / Admin</a></li>
                         <li><a href="javascript:void(0)" onclick="if(window.triggerPwaInstall) window.triggerPwaInstall();" class="text-decoration-none text-muted hover-red"><i class="bi bi-phone me-1 text-danger small"></i> Pasang Aplikasi di HP</a></li>

@@ -15,8 +15,6 @@ class KegiatanPerwakilanController extends Controller
      */
     public function index(Request $request)
     {
-        KegiatanPerwakilan::seedDefaults();
-
         $query = KegiatanPerwakilan::query();
 
         // Filter Kategori
@@ -227,5 +225,29 @@ class KegiatanPerwakilanController extends Controller
 
         return redirect()->route('admin.kegiatan-perwakilan.index')
             ->with('success', 'Pesan siaran maklumat perwakilan berhasil diperbarui dan disiarkan ke aplikasi mobile.');
+    }
+
+    /**
+     * Hapus Semua Agenda Kegiatan Sekaligus
+     */
+    public function hapusSemua()
+    {
+        $count = KegiatanPerwakilan::count();
+        KegiatanPerwakilan::query()->delete();
+
+        return redirect()->route('admin.kegiatan-perwakilan.index')
+            ->with('success', "Seluruh ({$count}) agenda kegiatan perwakilan berhasil dihapus secara permanen.");
+    }
+
+    /**
+     * Reset / Muat Ulang Template Agenda Kegiatan Bawaan
+     */
+    public function resetDefaults()
+    {
+        KegiatanPerwakilan::query()->delete();
+        KegiatanPerwakilan::seedDefaults(true);
+
+        return redirect()->route('admin.kegiatan-perwakilan.index')
+            ->with('success', 'Template agenda kegiatan resmi perwakilan berhasil dimuat ulang.');
     }
 }

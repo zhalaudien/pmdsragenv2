@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             InterestSeeder::class,
             HomepageSettingSeeder::class,
             UserSeeder::class,
+            KegiatanPerwakilanSeeder::class,
         ]);
     }
 }

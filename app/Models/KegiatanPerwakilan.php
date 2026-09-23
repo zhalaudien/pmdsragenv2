@@ -92,11 +92,11 @@ class KegiatanPerwakilan extends Model
     }
 
     /**
-     * Seed default data bila tabel kosong
+     * Seed default data bila tabel kosong atau dipaksa (force)
      */
-    public static function seedDefaults(): void
+    public static function seedDefaults(bool $force = false): void
     {
-        if (static::count() > 0) {
+        if (!$force && static::count() > 0) {
             return;
         }
 

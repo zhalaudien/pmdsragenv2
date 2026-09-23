@@ -273,8 +273,6 @@ class AuthController extends BaseApiController
      */
     public function kegiatanPerwakilan(Request $request): JsonResponse
     {
-        KegiatanPerwakilan::seedDefaults();
-
         $query = KegiatanPerwakilan::where('is_active', true);
 
         if ($request->filled('kategori') && $request->kategori !== 'semua') {

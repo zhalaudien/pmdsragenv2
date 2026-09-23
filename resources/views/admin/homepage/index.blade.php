@@ -113,6 +113,32 @@
         </div>
     </div>
 
+    <!-- 8. KODE AKSES GURU DAERAH -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+            <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-black flex items-center justify-center">8</span>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Akses Pemantauan Guru Daerah</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Kode Akses Guru Daerah</label>
+                <input type="text" name="kode_akses_guru_daerah" value="{{ $settings['kode_akses_guru_daerah'] ?? 'GURUPMD' }}" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 font-mono font-bold tracking-wider text-red-600">
+                <p class="text-[11px] text-slate-500 mt-1">Kode akses rahasia ini dimasukkan oleh Guru Daerah sebelum memilih cabang untuk memantau data pemuda cabang.</p>
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Tautan Pemantauan Cabang</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" readonly value="{{ route('guru-daerah.index') }}" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 font-mono text-[11px]">
+                    <a href="{{ route('guru-daerah.index') }}" target="_blank" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-300" title="Buka Halaman">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Halaman dapat diakses oleh Guru Daerah tanpa memerlukan akun user/password admin.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- SUBMIT -->
     <div class="flex justify-end pt-2">
         <button type="submit" class="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md flex items-center gap-2">

@@ -360,6 +360,14 @@ class HomepageSetting extends Model
                 'type'  => 'text',
                 'value' => 'Layanan Informasi & Helpdesk',
             ],
+
+            // 8. AKSES GURU DAERAH
+            'kode_akses_guru_daerah' => [
+                'group' => 'guru_daerah',
+                'label' => 'Kode Akses Pemantauan Guru Daerah',
+                'type'  => 'text',
+                'value' => 'GURUPMD',
+            ],
         ];
     }
 
