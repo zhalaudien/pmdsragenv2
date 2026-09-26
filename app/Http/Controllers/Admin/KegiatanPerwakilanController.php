@@ -43,7 +43,7 @@ class KegiatanPerwakilanController extends Controller
             });
         }
 
-        $kegiatanList = $query->orderBy('tanggal', 'ASC')->paginate(15)->withQueryString();
+        $kegiatanList = $query->with('cabang')->orderBy('tanggal', 'ASC')->paginate(15)->withQueryString();
 
         // Statistik Dashboard
         $totalKegiatan  = KegiatanPerwakilan::count();
@@ -56,11 +56,14 @@ class KegiatanPerwakilanController extends Controller
 
         $kategoriOptions = [
             'Kajian Akbar',
+            'Kajian Rutin',
             'Bakti Dakwah',
             'Diklat & Pelatihan',
             'Olahraga',
             'Musyawarah',
         ];
+
+        $cabangList = \App\Models\Cabang::orderBy('name')->get();
 
         return view('admin.kegiatan_perwakilan.index', [
             'title'            => 'Kelola Info Kegiatan Pemuda (Mobile Presensi)',
@@ -71,6 +74,7 @@ class KegiatanPerwakilanController extends Controller
             'totalSelesai'     => $totalSelesai,
             'broadcastMessage' => $broadcastMessage,
             'kategoriOptions'  => $kategoriOptions,
+            'cabangList'       => $cabangList,
         ]);
     }
 
@@ -81,28 +85,32 @@ class KegiatanPerwakilanController extends Controller
     {
         $request->validate([
             'nama_kegiatan'     => 'required|string|max:200',
-            'kategori'          => 'required|string|max:50',
+            'cabang_id'         => 'nullable|exists:cabang,id',
             'tanggal'           => 'required|date',
-            'hari_tanggal'      => 'nullable|string|max:100',
             'jam'               => 'required|string|max:100',
-            'lokasi'            => 'required|string|max:255',
-            'alamat_detail'     => 'nullable|string',
-            'pemateri'          => 'nullable|string|max:200',
-            'target_peserta'    => 'required|string|max:200',
-            'penyelenggara'     => 'required|string|max:200',
-            'deskripsi'         => 'required|string',
-            'catatan_ketentuan' => 'nullable|string',
             'narahubung'        => 'nullable|string|max:150',
-            'status'            => 'required|in:Akan Datang,Segera,Berlangsung,Selesai',
+            'lokasi'            => 'nullable|string|max:255',
+            'pemateri'          => 'nullable|string|max:200',
+            'kategori'          => 'nullable|string|max:50',
+            'deskripsi'         => 'nullable|string',
+            'status'            => 'nullable|in:Akan Datang,Segera,Berlangsung,Selesai',
             'is_active'         => 'nullable|boolean',
         ], [
             'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
-            'kategori.required'      => 'Kategori kegiatan wajib dipilih.',
             'tanggal.required'       => 'Tanggal pelaksanaan wajib diisi.',
             'jam.required'           => 'Waktu / jam kegiatan wajib diisi.',
-            'lokasi.required'        => 'Lokasi kegiatan wajib diisi.',
-            'deskripsi.required'     => 'Deskripsi ringkas kegiatan wajib diisi.',
         ]);
+
+        $cabang = $request->filled('cabang_id') ? \App\Models\Cabang::find($request->cabang_id) : null;
+        $namaCabang = $cabang ? 'Cabang ' . $cabang->name : 'Gedung Dakwah Pusat MTA Sragen';
+        $lokasi = trim((string)$request->input('lokasi')) ?: ($cabang ? 'Gedung Dakwah ' . $namaCabang : $namaCabang);
+        $narahubung = trim((string)$request->input('narahubung')) ?: ($cabang?->no_wa ?: '0812-2983-4412');
+        $namaKegiatan = trim($request->input('nama_kegiatan'));
+
+        $deskripsi = trim((string)$request->input('deskripsi'));
+        if (empty($deskripsi)) {
+            $deskripsi = "Kegiatan {$namaKegiatan} bertempat di {$namaCabang}.";
+        }
 
         $hariTanggal = trim((string)$request->input('hari_tanggal'));
         if (empty($hariTanggal)) {
@@ -111,19 +119,20 @@ class KegiatanPerwakilanController extends Controller
         }
 
         KegiatanPerwakilan::create([
-            'nama_kegiatan'     => trim($request->input('nama_kegiatan')),
-            'kategori'          => trim($request->input('kategori')),
+            'cabang_id'         => $cabang?->id,
+            'nama_kegiatan'     => $namaKegiatan,
+            'kategori'          => trim((string)$request->input('kategori')) ?: 'Kajian Rutin',
             'tanggal'           => $request->input('tanggal'),
             'hari_tanggal'      => $hariTanggal,
             'jam'               => trim($request->input('jam')),
-            'lokasi'            => trim($request->input('lokasi')),
-            'alamat_detail'     => trim((string)$request->input('alamat_detail')) ?: null,
+            'lokasi'            => $lokasi,
+            'alamat_detail'     => $cabang?->alamat,
             'pemateri'          => trim((string)$request->input('pemateri')) ?: null,
-            'target_peserta'    => trim($request->input('target_peserta')),
-            'penyelenggara'     => trim($request->input('penyelenggara')),
-            'deskripsi'         => trim($request->input('deskripsi')),
+            'target_peserta'    => trim((string)$request->input('target_peserta')) ?: 'Seluruh Pemuda & Pemudi Cabang',
+            'penyelenggara'     => trim((string)$request->input('penyelenggara')) ?: 'Pengurus Pemuda MTA Sragen',
+            'deskripsi'         => $deskripsi,
             'catatan_ketentuan' => trim((string)$request->input('catatan_ketentuan')) ?: null,
-            'narahubung'        => trim((string)$request->input('narahubung')) ?: null,
+            'narahubung'        => $narahubung,
             'status'            => $request->input('status', 'Akan Datang'),
             'is_active'         => $request->has('is_active') ? (bool)$request->input('is_active') : true,
             'created_by'        => auth()->id(),
@@ -142,21 +151,28 @@ class KegiatanPerwakilanController extends Controller
 
         $request->validate([
             'nama_kegiatan'     => 'required|string|max:200',
-            'kategori'          => 'required|string|max:50',
+            'cabang_id'         => 'nullable|exists:cabang,id',
             'tanggal'           => 'required|date',
-            'hari_tanggal'      => 'nullable|string|max:100',
             'jam'               => 'required|string|max:100',
-            'lokasi'            => 'required|string|max:255',
-            'alamat_detail'     => 'nullable|string',
-            'pemateri'          => 'nullable|string|max:200',
-            'target_peserta'    => 'required|string|max:200',
-            'penyelenggara'     => 'required|string|max:200',
-            'deskripsi'         => 'required|string',
-            'catatan_ketentuan' => 'nullable|string',
             'narahubung'        => 'nullable|string|max:150',
-            'status'            => 'required|in:Akan Datang,Segera,Berlangsung,Selesai',
+            'lokasi'            => 'nullable|string|max:255',
+            'pemateri'          => 'nullable|string|max:200',
+            'kategori'          => 'nullable|string|max:50',
+            'deskripsi'         => 'nullable|string',
+            'status'            => 'nullable|in:Akan Datang,Segera,Berlangsung,Selesai',
             'is_active'         => 'nullable|boolean',
         ]);
+
+        $cabang = $request->filled('cabang_id') ? \App\Models\Cabang::find($request->cabang_id) : ($kegiatan->cabang_id ? $kegiatan->cabang : null);
+        $namaCabang = $cabang ? 'Cabang ' . $cabang->name : 'Gedung Dakwah';
+        $lokasi = trim((string)$request->input('lokasi')) ?: ($cabang ? 'Gedung Dakwah ' . $namaCabang : $kegiatan->lokasi);
+        $narahubung = trim((string)$request->input('narahubung')) ?: ($cabang?->no_wa ?: $kegiatan->narahubung);
+        $namaKegiatan = trim($request->input('nama_kegiatan'));
+
+        $deskripsi = trim((string)$request->input('deskripsi'));
+        if (empty($deskripsi)) {
+            $deskripsi = $kegiatan->deskripsi ?: "Kegiatan {$namaKegiatan} bertempat di {$namaCabang}.";
+        }
 
         $hariTanggal = trim((string)$request->input('hari_tanggal'));
         if (empty($hariTanggal)) {
@@ -165,20 +181,18 @@ class KegiatanPerwakilanController extends Controller
         }
 
         $kegiatan->update([
-            'nama_kegiatan'     => trim($request->input('nama_kegiatan')),
-            'kategori'          => trim($request->input('kategori')),
+            'cabang_id'         => $request->filled('cabang_id') ? $request->input('cabang_id') : $kegiatan->cabang_id,
+            'nama_kegiatan'     => $namaKegiatan,
+            'kategori'          => trim((string)$request->input('kategori')) ?: $kegiatan->kategori,
             'tanggal'           => $request->input('tanggal'),
             'hari_tanggal'      => $hariTanggal,
             'jam'               => trim($request->input('jam')),
-            'lokasi'            => trim($request->input('lokasi')),
-            'alamat_detail'     => trim((string)$request->input('alamat_detail')) ?: null,
+            'lokasi'            => $lokasi,
+            'alamat_detail'     => $cabang?->alamat ?: $kegiatan->alamat_detail,
             'pemateri'          => trim((string)$request->input('pemateri')) ?: null,
-            'target_peserta'    => trim($request->input('target_peserta')),
-            'penyelenggara'     => trim($request->input('penyelenggara')),
-            'deskripsi'         => trim($request->input('deskripsi')),
-            'catatan_ketentuan' => trim((string)$request->input('catatan_ketentuan')) ?: null,
-            'narahubung'        => trim((string)$request->input('narahubung')) ?: null,
-            'status'            => $request->input('status'),
+            'deskripsi'         => $deskripsi,
+            'narahubung'        => $narahubung,
+            'status'            => $request->input('status', $kegiatan->status),
             'is_active'         => $request->has('is_active') ? (bool)$request->input('is_active') : true,
         ]);
 

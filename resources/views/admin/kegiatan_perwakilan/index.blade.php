@@ -260,14 +260,21 @@
                                 </div>
                             </td>
                             <td class="px-4 py-4">
-                                <div class="text-xs text-slate-800 font-semibold truncate max-w-[220px]" title="{{ $item->lokasi }}">
+                                <div class="text-xs text-slate-800 font-bold truncate max-w-[220px]" title="{{ $item->cabang ? 'Cabang ' . $item->cabang->name : $item->lokasi }}">
                                     <i class="bi bi-geo-alt-fill text-rose-500 text-[11px] mr-0.5"></i>
-                                    {{ $item->lokasi }}
+                                    {{ $item->cabang ? 'Cabang ' . $item->cabang->name : $item->lokasi }}
                                 </div>
-                                <div class="text-[11px] text-slate-500 mt-1 truncate max-w-[220px]" title="{{ $item->target_peserta }}">
-                                    <i class="bi bi-people-fill text-slate-400 text-[10px] mr-0.5"></i>
-                                    {{ $item->target_peserta }}
-                                </div>
+                                @if($item->narahubung)
+                                    <div class="text-[11px] text-emerald-600 font-medium mt-1 truncate max-w-[220px]">
+                                        <i class="bi bi-whatsapp text-[10px] mr-0.5"></i>
+                                        {{ $item->narahubung }}
+                                    </div>
+                                @else
+                                    <div class="text-[11px] text-slate-500 mt-1 truncate max-w-[220px]">
+                                        <i class="bi bi-people-fill text-slate-400 text-[10px] mr-0.5"></i>
+                                        {{ $item->target_peserta }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-4 py-4 text-center">
                                 <span class="inline-block px-2.5 py-1 rounded-full border text-[10px] font-bold {{ $item->status_badge }}">
@@ -359,20 +366,22 @@
 
                     <!-- Location & Speaker -->
                     <div class="space-y-1 text-xs">
-                        <div class="flex items-center gap-2 text-slate-700 font-medium">
+                        <div class="flex items-center gap-2 text-slate-800 font-bold">
                             <i class="bi bi-geo-alt-fill text-rose-500 text-xs flex-shrink-0"></i>
-                            <span class="truncate">{{ $item->lokasi }}</span>
+                            <span class="truncate">{{ $item->cabang ? 'Cabang ' . $item->cabang->name : $item->lokasi }}</span>
                         </div>
+                        @if($item->narahubung)
+                            <div class="flex items-center gap-2 text-emerald-600 font-medium text-[11px]">
+                                <i class="bi bi-whatsapp text-emerald-600 text-xs flex-shrink-0"></i>
+                                <span class="truncate">{{ $item->narahubung }}</span>
+                            </div>
+                        @endif
                         @if($item->pemateri)
                             <div class="flex items-center gap-2 text-slate-600">
-                                <i class="bi bi-mic-fill text-emerald-600 text-xs flex-shrink-0"></i>
+                                <i class="bi bi-mic-fill text-amber-600 text-xs flex-shrink-0"></i>
                                 <span class="truncate font-medium">{{ $item->pemateri }}</span>
                             </div>
                         @endif
-                        <div class="flex items-center gap-2 text-slate-500 text-[11px]">
-                            <i class="bi bi-people text-slate-400 text-xs flex-shrink-0"></i>
-                            <span class="truncate">{{ $item->target_peserta }}</span>
-                        </div>
                     </div>
 
                     <!-- Mobile Action Footer -->
@@ -443,13 +452,16 @@
 
 <!-- ================= MODAL TAMBAH KEGIATAN ================= -->
 <div id="modalTambah" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl my-8 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-xl my-8 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2.5">
                 <span class="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-sm">
-                    <i class="bi bi-plus-circle-fill"></i>
+                    <i class="bi bi-calendar-plus-fill"></i>
                 </span>
-                <h3 class="text-sm font-bold text-slate-900">Tambah Agenda Kegiatan Pemuda Perwakilan</h3>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Tambah Info Kegiatan</h3>
+                    <p class="text-[11px] text-slate-500">Tampil langsung di beranda aplikasi mobile Presensi PMD</p>
+                </div>
             </div>
             <button type="button" onclick="closeModal('modalTambah')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
                 <i class="bi bi-x-lg text-sm"></i>
@@ -458,90 +470,85 @@
 
         <form action="{{ route('admin.kegiatan-perwakilan.simpan') }}" method="POST" class="p-6 space-y-4 text-xs">
             @csrf
+
+            <!-- 1. NAMA KEGIATAN -->
             <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Kegiatan / Agenda <span class="text-red-500">*</span></label>
-                <input type="text" name="nama_kegiatan" required placeholder="Contoh: Kajian Akbar Pemuda & Pemudi Se-Perwakilan Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Kegiatan <span class="text-red-500">*</span></label>
+                <input type="text" name="nama_kegiatan" required placeholder="Contoh: Pengajian Rutin Pemuda & Pemudi" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
             </div>
 
+            <!-- 2. PILIH CABANG YANG DITEMPATI -->
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Cabang yang Ditempati <span class="text-red-500">*</span></label>
+                <select name="cabang_id" id="tambah_cabang_id" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                    <option value="">-- Pilih Cabang (atau Pusat Perwakilan) --</option>
+                    @foreach($cabangList as $cb)
+                        <option value="{{ $cb->id }}">{{ $cb->name }} (Cabang {{ $cb->code ?? $cb->id }})</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Pilih cabang tuan rumah kegiatan presensi/kajian.</p>
+            </div>
+
+            <!-- 3. TANGGAL & JAM KEGIATAN -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Kategori Kegiatan <span class="text-red-500">*</span></label>
-                    <select name="kategori" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                        @foreach($kategoriOptions as $kat)
-                            <option value="{{ $kat }}">{{ $kat }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Kegiatan <span class="text-red-500">*</span></label>
-                    <select name="status" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                        <option value="Akan Datang" selected>Akan Datang</option>
-                        <option value="Segera">Segera</option>
-                        <option value="Berlangsung">Berlangsung</option>
-                        <option value="Selesai">Selesai</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                    <input type="date" name="tanggal" required value="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari &amp; Tanggal (Teks)</label>
-                    <input type="text" name="hari_tanggal" placeholder="Otomatis jika kosong" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Pelaksanaan <span class="text-red-500">*</span></label>
-                    <input type="text" name="jam" required placeholder="08.30 - 11.45 WIB" value="08.30 - Selesai" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Kegiatan <span class="text-red-500">*</span></label>
+                    <input type="text" name="jam" required placeholder="Contoh: 19.30 - Selesai" value="19.30 - 21.30 WIB" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Lokasi Kegiatan <span class="text-red-500">*</span></label>
-                    <input type="text" name="lokasi" required placeholder="Gedung Dakwah Pusat MTA Perwakilan Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Lengkap / Tautan Peta</label>
-                    <input type="text" name="alamat_detail" placeholder="Jl. Raya Sukowati No. 42, Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Pembicara / Pemateri</label>
-                    <input type="text" name="pemateri" placeholder="Ustadz Pembina Pemuda MTA Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Sasaran Peserta <span class="text-red-500">*</span></label>
-                    <input type="text" name="target_peserta" required value="Seluruh Pemuda & Pemudi 70 Cabang se-Kabupaten Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Penyelenggara <span class="text-red-500">*</span></label>
-                    <input type="text" name="penyelenggara" required value="Pengurus Pemuda MTA Perwakilan Sragen" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Narahubung (WhatsApp/HP)</label>
-                    <input type="text" name="narahubung" placeholder="0812-2983-4412 (Biro Pemuda)" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
+            <!-- 4. KONTAK WA -->
             <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Deskripsi Kegiatan <span class="text-red-500">*</span></label>
-                <textarea name="deskripsi" rows="3" required placeholder="Jelaskan gambaran umum, tema pengajian, dan rundown singkat..." class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition"></textarea>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Kontak WA yang Dapat Dihubungi</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-600 font-bold">
+                        <i class="bi bi-whatsapp"></i>
+                    </span>
+                    <input type="text" name="narahubung" placeholder="0812-xxxx-xxxx (Narahubung)" class="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                </div>
             </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Ketentuan &amp; Persiapan Peserta</label>
-                <textarea name="catatan_ketentuan" rows="2" placeholder="Contoh: Berbusana rapi, membawa Al-Qur'an dan alat tulis..." class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition"></textarea>
-            </div>
+            <!-- DETAIL TAMBAHAN (OPSIONAL - ACCORDION) -->
+            <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-600 hover:text-slate-900 select-none">
+                    <span class="flex items-center gap-2">
+                        <i class="bi bi-sliders text-slate-400"></i>
+                        <span>Pengaturan Tambahan (Opsional)</span>
+                    </span>
+                    <i class="bi bi-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-3.5 space-y-3 pt-3 border-t border-slate-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Pemateri / Ustadz</label>
+                            <input type="text" name="pemateri" placeholder="Nama Ustadz / Pembicara" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Status Kegiatan</label>
+                            <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                                <option value="Akan Datang" selected>Akan Datang</option>
+                                <option value="Segera">Segera</option>
+                                <option value="Berlangsung">Berlangsung</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Lokasi Khusus / Keterangan Tempat</label>
+                        <input type="text" name="lokasi" placeholder="Kosongkan jika sesuai nama cabang" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Deskripsi Singkat</label>
+                        <textarea name="deskripsi" rows="2" placeholder="Keterangan singkat kegiatan..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800"></textarea>
+                    </div>
+                </div>
+            </details>
 
-            <div class="flex items-center gap-2 pt-2">
+            <div class="flex items-center gap-2 pt-1">
                 <input type="checkbox" name="is_active" id="tambah_is_active" value="1" checked class="w-4 h-4 rounded text-red-600 focus:ring-red-500 border-slate-300">
                 <label for="tambah_is_active" class="text-xs text-slate-700 font-semibold cursor-pointer">Langsung tayangkan pada aplikasi mobile Presensi PMD</label>
             </div>
@@ -551,7 +558,7 @@
                     Batal
                 </button>
                 <button type="submit" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-md shadow-red-600/20">
-                    Simpan Agenda
+                    Simpan Kegiatan
                 </button>
             </div>
         </form>
@@ -560,13 +567,16 @@
 
 <!-- ================= MODAL EDIT KEGIATAN ================= -->
 <div id="modalEdit" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl my-8 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-xl my-8 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2.5">
                 <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-sm">
                     <i class="bi bi-pencil-square"></i>
                 </span>
-                <h3 class="text-sm font-bold text-slate-900">Edit Agenda Kegiatan</h3>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Edit Info Kegiatan</h3>
+                    <p class="text-[11px] text-slate-500">Perbarui data kegiatan untuk aplikasi mobile</p>
+                </div>
             </div>
             <button type="button" onclick="closeModal('modalEdit')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
                 <i class="bi bi-x-lg text-sm"></i>
@@ -575,90 +585,84 @@
 
         <form id="formEditKegiatan" method="POST" class="p-6 space-y-4 text-xs">
             @csrf
+
+            <!-- 1. NAMA KEGIATAN -->
             <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Kegiatan / Agenda <span class="text-red-500">*</span></label>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Kegiatan <span class="text-red-500">*</span></label>
                 <input type="text" id="edit_nama_kegiatan" name="nama_kegiatan" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Kategori Kegiatan <span class="text-red-500">*</span></label>
-                    <select id="edit_kategori" name="kategori" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                        @foreach($kategoriOptions as $kat)
-                            <option value="{{ $kat }}">{{ $kat }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Kegiatan <span class="text-red-500">*</span></label>
-                    <select id="edit_status" name="status" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                        <option value="Akan Datang">Akan Datang</option>
-                        <option value="Segera">Segera</option>
-                        <option value="Berlangsung">Berlangsung</option>
-                        <option value="Selesai">Selesai</option>
-                    </select>
-                </div>
+            <!-- 2. PILIH CABANG -->
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Cabang yang Ditempati <span class="text-red-500">*</span></label>
+                <select name="cabang_id" id="edit_cabang_id" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                    <option value="">-- Pilih Cabang (atau Pusat Perwakilan) --</option>
+                    @foreach($cabangList as $cb)
+                        <option value="{{ $cb->id }}">{{ $cb->name }} (Cabang {{ $cb->code ?? $cb->id }})</option>
+                    @endforeach
+                </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- 3. TANGGAL & JAM -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label>
                     <input type="date" id="edit_tanggal" name="tanggal" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari &amp; Tanggal (Teks)</label>
-                    <input type="text" id="edit_hari_tanggal" name="hari_tanggal" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Pelaksanaan <span class="text-red-500">*</span></label>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Kegiatan <span class="text-red-500">*</span></label>
                     <input type="text" id="edit_jam" name="jam" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Lokasi Kegiatan <span class="text-red-500">*</span></label>
-                    <input type="text" id="edit_lokasi" name="lokasi" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Lengkap / Peta</label>
-                    <input type="text" id="edit_alamat_detail" name="alamat_detail" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Pembicara / Pemateri</label>
-                    <input type="text" id="edit_pemateri" name="pemateri" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Sasaran Peserta <span class="text-red-500">*</span></label>
-                    <input type="text" id="edit_target_peserta" name="target_peserta" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Penyelenggara <span class="text-red-500">*</span></label>
-                    <input type="text" id="edit_penyelenggara" name="penyelenggara" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Narahubung (WhatsApp/HP)</label>
-                    <input type="text" id="edit_narahubung" name="narahubung" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
-                </div>
-            </div>
-
+            <!-- 4. KONTAK WA -->
             <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Deskripsi Kegiatan <span class="text-red-500">*</span></label>
-                <textarea id="edit_deskripsi" name="deskripsi" rows="3" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition"></textarea>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Kontak WA yang Dapat Dihubungi</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-600 font-bold">
+                        <i class="bi bi-whatsapp"></i>
+                    </span>
+                    <input type="text" id="edit_narahubung" name="narahubung" class="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                </div>
             </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Ketentuan &amp; Persiapan Peserta</label>
-                <textarea id="edit_catatan_ketentuan" name="catatan_ketentuan" rows="2" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition"></textarea>
-            </div>
+            <!-- DETAIL TAMBAHAN (OPSIONAL) -->
+            <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-600 hover:text-slate-900 select-none">
+                    <span class="flex items-center gap-2">
+                        <i class="bi bi-sliders text-slate-400"></i>
+                        <span>Pengaturan Tambahan (Opsional)</span>
+                    </span>
+                    <i class="bi bi-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-3.5 space-y-3 pt-3 border-t border-slate-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Pemateri / Ustadz</label>
+                            <input type="text" id="edit_pemateri" name="pemateri" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Status Kegiatan</label>
+                            <select id="edit_status" name="status" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                                <option value="Akan Datang">Akan Datang</option>
+                                <option value="Segera">Segera</option>
+                                <option value="Berlangsung">Berlangsung</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Lokasi Khusus / Keterangan Tempat</label>
+                        <input type="text" id="edit_lokasi" name="lokasi" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Deskripsi Singkat</label>
+                        <textarea id="edit_deskripsi" name="deskripsi" rows="2" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800"></textarea>
+                    </div>
+                </div>
+            </details>
 
-            <div class="flex items-center gap-2 pt-2">
+            <div class="flex items-center gap-2 pt-1">
                 <input type="checkbox" name="is_active" id="edit_is_active" value="1" class="w-4 h-4 rounded text-red-600 focus:ring-red-500 border-slate-300">
                 <label for="edit_is_active" class="text-xs text-slate-700 font-semibold cursor-pointer">Tayangkan pada aplikasi mobile Presensi PMD</label>
             </div>
@@ -668,7 +672,7 @@
                     Batal
                 </button>
                 <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition shadow-md shadow-amber-600/20">
-                    Perbarui Agenda
+                    Perbarui Kegiatan
                 </button>
             </div>
         </form>
@@ -804,8 +808,13 @@
     function editKegiatan(data) {
         document.getElementById('formEditKegiatan').action = '/admin/kegiatan-perwakilan/update/' + data.id;
         document.getElementById('edit_nama_kegiatan').value = data.nama_kegiatan || '';
-        document.getElementById('edit_kategori').value = data.kategori || 'Kajian Akbar';
-        document.getElementById('edit_status').value = data.status || 'Akan Datang';
+        document.getElementById('edit_cabang_id').value = data.cabang_id || '';
+        if (document.getElementById('edit_kategori')) {
+            document.getElementById('edit_kategori').value = data.kategori || 'Kajian Akbar';
+        }
+        if (document.getElementById('edit_status')) {
+            document.getElementById('edit_status').value = data.status || 'Akan Datang';
+        }
         
         // Format tanggal YYYY-MM-DD
         if (data.tanggal) {

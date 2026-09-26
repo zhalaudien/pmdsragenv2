@@ -279,11 +279,13 @@ class AuthController extends BaseApiController
             $query->where('kategori', $request->kategori);
         }
 
-        $items = $query->orderBy('tanggal', 'ASC')->get();
+        $items = $query->with('cabang')->orderBy('tanggal', 'ASC')->get();
 
         $data = $items->map(function ($item) {
             return [
                 'id'                => $item->id,
+                'cabang_id'         => $item->cabang_id,
+                'cabang_name'       => $item->cabang?->name,
                 'nama_kegiatan'     => $item->nama_kegiatan,
                 'kategori'          => $item->kategori,
                 'tanggal'           => $item->tanggal ? $item->tanggal->format('Y-m-d') : '',
@@ -297,6 +299,7 @@ class AuthController extends BaseApiController
                 'deskripsi'         => $item->deskripsi,
                 'catatan_ketentuan' => $item->catatan_ketentuan,
                 'narahubung'        => $item->narahubung,
+                'kontak_wa'         => $item->narahubung,
                 'status'            => $item->status,
                 'hari_tersisa'      => $item->hari_tersisa,
             ];

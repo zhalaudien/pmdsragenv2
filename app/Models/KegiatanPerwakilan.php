@@ -13,6 +13,7 @@ class KegiatanPerwakilan extends Model
     protected $table = 'kegiatan_perwakilan';
 
     protected $fillable = [
+        'cabang_id',
         'nama_kegiatan',
         'kategori',
         'tanggal',
@@ -35,10 +36,16 @@ class KegiatanPerwakilan extends Model
     protected function casts(): array
     {
         return [
+            'cabang_id' => 'integer',
             'tanggal'   => 'date',
             'is_active' => 'boolean',
             'urutan'    => 'integer',
         ];
+    }
+
+    public function cabang()
+    {
+        return $this->belongsTo(Cabang::class, 'cabang_id');
     }
 
     public function creator()
