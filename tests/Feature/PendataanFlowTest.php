@@ -423,8 +423,15 @@ class PendataanFlowTest extends TestCase
         $this->assertContains('SATGAS', $orgNames);
         $this->assertContains($customOrgName, $orgNames);
 
-        // Verify the new custom element appears when opening /pendataan
-        $getForm = $this->get('/pendataan');
+        // Verify the new custom element appears when opening the form with active pendataan_auth session
+        $sessionAuth = [
+            'authenticated' => true,
+            'mode'          => 'create',
+            'cabang_id'     => $cabang->id,
+            'name'          => 'Test Custom Org Pemuda',
+            'birth_date'    => '2000-01-01',
+        ];
+        $getForm = $this->withSession(['pendataan_auth' => $sessionAuth])->get('/pendataan/form');
         $getForm->assertStatus(200);
         $getForm->assertSee($customOrgName);
     }

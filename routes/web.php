@@ -25,6 +25,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('pendataan')->name('pendataan.')->group(function () {
     Route::get('/', [PendataanController::class, 'index'])->name('index');
+    Route::post('/auth', [PendataanController::class, 'authenticate'])->name('auth');
+    Route::get('/keluar', [PendataanController::class, 'logoutPemuda'])->name('logout');
+    Route::get('/form', [PendataanController::class, 'formView'])->name('form');
     Route::get('/search-nama', [PendataanController::class, 'searchNama'])->middleware('throttle:120,1')->name('search-nama');
     Route::get('/get-pemuda/{id}', [PendataanController::class, 'getPemudaData'])->middleware('throttle:120,1')->name('get-pemuda');
     Route::get('/get-warga/{uuid}', [PendataanController::class, 'getWargaData'])->middleware('throttle:120,1')->name('get-warga');

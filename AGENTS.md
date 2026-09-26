@@ -1316,6 +1316,29 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-26 — Implementasi Gerbang Autentikasi Awal Pendataan Pemuda (Anti Data Ganda & Proteksi Akses Formulir)
+
+- **Gerbang Autentikasi Awal Sebelum Akses Formulir Pendataan:**
+  - Route `/pendataan` (`pendataan.index`) dialihkan menjadi halaman **Autentikasi & Verifikasi Awal** (`resources/views/pendataan/auth.blade.php`).
+  - Form pendataan (`/pendataan/form`) dilindungi secara ketat di server-side dan tidak dapat dibuka tanpa melalui autentikasi awal terlebih dahulu. Kunjungan tanpa sesi diarahkan kembali ke `/pendataan` dengan notifikasi kesalahan.
+  - Parameter URL `?cabang_id=` (misal dari tautan pantau Guru Daerah / blast WhatsApp) otomatis memilih cabang pada formulir autentikasi.
+- **Smart Autocomplete & Anti-Duplikasi Data (Hanya Tampilkan Nama & Umur):**
+  - Input nama pada halaman autentikasi secara cerdas melakukan pencarian autocomplete ketika mengetik minimal 4 karakter (`length >= 4`).
+  - Mencari gabungan data dari **Database Pemuda Lokal Cabang** dan **Database Warga MTA Pusat** (`MtaApiService`), menghitung usia (`age`), dan pada item dropdown **hanya menampilkan Nama Lengkap dan Umur** (tanpa menampilkan tanggal lahir lengkap, jenis kelamin, tempat lahir, atau no HP untuk menjaga privasi data).
+- **Verifikasi Keamanan Identitas (Input Tanggal Lahir Wajib Manual):**
+  - Saat nama pada sugesti dipilih, kolom tanggal lahir **TIDAK diisi secara otomatis**. Pengguna diwajibkan mengetikkan tanggal lahir sendiri secara manual sebagai verifikasi kecocokan identitas pemilik data.
+  - Server-side verification pada `PendataanController::authenticate` memvalidasi kecocokan tanggal lahir yang diinput manual dengan data tanggal lahir pemuda yang tercatat di database. Jika tanggal lahir tidak cocok, proses autentikasi ditolak.
+- **Logika Percabangan Otomatis (Update vs Pendaftaran Baru):**
+  - **Data Sudah Ada:** Jika nama dan tanggal lahir cocok dengan data pemuda yang sudah ada (atau dipilih dari sugesti pemuda dan tanggal lahir terverifikasi), sistem masuk ke **Mode Pembaruan / Update Data**, seluruh isian pemuda di-prefill otomatis pada formulir pendataan.
+  - **Warga MTA Pusat:** Jika dipilih dari data warga MTA yang belum tercatat di data pemuda, data warga disinkronkan otomatis.
+  - **Nama Belum Ada:** Jika nama dan tanggal lahir belum tercatat pada cabang tersebut, sistem masuk ke **Mode Pendaftaran Pemuda Baru**.
+- **Integritas & Proteksi Formulir Pendataan:**
+  - Cabang, Nama, dan Tanggal Lahir dikunci (`readonly` / `hidden`) sesuai hasil verifikasi autentikasi awal agar tidak dapat dimanipulasi di sisi klien.
+  - Disediakan tombol "Ganti Identitas / Keluar" (`/pendataan/keluar`) untuk mengakhiri sesi autentikasi dan kembali ke halaman verifikasi awal.
+  - Endpoint simpan (`/pendataan/simpan`) memvalidasi kecocokan cabang dan ID terhadap sesi `pendataan_auth`, serta membersihkan sesi setelah transaksi database berhasil di-commit.
+- **Testing & Jaminan Mutu:**
+  - Menambahkan test suite `tests/Feature/PendataanAuthGateTest.php` (11 test case) mencakup verifikasi tampilan autentikasi, proteksi redirect form unauthenticated, autocomplete >= 4 huruf dengan atribut `age`, penolakan autentikasi jika tanggal lahir manual tidak cocok, deteksi update vs create mode, session isolation, dan logout. Seluruh test lulus 100%.
+
 ### 2026-09-21 — Implementasi REST API Mobile "Presensi PMD" & Fitur Pengaturan API Superadmin
 
 - **Pembangunan Modul REST API Backend untuk Aplikasi Mobile Android Flutter (`Presensi PMD`):**

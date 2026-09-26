@@ -80,8 +80,8 @@
             @csrf
 
             <!-- Hidden input for existing youth update and warga uuid -->
-            <input type="hidden" name="existing_pemuda_id" id="input_existing_pemuda_id" value="{{ old('existing_pemuda_id', '') }}">
-            <input type="hidden" name="mta_warga_uuid" id="input_mta_warga_uuid" value="{{ old('mta_warga_uuid', '') }}">
+            <input type="hidden" name="existing_pemuda_id" id="input_existing_pemuda_id" value="{{ old('existing_pemuda_id', $authSession['pemuda_id'] ?? '') }}">
+            <input type="hidden" name="mta_warga_uuid" id="input_mta_warga_uuid" value="{{ old('mta_warga_uuid', $authSession['mta_warga_uuid'] ?? '') }}">
             <input type="hidden" name="mta_ayah_uuid" id="input_mta_ayah_uuid" value="{{ old('mta_ayah_uuid', '') }}">
             <input type="hidden" name="mta_ibu_uuid" id="input_mta_ibu_uuid" value="{{ old('mta_ibu_uuid', '') }}">
             <input type="hidden" name="mta_foto_url" id="input_mta_foto_url" value="{{ old('mta_foto_url', '') }}">
@@ -124,92 +124,50 @@
             <!-- STEP 1: CABANG & DATA DIRI -->
             <!-- ========================================================================= -->
             <div class="form-step" id="step-1">
-                <!-- 1.1 PEMILIHAN CABANG DENGAN SEARCH LANGSUNG PADA DROPDOWN LIST -->
-                <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-red-50/40 border border-slate-200/80 shadow-sm mb-6">
-                    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
-                        <span class="w-8 h-8 rounded-xl bg-red-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-red-200">
-                            <i class="bi bi-geo-alt-fill"></i>
+                <!-- 1.1 CABANG MTA DOMISILI TERAUTENTIKASI -->
+                <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-50 via-white to-red-50/30 border border-slate-200/90 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm font-black">
+                            <i class="bi bi-geo-alt-fill text-lg"></i>
                         </span>
                         <div>
-                            <h4 class="text-sm font-black text-slate-900 uppercase tracking-tight">1. Tentukan Cabang MTA Tempat Mengaji</h4>
-                            <p class="text-[11px] text-slate-500">Pilih cabang mengaji/domisili Anda terlebih dahulu untuk membuka formulir</p>
-                        </div>
-                    </div>
-
-                    <!-- SEARCHABLE CABANG DROPDOWN COMPONENT -->
-                    <div class="space-y-1.5 text-xs relative" id="cabang_dropdown_wrapper">
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">
-                                Cabang MTA Domisili / Binaan <span class="text-red-500">*</span>
-                            </label>
-                            <span class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-semibold">70 Cabang MTA Se-Sragen</span>
-                        </div>
-
-                        <!-- Hidden native input to submit cabang_id -->
-                        <input type="hidden" name="cabang_id" id="public_cabang_id" value="{{ old('cabang_id') }}" required>
-
-                        <!-- Dropdown Button Trigger -->
-                        @php
-                            $selectedCabangObj = old('cabang_id') ? $cabangList->firstWhere('id', old('cabang_id')) : null;
-                        @endphp
-                        <button type="button" id="cabang_dropdown_btn" class="w-full py-3.5 px-4 rounded-xl border border-slate-300 bg-white hover:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-slate-800 shadow-sm flex items-center justify-between transition text-left group">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <i class="bi bi-building text-slate-400 group-hover:text-red-600 transition text-base flex-shrink-0"></i>
-                                <span id="cabang_selected_label" class="truncate {{ $selectedCabangObj ? 'text-slate-900 font-bold' : 'text-slate-400 font-normal' }}">
-                                    {{ $selectedCabangObj ? $selectedCabangObj->name : '-- Klik di sini untuk Memilih Cabang MTA (Tersedia Pencarian) --' }}
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cabang MTA Tempat Mengaji</span>
+                                @if(($authSession['mode'] ?? '') === 'update')
+                                    <span class="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        <i class="bi bi-pencil-square mr-1"></i> Mode: Pembaruan Data Pemuda
+                                    </span>
+                                @elseif(($authSession['mode'] ?? '') === 'new_warga_mta')
+                                    <span class="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
+                                        <i class="bi bi-patch-check-fill mr-1"></i> Mode: Sinkronisasi Warga MTA
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-800 border border-slate-300">
+                                        <i class="bi bi-person-plus-fill mr-1"></i> Mode: Pendaftaran Pemuda Baru
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="text-sm font-black text-slate-900 mt-0.5 flex items-center gap-2">
+                                <span>Cabang {{ $selectedCabang->name }}</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <i class="bi bi-patch-check-fill mr-1 text-emerald-600"></i> Terverifikasi
                                 </span>
                             </div>
-                            <i class="bi bi-chevron-down text-slate-400 text-xs ml-2 transition-transform duration-200 flex-shrink-0" id="cabang_dropdown_arrow"></i>
-                        </button>
-
-                        <!-- Dropdown Panel with Integrated Search Box -->
-                        <div id="cabang_dropdown_panel" class="hidden absolute z-50 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                            <!-- Integrated Search Input -->
-                            <div class="p-3 bg-slate-50 border-b border-slate-200">
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-xs">
-                                        <i class="bi bi-search"></i>
-                                    </span>
-                                    <input type="text" id="cabang_search_input" placeholder="Cari cabang (contoh: Masaran, Gemolong, Tanon, Sragen Kota)..." autocomplete="off" class="w-full py-2.5 pl-10 pr-4 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs text-slate-800 placeholder:text-slate-400 font-medium">
-                                </div>
-                            </div>
-
-                            <!-- Scrollable Cabang Items List -->
-                            <div class="max-h-64 overflow-y-auto divide-y divide-slate-100" id="cabang_options_list">
-                                @foreach($cabangList as $c)
-                                    <div class="cabang-option-item px-4 py-3 hover:bg-red-50/80 cursor-pointer text-xs font-semibold text-slate-800 transition flex items-center justify-between group"
-                                         data-id="{{ $c->id }}"
-                                         data-name="{{ $c->name }}"
-                                         data-code="{{ $c->code }}">
-                                        <div class="flex items-center gap-2">
-                                            <i class="bi bi-geo-alt text-slate-400 group-hover:text-red-600 transition text-xs"></i>
-                                            <span class="group-hover:text-red-700 font-bold text-slate-800">{{ $c->name }}</span>
-                                        </div>
-                                        @if(!empty($c->code))
-                                            <span class="text-[10px] text-slate-400 group-hover:text-red-600 font-mono bg-slate-100 group-hover:bg-red-100/60 px-2 py-0.5 rounded">{{ $c->code }}</span>
-                                        @endif
-                                    </div>
-                                @endforeach
-                                <div id="cabang_no_match" class="hidden p-6 text-center text-xs text-slate-400 font-normal">
-                                    <i class="bi bi-search text-xl block text-slate-300 mb-1"></i>
-                                    Cabang tidak ditemukan. Periksa kata kunci pencarian Anda.
-                                </div>
-                            </div>
                         </div>
                     </div>
+
+                    <!-- Hidden native input to submit cabang_id -->
+                    <input type="hidden" name="cabang_id" id="public_cabang_id" value="{{ old('cabang_id', $authSession['cabang_id'] ?? $selectedCabang->id) }}" required>
+
+                    <a href="{{ route('pendataan.logout') }}" onclick="return confirm('Apakah Anda yakin ingin mengganti identitas / mengulang autentikasi? Data isian yang belum tersimpan akan dibatalkan.')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-700 hover:text-red-700 font-bold text-xs border border-slate-300 hover:border-red-300 shadow-2xs transition flex-shrink-0">
+                        <i class="bi bi-arrow-repeat text-red-600"></i>
+                        <span>Ganti Identitas / Keluar</span>
+                    </a>
                 </div>
 
                 <!-- 1.2 STATUS MODE NOTIFICATION BANNER -->
                 <div id="mode_indicator_box" class="mb-6">
-                    <!-- Default: Prompt to select Cabang -->
-                    <div id="mode_prompt_cabang" class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-950 text-xs flex items-start sm:items-center gap-3 shadow-sm">
-                        <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 font-bold text-sm shadow-sm">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                        </span>
-                        <div class="leading-relaxed">
-                            <strong class="font-bold text-amber-900">Perhatian:</strong> Silakan tentukan <strong>Cabang MTA</strong> Anda pada pilihan di atas terlebih dahulu. Setelah cabang dipilih, ketik nama lengkap Anda untuk mencari data di cabang tersebut.
-                        </div>
-                    </div>
+                    <div id="mode_prompt_cabang" class="hidden"></div>
 
                     <!-- State: New Registration Mode -->
                     <div id="mode_new_registration" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-xs flex items-center justify-between gap-3 shadow-sm">
@@ -275,37 +233,29 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <!-- NAMA LENGKAP WITH AUTOCOMPLETE (COMBINED PEMUDA & WARGA MTA) -->
+                    <!-- NAMA LENGKAP TERAUTENTIKASI -->
                     <div class="sm:col-span-2 relative">
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">
                                 Nama Lengkap <span class="text-red-500">*</span>
                             </label>
-                            <span class="text-[11px] text-slate-500">Pencarian otomatis di Cabang terpilih</span>
+                            <span class="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                                <i class="bi bi-shield-check"></i> Terverifikasi Autentikasi
+                            </span>
                         </div>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                 <i class="bi bi-person text-base"></i>
                             </div>
-                            <input type="text" name="name" id="input_name" value="{{ old('name') }}" placeholder="Pilih Cabang terlebih dahulu..." disabled required autocomplete="off" class="w-full py-3 pl-10 pr-10 rounded-xl border border-slate-300 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium transition shadow-sm">
-                            
-                            <!-- Search Loading Spinner -->
-                            <div id="search_spinner" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                                <svg class="animate-spin h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                </svg>
+                            <input type="text" name="name" id="input_name" value="{{ old('name', $authSession['name'] ?? '') }}" readonly required autocomplete="off" class="w-full py-3 pl-10 pr-10 rounded-xl border border-slate-300 bg-slate-100 text-slate-800 text-sm font-semibold cursor-not-allowed transition shadow-sm">
+                            <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" title="Nama terkunci sesuai verifikasi awal">
+                                <i class="bi bi-lock-fill text-slate-400 text-sm"></i>
                             </div>
                         </div>
                         <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5" id="name_helper_text">
                             <i class="bi bi-info-circle text-slate-400"></i>
-                            <span>Pilih Cabang MTA terlebih dahulu sebelum mengetik nama.</span>
+                            <span>Nama terkunci dari hasil autentikasi awal. Untuk mengubah identitas, klik tombol "Ganti Identitas / Keluar" di atas.</span>
                         </p>
-
-                        <!-- Autocomplete Dropdown List -->
-                        <div id="autocomplete_dropdown" class="hidden absolute z-50 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto divide-y divide-slate-100">
-                            <!-- Populated dynamically via JS -->
-                        </div>
                     </div>
 
                     <div>
@@ -338,10 +288,15 @@
                     </div>
 
                     <div>
-                        <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
-                            Tanggal Lahir <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" name="birth_date" id="input_birth_date" value="{{ old('birth_date') }}" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                                Tanggal Lahir <span class="text-red-500">*</span>
+                            </label>
+                            <span class="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                                <i class="bi bi-shield-check"></i> Terverifikasi
+                            </span>
+                        </div>
+                        <input type="date" name="birth_date" id="input_birth_date" value="{{ old('birth_date', $authSession['birth_date'] ?? '') }}" readonly required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-slate-100 text-slate-800 text-sm font-semibold cursor-not-allowed shadow-sm">
                     </div>
 
                     <div>
@@ -2133,11 +2088,14 @@
 
     // Initialize state on load
     document.addEventListener('DOMContentLoaded', function () {
-        if (cabInputHidden && cabInputHidden.value) {
-            onCabangChanged();
-        }
+        const initialExistingData = @json($existingPemudaData ?? null);
+        const authSessionData     = @json($authSession ?? null);
 
-        if (inputExistingId && inputExistingId.value) {
+        if (initialExistingData) {
+            populateFormWithData(initialExistingData);
+        } else if (authSessionData && authSessionData.mode === 'new_warga_mta' && authSessionData.mta_warga_uuid) {
+            selectWargaMta(authSessionData.mta_warga_uuid, authSessionData.name);
+        } else if (inputExistingId && inputExistingId.value) {
             modeNewReg.classList.add('hidden');
             if (modeWarga) modeWarga.classList.add('hidden');
             modeUpdate.classList.remove('hidden');
@@ -2152,6 +2110,11 @@
                 modeWarga.classList.remove('hidden');
             }
             if (btnSubmitText) btnSubmitText.textContent = 'Kirim Pendaftaran (Sinkron MTA)';
+        } else {
+            if (modeNewReg) modeNewReg.classList.remove('hidden');
+            if (modeUpdate) modeUpdate.classList.add('hidden');
+            if (modeWarga) modeWarga.classList.add('hidden');
+            if (btnSubmitText) btnSubmitText.textContent = 'Kirim Pendaftaran Pemuda Baru';
         }
 
         if (distSelect && distSelect.value) {

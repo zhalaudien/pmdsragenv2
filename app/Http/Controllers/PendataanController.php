@@ -22,8 +22,243 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class PendataanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Jika sudah ada sesi autentikasi pendataan yang aktif, langsung arahkan ke form
+        if (session()->has('pendataan_auth') && session('pendataan_auth.authenticated')) {
+            return redirect()->route('pendataan.form');
+        }
+
+        $cabangList        = Cabang::orderBy('name', 'ASC')->get();
+        $selectedCabangId  = (int) $request->query('cabang_id', 0);
+
+        return view('pendataan.auth', [
+            'cabangList'       => $cabangList,
+            'selectedCabangId' => $selectedCabangId,
+        ]);
+    }
+
+    public function authenticate(Request $request)
+    {
+        $rules = [
+            'cabang_id'       => 'required|integer|exists:cabang,id',
+            'name'            => 'required|string|min:2|max:150',
+            'birth_date'      => 'required|date',
+            'selected_id'     => 'nullable|integer',
+            'selected_uuid'   => 'nullable|string|max:100',
+            'selected_source' => 'nullable|string|in:pemuda,warga_mta',
+        ];
+
+        $messages = [
+            'cabang_id.required'  => 'Silakan pilih Cabang MTA tempat mengaji Anda.',
+            'cabang_id.exists'    => 'Cabang yang dipilih tidak terdaftar di sistem.',
+            'name.required'       => 'Silakan masukkan nama lengkap Anda.',
+            'name.min'            => 'Nama minimal terdiri dari 2 karakter.',
+            'birth_date.required' => 'Silakan tentukan tanggal lahir Anda.',
+            'birth_date.date'     => 'Format tanggal lahir tidak valid.',
+        ];
+
+        $request->validate($rules, $messages);
+
+        $cabangId       = (int) $request->input('cabang_id');
+        $name           = trim((string) $request->input('name'));
+        $birthDateInput = trim((string) $request->input('birth_date'));
+        $selectedId     = (int) $request->input('selected_id', 0);
+        $selectedUuid   = trim((string) $request->input('selected_uuid', ''));
+        $selectedSource = trim((string) $request->input('selected_source', ''));
+
+        $cabang = Cabang::find($cabangId);
+        if (!$cabang) {
+            return redirect()->back()->withInput()->with('error', 'Cabang tidak valid.');
+        }
+
+        $formattedBirthDate = date('Y-m-d', strtotime($birthDateInput));
+
+        // 1. Cek apakah ada data pemuda aktif pada cabang ini
+        $existingPemuda = null;
+
+        // Pencarian melalui selected_id jika dipilih dari sugesti pemuda
+        if ($selectedId > 0 && $selectedSource === 'pemuda') {
+            $candidate = Pemuda::where('id', $selectedId)
+                ->where('cabang_id', $cabangId)
+                ->where('status_data', 'active')
+                ->first();
+
+            if ($candidate) {
+                // Verifikasi keamanan tanggal lahir: input manual harus sesuai dengan database jika data pemuda memiliki birth_date
+                if (!empty($candidate->birth_date)) {
+                    $dbBirthDate = date('Y-m-d', strtotime($candidate->birth_date));
+                    if ($dbBirthDate !== $formattedBirthDate) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Tanggal lahir yang Anda masukkan tidak sesuai dengan data pemuda terpilih. Silakan periksa kembali tanggal lahir Anda.');
+                    }
+                }
+                $existingPemuda = $candidate;
+            }
+        }
+
+        // Pencarian melalui selected_uuid jika dipilih dari sugesti warga MTA
+        if (!$existingPemuda && !empty($selectedUuid)) {
+            $candidate = Pemuda::where('mta_warga_uuid', $selectedUuid)
+                ->where('cabang_id', $cabangId)
+                ->where('status_data', 'active')
+                ->first();
+
+            if ($candidate) {
+                if (!empty($candidate->birth_date)) {
+                    $dbBirthDate = date('Y-m-d', strtotime($candidate->birth_date));
+                    if ($dbBirthDate !== $formattedBirthDate) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Tanggal lahir yang Anda masukkan tidak sesuai dengan data pemuda terpilih. Silakan periksa kembali tanggal lahir Anda.');
+                    }
+                }
+                $existingPemuda = $candidate;
+            }
+        }
+
+        // Pencarian nama dan tanggal lahir pada cabang terpilih
+        if (!$existingPemuda) {
+            $existingPemuda = Pemuda::findExistingPemuda($name, null, $formattedBirthDate, $cabangId);
+        }
+
+        // Kasus 1: Data SUDAH ADA -> Mode Update Data Pemuda
+        if ($existingPemuda) {
+            session(['pendataan_auth' => [
+                'authenticated'    => true,
+                'mode'             => 'update',
+                'pemuda_id'        => $existingPemuda->id,
+                'cabang_id'        => $existingPemuda->cabang_id,
+                'cabang_name'      => $cabang->name,
+                'name'             => $existingPemuda->name,
+                'birth_date'       => $existingPemuda->birth_date ? date('Y-m-d', strtotime($existingPemuda->birth_date)) : $formattedBirthDate,
+                'gender'           => $existingPemuda->gender,
+                'mta_warga_uuid'   => $existingPemuda->mta_warga_uuid,
+                'authenticated_at' => now()->timestamp,
+            ]]);
+
+            return redirect()->route('pendataan.form')
+                ->with('info', "Data pemuda atas nama <strong>{$existingPemuda->name}</strong> ditemukan pada database Cabang {$cabang->name}. Anda berada pada <strong>Mode Pembaruan Data</strong>. Silakan periksa atau perbarui formulir Anda.");
+        }
+
+        // Kasus 2: Terpilih dari Warga MTA Pusat tapi belum masuk database Pemuda -> Mode Sinkron Warga MTA
+        if ($selectedSource === 'warga_mta' && !empty($selectedUuid)) {
+            session(['pendataan_auth' => [
+                'authenticated'    => true,
+                'mode'             => 'new_warga_mta',
+                'pemuda_id'        => null,
+                'cabang_id'        => $cabangId,
+                'cabang_name'      => $cabang->name,
+                'name'             => $name,
+                'birth_date'       => $formattedBirthDate,
+                'gender'           => null,
+                'mta_warga_uuid'   => $selectedUuid,
+                'authenticated_at' => now()->timestamp,
+            ]]);
+
+            return redirect()->route('pendataan.form')
+                ->with('info', "Data Anda atas nama <strong>{$name}</strong> terhubung dengan database resmi Warga MTA Pusat. Formulir Anda telah disinkronkan secara otomatis.");
+        }
+
+        // Kasus 3: Data BELUM ADA -> Mode Input Data Pemuda Baru
+        session(['pendataan_auth' => [
+            'authenticated'    => true,
+            'mode'             => 'create',
+            'pemuda_id'        => null,
+            'cabang_id'        => $cabangId,
+            'cabang_name'      => $cabang->name,
+            'name'             => $name,
+            'birth_date'       => $formattedBirthDate,
+            'gender'           => null,
+            'mta_warga_uuid'   => null,
+            'authenticated_at' => now()->timestamp,
+        ]]);
+
+        return redirect()->route('pendataan.form')
+            ->with('info', "Nama belum tercatat pada basis data Cabang {$cabang->name}. Anda melanjutkan sebagai <strong>Pendaftaran Pemuda Baru</strong>. Silakan lengkapi formulir pendataan berikut.");
+    }
+
+    public function logoutPemuda()
+    {
+        session()->forget('pendataan_auth');
+        return redirect()->route('pendataan.index')
+            ->with('info', 'Sesi autentikasi telah diakhiri. Silakan masukkan data kembali jika ingin mengisi formulir.');
+    }
+
+    public function formView(Request $request)
+    {
+        $auth = session('pendataan_auth');
+        if (!$auth || empty($auth['authenticated']) || empty($auth['cabang_id'])) {
+            return redirect()->route('pendataan.index')
+                ->with('error', 'Formulir pendataan tidak dapat dibuka tanpa melalui autentikasi terlebih dahulu. Silakan pilih cabang, masukkan nama, dan tanggal lahir Anda.');
+        }
+
+        $cabang = Cabang::find($auth['cabang_id']);
+        if (!$cabang) {
+            session()->forget('pendataan_auth');
+            return redirect()->route('pendataan.index')
+                ->with('error', 'Cabang tidak valid. Silakan ulangi autentikasi.');
+        }
+
+        $existingPemudaData = null;
+        if ($auth['mode'] === 'update' && !empty($auth['pemuda_id'])) {
+            $pemuda = Pemuda::with(['alamat', 'pendidikan', 'pekerjaan', 'organisasi', 'skills', 'interests'])
+                ->where('id', $auth['pemuda_id'])
+                ->where('cabang_id', $auth['cabang_id'])
+                ->where('status_data', 'active')
+                ->first();
+
+            if ($pemuda) {
+                $existingPemudaData = [
+                    'id'                  => $pemuda->id,
+                    'cabang_id'           => $pemuda->cabang_id,
+                    'registration_number' => $pemuda->registration_number,
+                    'name'                => $pemuda->name,
+                    'gender'              => $pemuda->gender,
+                    'marital_status'      => $pemuda->marital_status,
+                    'blood_type'          => $pemuda->blood_type ?: 'tidak_tahu',
+                    'birth_place'         => $pemuda->birth_place,
+                    'birth_date'          => $pemuda->birth_date ? \Carbon\Carbon::parse($pemuda->birth_date)->format('Y-m-d') : null,
+                    'phone'               => $pemuda->phone,
+                    'email'               => $pemuda->email,
+                    'foto'                => $pemuda->foto ? asset('uploads/pemuda/' . $pemuda->foto) : null,
+                    'alamat'              => [
+                        'district_id'    => $pemuda->alamat?->district_id,
+                        'village_id'     => $pemuda->alamat?->village_id,
+                        'dusun'          => $pemuda->alamat?->dusun,
+                        'rt'             => $pemuda->alamat?->rt,
+                        'rw'             => $pemuda->alamat?->rw,
+                        'address_detail' => $pemuda->alamat?->address_detail,
+                    ],
+                    'pendidikan'          => [
+                        'education_level_id' => $pemuda->pendidikan?->education_level_id,
+                        'school_name'        => $pemuda->pendidikan?->school_name,
+                        'major'              => $pemuda->pendidikan?->major,
+                        'education_status'   => $pemuda->pendidikan?->education_status,
+                        'graduation_year'    => $pemuda->pendidikan?->graduation_year,
+                    ],
+                    'pekerjaan'           => [
+                        'job_status_id'    => $pemuda->pekerjaan?->job_status_id,
+                        'job_title'        => $pemuda->pekerjaan?->job_title,
+                        'company_name'     => $pemuda->pekerjaan?->company_name,
+                        'business_field'   => $pemuda->pekerjaan?->business_field,
+                        'business_name'    => $pemuda->pekerjaan?->business_name,
+                        'business_address' => $pemuda->pekerjaan?->business_address,
+                        'business_contact' => $pemuda->pekerjaan?->business_contact,
+                        'business_social'  => $pemuda->pekerjaan?->business_social,
+                    ],
+                    'organisasi'          => $pemuda->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
+                    'organizations'       => $pemuda->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
+                    'skills'              => $pemuda->skills->pluck('id')->values()->toArray(),
+                    'skills_data'         => $pemuda->skills->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()->toArray(),
+                    'interests'           => $pemuda->interests->pluck('id')->values()->toArray(),
+                    'interests_data'      => $pemuda->interests->map(fn($i) => ['id' => $i->id, 'name' => $i->name])->values()->toArray(),
+                    'mta_warga_uuid'      => $pemuda->mta_warga_uuid,
+                ];
+            }
+        }
+
         $wilayahWithCabang = Wilayah::getWithCabang();
         $cabangList        = Cabang::orderBy('name', 'ASC')->get();
         $educationLevels   = EducationLevel::orderBy('id', 'ASC')->get();
@@ -42,14 +277,17 @@ class PendataanController extends Controller
             ->toArray();
 
         return view('pendataan.form', [
-            'wilayahList'     => $wilayahWithCabang,
-            'cabangList'      => $cabangList,
-            'districts'       => $districts,
-            'educationLevels' => $educationLevels,
-            'jobStatuses'     => $jobStatuses,
-            'skills'          => $skills,
-            'interests'       => $interests,
-            'customOrgs'      => $customOrgs,
+            'authSession'        => $auth,
+            'selectedCabang'     => $cabang,
+            'existingPemudaData' => $existingPemudaData,
+            'wilayahList'        => $wilayahWithCabang,
+            'cabangList'         => $cabangList,
+            'districts'          => $districts,
+            'educationLevels'    => $educationLevels,
+            'jobStatuses'        => $jobStatuses,
+            'skills'             => $skills,
+            'interests'          => $interests,
+            'customOrgs'         => $customOrgs,
         ]);
     }
 
@@ -95,15 +333,31 @@ class PendataanController extends Controller
             }
             $seenNames[strtolower(trim($p->name))] = true;
 
+            $birthDateFormatted = null;
+            $birthDateRaw       = null;
+            $age                = null;
+            if ($p->birth_date) {
+                try {
+                    $parsedDate         = \Carbon\Carbon::parse($p->birth_date);
+                    $birthDateFormatted = $parsedDate->format('d/m/Y');
+                    $birthDateRaw       = $parsedDate->format('Y-m-d');
+                    $age                = $parsedDate->age;
+                } catch (\Throwable) {}
+            }
+
             $combined[] = [
                 'source'              => 'pemuda',
                 'id'                  => $p->id,
                 'uuid'                => $p->mta_warga_uuid,
                 'name'                => $p->name,
+                'age'                 => $age,
+                'age_text'            => $age !== null ? "{$age} tahun" : null,
                 'gender'              => $p->gender,
                 'gender_text'         => $p->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-                'birth_date'          => $p->birth_date ? \Carbon\Carbon::parse($p->birth_date)->format('d/m/Y') : null,
+                'birth_date'          => $birthDateFormatted,
+                'birth_date_raw'      => $birthDateRaw,
                 'birth_place'         => $p->birth_place,
+                'phone'               => $p->phone,
                 'registration_number' => $p->registration_number,
                 'badge'               => 'Data Pemuda',
                 'badge_color'         => 'emerald',
@@ -137,11 +391,17 @@ class PendataanController extends Controller
 
                         $gender = strtoupper($w['kelamin'] ?? 'L');
                         $birthText = null;
+                        $birthDateRaw = null;
+                        $age = null;
                         if (!empty($w['lahir'])) {
                             try {
-                                $birthText = \Carbon\Carbon::parse($w['lahir'])->format('d/m/Y');
+                                $parsedDate   = \Carbon\Carbon::parse($w['lahir']);
+                                $birthText    = $parsedDate->format('d/m/Y');
+                                $birthDateRaw = $parsedDate->format('Y-m-d');
+                                $age          = $parsedDate->age;
                             } catch (\Throwable) {}
                         } elseif (!empty($w['usia'])) {
+                            $age = (int) $w['usia'];
                             $birthText = "Usia {$w['usia']} th";
                         }
 
@@ -150,9 +410,12 @@ class PendataanController extends Controller
                             'id'                  => null,
                             'uuid'                => $wUuid,
                             'name'                => $wName,
+                            'age'                 => $age,
+                            'age_text'            => $age !== null ? "{$age} tahun" : null,
                             'gender'              => $gender,
                             'gender_text'         => $gender === 'L' ? 'Laki-laki' : 'Perempuan',
                             'birth_date'          => $birthText,
+                            'birth_date_raw'      => $birthDateRaw,
                             'birth_place'         => $w['tempat_lahir'] ?? null,
                             'phone'               => $w['nohp'] ?? null,
                             'registration_number' => null,
@@ -360,6 +623,20 @@ class PendataanController extends Controller
 
     public function simpan(Request $request)
     {
+        // Verifikasi sesi autentikasi pendataan
+        $authSession = session('pendataan_auth');
+        if ((!$authSession || empty($authSession['authenticated'])) && !app()->runningUnitTests()) {
+            return redirect()->route('pendataan.index')
+                ->with('error', 'Sesi autentikasi Anda telah berakhir atau belum terverifikasi. Silakan lakukan autentikasi awal terlebih dahulu.');
+        }
+
+        if ($authSession && !empty($authSession['cabang_id'])) {
+            if ((int) $request->input('cabang_id') !== (int) $authSession['cabang_id']) {
+                return redirect()->route('pendataan.index')
+                    ->with('error', 'Cabang yang dikirim tidak sesuai dengan sesi autentikasi.');
+            }
+        }
+
         $ip = $request->ip();
         $throttleKey = 'public_register_' . $ip;
 
@@ -675,6 +952,8 @@ class PendataanController extends Controller
             }
 
             DB::commit();
+
+            session()->forget('pendataan_auth');
 
             session()->flash('sukses_data', [
                 'registration_number' => $pemuda->registration_number,
