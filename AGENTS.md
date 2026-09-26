@@ -1316,6 +1316,21 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-27 — Penyederhanaan Input Tanggal Lahir (Pilihan 3 Dropdown: Tanggal, Bulan, Tahun Maksimal 40 Tahun)
+
+- **Penyederhanaan Input Tanggal Lahir pada Autentikasi (`auth.blade.php`) & Formulir Pendataan (`form.blade.php`):**
+  - Mengganti pemilih tanggal native (`<input type="date">`) menjadi 3 komponen dropdown terstruktur dan user-friendly:
+    1. **Tanggal:** Angka 1 s/d 31 dengan penyesuaian otomatis terhadap jumlah hari dalam bulan/tahun kabisat (`adjustDaysInMonth`).
+    2. **Bulan:** Nama bulan dalam Bahasa Indonesia (`Januari` s/d `Desember`).
+    3. **Tahun:** Dibatasi maksimal 40 tahun dari tahun sekarang (`date('Y')` menurun hingga `date('Y') - 40`, misal 2026 s/d 1986).
+  - Ketiga nilai dropdown secara otomatis disinkronkan ke elemen hidden input `<input type="hidden" name="birth_date">` berformat standar ISO `YYYY-MM-DD`, menjaga kompatibilitas penuh dengan controller backend, validasi request, dan database.
+  - Nilai prefill (dari `old('birth_date')`, sesi autentikasi, maupun autofill pemuda/warga MTA) otomatis dipetakan ke dropdown Tanggal, Bulan, dan Tahun saat form dimuat atau saat data dipilih.
+- **Penambahan Label Jenis Kelamin (L/P) pada Sugesti Nama Autentikasi (`auth.blade.php`):**
+  - Pada daftar item sugesti nama autocomplete, ditambahkan badge dan label jenis kelamin **L/P** (Laki-laki berwarna biru, Perempuan berwarna merah muda) baik pada avatar lingkaran, samping nama lengkap, maupun keterangan di bawah nama (`Laki-laki (L)` / `Perempuan (P)`).
+  - Saat nama dipilih, kotak konfirmasi terpilih juga menampilkan kode jenis kelamin `[L]` atau `[P]` secara jelas.
+- **Pengujian & Jaminan Mutu:**
+  - Memperbarui `tests/Feature/PendataanAuthGateTest.php` untuk memvalidasi keberadaan 3 dropdown tanggal lahir (`birth_day`, `birth_month`, `birth_year`, `form_birth_day`, `form_birth_month`, `form_birth_year`) dan batas tahun 40 tahun mundur. Seluruh 79 test suite lulus 100%.
+
 ### 2026-09-26 — Implementasi Gerbang Autentikasi Awal Pendataan Pemuda (Anti Data Ganda & Proteksi Akses Formulir)
 
 - **Gerbang Autentikasi Awal Sebelum Akses Formulir Pendataan:**

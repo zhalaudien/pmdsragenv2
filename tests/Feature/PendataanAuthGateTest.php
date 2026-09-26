@@ -23,6 +23,10 @@ class PendataanAuthGateTest extends TestCase
         $response->assertSee('1. Cabang MTA Tempat Mengaji');
         $response->assertSee('2. Nama Lengkap');
         $response->assertSee('3. Tanggal Lahir');
+        $response->assertSee('id="birth_day"', false);
+        $response->assertSee('id="birth_month"', false);
+        $response->assertSee('id="birth_year"', false);
+        $response->assertSee((string) (date('Y') - 40));
         $response->assertSee('Masuk ke Formulir Pendataan');
     }
 
@@ -225,6 +229,9 @@ class PendataanAuthGateTest extends TestCase
         $response->assertSee($name);
         $response->assertSee($cabang->name);
         $response->assertSee('Mode: Pendaftaran Pemuda Baru');
+        $response->assertSee('id="form_birth_day"', false);
+        $response->assertSee('id="form_birth_month"', false);
+        $response->assertSee('id="form_birth_year"', false);
         $response->assertSee('Ganti Identitas / Keluar');
     }
 

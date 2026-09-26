@@ -225,29 +225,94 @@
                     </div>
                 </div>
 
-                <!-- 3. TANGGAL LAHIR -->
+                <!-- 3. TANGGAL LAHIR (TANGGAL, BULAN, TAHUN MAKSIMAL 40 TAHUN) -->
                 <div class="space-y-1.5 text-xs">
                     <div class="flex items-center justify-between mb-1">
                         <label class="block font-bold text-slate-800 uppercase tracking-wider text-[11px]">
                             3. Tanggal Lahir <span class="text-red-500">*</span>
                         </label>
-                        <span class="text-[11px] text-slate-500">Wajib diisi manual untuk verifikasi</span>
+                        <span class="text-[11px] text-slate-500">Pilih Tanggal, Bulan, dan Tahun</span>
                     </div>
 
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <i class="bi bi-calendar3 text-base"></i>
+                    @php
+                        $oldBirthDate = old('birth_date', '');
+                        $initDay   = '';
+                        $initMonth = '';
+                        $initYear  = '';
+                        if (!empty($oldBirthDate)) {
+                            $parts = explode('-', $oldBirthDate);
+                            if (count($parts) === 3) {
+                                $initYear  = $parts[0];
+                                $initMonth = str_pad($parts[1], 2, '0', STR_PAD_LEFT);
+                                $initDay   = str_pad($parts[2], 2, '0', STR_PAD_LEFT);
+                            }
+                        }
+                        $currentYear = (int) date('Y');
+                        $minYear     = $currentYear - 40;
+                        $monthList   = [
+                            '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                            '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                            '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                        ];
+                    @endphp
+
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                        <!-- TANGGAL -->
+                        <div>
+                            <label for="birth_day" class="block text-[11px] font-semibold text-slate-600 mb-1">Tanggal <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="birth_day" class="w-full py-3.5 px-3 rounded-2xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs appearance-none cursor-pointer">
+                                    <option value="">-- Tgl --</option>
+                                    @for($d = 1; $d <= 31; $d++)
+                                        @php $dVal = sprintf('%02d', $d); @endphp
+                                        <option value="{{ $dVal }}" {{ $initDay === $dVal ? 'selected' : '' }}>{{ $d }}</option>
+                                    @endfor
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-xs"></i>
+                                </div>
+                            </div>
                         </div>
-                        <input type="date" 
-                               name="birth_date" 
-                               id="input_birth_date" 
-                               value="{{ old('birth_date') }}" 
-                               required 
-                               class="w-full py-3.5 pl-10 pr-4 rounded-2xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-slate-800 transition shadow-2xs">
+
+                        <!-- BULAN -->
+                        <div>
+                            <label for="birth_month" class="block text-[11px] font-semibold text-slate-600 mb-1">Bulan <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="birth_month" class="w-full py-3.5 px-2.5 sm:px-3 rounded-2xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs appearance-none cursor-pointer">
+                                    <option value="">-- Bulan --</option>
+                                    @foreach($monthList as $mNum => $mName)
+                                        <option value="{{ $mNum }}" {{ $initMonth === $mNum ? 'selected' : '' }}>{{ $mName }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAHUN (Maksimal 40 tahun dari sekarang) -->
+                        <div>
+                            <label for="birth_year" class="block text-[11px] font-semibold text-slate-600 mb-1">Tahun <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="birth_year" class="w-full py-3.5 px-3 rounded-2xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs appearance-none cursor-pointer">
+                                    <option value="">-- Tahun --</option>
+                                    @for($y = $currentYear; $y >= $minYear; $y--)
+                                        <option value="{{ $y }}" {{ (string)$initYear === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Hidden input to submit birth_date as YYYY-MM-DD -->
+                    <input type="hidden" name="birth_date" id="input_birth_date" value="{{ $oldBirthDate }}" required>
+
                     <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
                         <i class="bi bi-shield-lock text-slate-400"></i>
-                        <span>Silakan masukkan tanggal lahir Anda secara manual sebagai verifikasi kecocokan identitas.</span>
+                        <span>Pilih tanggal, bulan, dan tahun kelahiran secara manual untuk verifikasi kecocokan identitas.</span>
                     </p>
                 </div>
 
@@ -299,6 +364,10 @@
 
         const inputName        = document.getElementById('input_name');
         const inputBirthDate   = document.getElementById('input_birth_date');
+        const birthDaySelect   = document.getElementById('birth_day');
+        const birthMonthSelect = document.getElementById('birth_month');
+        const birthYearSelect  = document.getElementById('birth_year');
+
         const nameHelper       = document.getElementById('name_helper_text');
         const searchSpinner    = document.getElementById('search_spinner');
         const dropdownList     = document.getElementById('autocomplete_dropdown');
@@ -499,23 +568,40 @@
                     const item = document.createElement('div');
                     item.className = 'px-4 py-3 hover:bg-red-50/70 cursor-pointer transition flex items-center justify-between group border-b border-slate-100 last:border-0';
 
+                    const isFemale = (p.gender === 'P');
+                    const genderCode = isFemale ? 'P' : 'L';
+                    const genderText = isFemale ? 'Perempuan (P)' : 'Laki-laki (L)';
+                    const genderBadgeClass = isFemale
+                        ? 'bg-rose-100 text-rose-700 border-rose-200'
+                        : 'bg-blue-100 text-blue-700 border-blue-200';
+                    const avatarBg = isFemale
+                        ? 'bg-rose-50 text-rose-600 group-hover:bg-rose-100'
+                        : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100';
+
                     const ageText = (p.age !== null && p.age !== undefined && p.age !== '')
                         ? `${escapeHtml(p.age_text || (p.age + ' tahun'))}`
                         : 'Umur belum tercatat';
 
                     item.innerHTML = `
                         <div class="flex items-center gap-3 min-w-0 pr-2">
-                            <span class="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-red-100 text-slate-500 group-hover:text-red-600 flex items-center justify-center flex-shrink-0 transition text-sm">
-                                <i class="bi bi-person-fill"></i>
+                            <span class="w-8 h-8 rounded-xl ${avatarBg} flex items-center justify-center flex-shrink-0 transition text-xs font-black">
+                                ${genderCode}
                             </span>
                             <div class="min-w-0">
-                                <div class="font-bold text-slate-900 group-hover:text-red-700 text-sm truncate">
-                                    ${escapeHtml(p.name)}
+                                <div class="font-bold text-slate-900 group-hover:text-red-700 text-sm truncate flex items-center gap-1.5">
+                                    <span>${escapeHtml(p.name)}</span>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black border ${genderBadgeClass}">
+                                        ${genderCode}
+                                    </span>
                                 </div>
-                                <div class="text-[11px] text-slate-500 mt-0.5">
+                                <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
                                     <span class="inline-flex items-center gap-1 font-medium text-slate-600">
                                         <i class="bi bi-hourglass-split text-red-500 text-[10px]"></i>
                                         <span>${ageText}</span>
+                                    </span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-[10px] font-semibold ${isFemale ? 'text-rose-600' : 'text-blue-600'}">
+                                        ${genderText}
                                     </span>
                                 </div>
                             </div>
@@ -571,6 +657,86 @@
             dropdownList.classList.remove('hidden');
         }
 
+        // Helper Sinkronisasi 3 Dropdown Tanggal Lahir (Tanggal, Bulan, Tahun)
+        function updateBirthDateFromDropdowns() {
+            adjustDaysInMonth();
+            const d = birthDaySelect.value;
+            const m = birthMonthSelect.value;
+            const y = birthYearSelect.value;
+
+            if (d && m && y) {
+                inputBirthDate.value = `${y}-${m}-${d}`;
+            } else {
+                inputBirthDate.value = '';
+            }
+        }
+
+        function adjustDaysInMonth() {
+            if (!birthMonthSelect || !birthYearSelect || !birthDaySelect) return;
+            const m = parseInt(birthMonthSelect.value, 10);
+            const y = parseInt(birthYearSelect.value, 10);
+            if (!m) return;
+
+            const year = y || 2024;
+            const daysInMonth = new Date(year, m, 0).getDate();
+
+            Array.from(birthDaySelect.options).forEach(opt => {
+                if (!opt.value) return;
+                const d = parseInt(opt.value, 10);
+                if (d > daysInMonth) {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+
+            if (parseInt(birthDaySelect.value, 10) > daysInMonth) {
+                birthDaySelect.value = String(daysInMonth).padStart(2, '0');
+            }
+        }
+
+        function syncDropdownsFromBirthDate(dateStr) {
+            if (!birthDaySelect || !birthMonthSelect || !birthYearSelect) return;
+            if (!dateStr) {
+                birthDaySelect.value   = '';
+                birthMonthSelect.value = '';
+                birthYearSelect.value  = '';
+                adjustDaysInMonth();
+                return;
+            }
+
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const y = parts[0];
+                const m = parts[1].padStart(2, '0');
+                const d = parts[2].padStart(2, '0');
+
+                if (birthYearSelect.querySelector(`option[value="${y}"]`)) {
+                    birthYearSelect.value = y;
+                }
+                if (birthMonthSelect.querySelector(`option[value="${m}"]`)) {
+                    birthMonthSelect.value = m;
+                }
+                adjustDaysInMonth();
+                if (birthDaySelect.querySelector(`option[value="${d}"]`)) {
+                    birthDaySelect.value = d;
+                }
+            }
+        }
+
+        if (birthDaySelect && birthMonthSelect && birthYearSelect) {
+            birthDaySelect.addEventListener('change', updateBirthDateFromDropdowns);
+            birthMonthSelect.addEventListener('change', updateBirthDateFromDropdowns);
+            birthYearSelect.addEventListener('change', updateBirthDateFromDropdowns);
+
+            // Inisialisasi awal jika ada nilai lama
+            if (inputBirthDate.value) {
+                syncDropdownsFromBirthDate(inputBirthDate.value);
+            }
+        }
+
         // 3. AKSI KETIKA MEMILIH DATA DARI SUGESTI
         function selectSuggestion(p) {
             dropdownList.classList.add('hidden');
@@ -578,6 +744,7 @@
 
             // PENTING: Tanggal lahir wajib diinput manual oleh pengguna (tidak diisi otomatis)
             inputBirthDate.value = '';
+            syncDropdownsFromBirthDate('');
 
             const isWarga = (p.source === 'warga_mta');
 
@@ -588,7 +755,7 @@
 
                 selectedBadgeDisp.className   = 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-900';
                 selectedBadgeDisp.innerHTML   = '<i class="bi bi-patch-check-fill mr-1"></i> Warga MTA Pusat';
-                selectedNoteDisp.textContent  = 'Nama terpilih. Silakan masukkan tanggal lahir Anda di bawah ini secara manual untuk verifikasi identitas.';
+                selectedNoteDisp.textContent  = 'Nama terpilih. Silakan pilih tanggal, bulan, dan tahun lahir Anda di bawah ini secara manual untuk verifikasi identitas.';
                 btnSubmitText.textContent     = 'Lanjutkan & Sinkronkan Data';
             } else {
                 selectedIdInput.value   = p.id || '';
@@ -597,16 +764,19 @@
 
                 selectedBadgeDisp.className   = 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-200 text-emerald-900';
                 selectedBadgeDisp.innerHTML   = '<i class="bi bi-person-check-fill mr-1"></i> Data Pemuda Terdaftar';
-                selectedNoteDisp.textContent  = 'Nama terpilih. Silakan masukkan tanggal lahir Anda di bawah ini secara manual untuk verifikasi identitas.';
+                selectedNoteDisp.textContent  = 'Nama terpilih. Silakan pilih tanggal, bulan, dan tahun lahir Anda di bawah ini secara manual untuk verifikasi identitas.';
                 btnSubmitText.textContent     = 'Lanjutkan & Perbarui Data Pemuda';
             }
 
+            const genderBadgeText = p.gender ? ` [${p.gender}]` : '';
             const ageLabel = (p.age !== null && p.age !== undefined && p.age !== '') ? ` (${p.age} th)` : '';
-            selectedNameDisp.textContent = p.name + ageLabel;
+            selectedNameDisp.textContent = p.name + genderBadgeText + ageLabel;
             selectedBox.classList.remove('hidden');
 
-            // Beri fokus ke input tanggal lahir agar user menginputkannya secara manual
-            inputBirthDate.focus();
+            // Beri fokus ke dropdown tanggal lahir agar user menginputkannya secara manual
+            if (birthDaySelect) {
+                birthDaySelect.focus();
+            }
         }
 
         function selectAsNew(query) {
@@ -614,7 +784,9 @@
             inputName.value = query;
             resetSelectedData(false);
             btnSubmitText.textContent = 'Lanjutkan & Daftar Pemuda Baru';
-            inputBirthDate.focus();
+            if (birthDaySelect) {
+                birthDaySelect.focus();
+            }
         }
 
         window.resetSelectedData = function (clearName = true) {
@@ -626,6 +798,7 @@
             if (clearName) {
                 inputName.value = '';
                 inputBirthDate.value = '';
+                syncDropdownsFromBirthDate('');
                 inputName.focus();
             }
         };
@@ -652,8 +825,14 @@
 
             if (!birthDate) {
                 e.preventDefault();
-                alert('Silakan tentukan atau periksa tanggal lahir Anda.');
-                inputBirthDate.focus();
+                alert('Silakan pilih tanggal, bulan, dan tahun lahir Anda secara lengkap.');
+                if (!birthDaySelect.value) {
+                    birthDaySelect.focus();
+                } else if (!birthMonthSelect.value) {
+                    birthMonthSelect.focus();
+                } else {
+                    birthYearSelect.focus();
+                }
                 return;
             }
 

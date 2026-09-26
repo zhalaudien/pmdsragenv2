@@ -296,7 +296,73 @@
                                 <i class="bi bi-shield-check"></i> Terverifikasi
                             </span>
                         </div>
-                        <input type="date" name="birth_date" id="input_birth_date" value="{{ old('birth_date', $authSession['birth_date'] ?? '') }}" readonly required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-slate-100 text-slate-800 text-sm font-semibold cursor-not-allowed shadow-sm">
+
+                        @php
+                            $formBirthDate = old('birth_date', $authSession['birth_date'] ?? ($existingPemudaData['birth_date'] ?? ''));
+                            $fDay   = '';
+                            $fMonth = '';
+                            $fYear  = '';
+                            if (!empty($formBirthDate)) {
+                                $fParts = explode('-', $formBirthDate);
+                                if (count($fParts) === 3) {
+                                    $fYear  = $fParts[0];
+                                    $fMonth = str_pad($fParts[1], 2, '0', STR_PAD_LEFT);
+                                    $fDay   = str_pad($fParts[2], 2, '0', STR_PAD_LEFT);
+                                }
+                            }
+                            $cYear   = (int) date('Y');
+                            $mYear   = $cYear - 40;
+                            $mMonths = [
+                                '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                                '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                                '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+                            <!-- TANGGAL -->
+                            <div class="relative">
+                                <select id="form_birth_day" class="w-full py-2.5 px-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-medium shadow-sm appearance-none cursor-pointer">
+                                    <option value="">Tgl</option>
+                                    @for($d = 1; $d <= 31; $d++)
+                                        @php $dVal = sprintf('%02d', $d); @endphp
+                                        <option value="{{ $dVal }}" {{ $fDay === $dVal ? 'selected' : '' }}>{{ $d }}</option>
+                                    @endfor
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+
+                            <!-- BULAN -->
+                            <div class="relative">
+                                <select id="form_birth_month" class="w-full py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-medium shadow-sm appearance-none cursor-pointer">
+                                    <option value="">Bulan</option>
+                                    @foreach($mMonths as $mNum => $mName)
+                                        <option value="{{ $mNum }}" {{ $fMonth === $mNum ? 'selected' : '' }}>{{ $mName }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+
+                            <!-- TAHUN (MAKSIMAL 40 TH DARI SEKARANG) -->
+                            <div class="relative">
+                                <select id="form_birth_year" class="w-full py-2.5 px-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs sm:text-sm font-medium shadow-sm appearance-none cursor-pointer">
+                                    <option value="">Tahun</option>
+                                    @for($y = $cYear; $y >= $mYear; $y--)
+                                        <option value="{{ $y }}" {{ (string)$fYear === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+                                    <i class="bi bi-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden input to submit birth_date as YYYY-MM-DD -->
+                        <input type="hidden" name="birth_date" id="input_birth_date" value="{{ $formBirthDate }}" required>
                     </div>
 
                     <div>
@@ -846,6 +912,90 @@
     const stepAlertBox       = document.getElementById('step_alert_box');
     const stepAlertMsg       = document.getElementById('step_alert_message');
 
+    // Dropdown Tanggal Lahir (Tanggal, Bulan, Tahun Maksimal 40 Tahun)
+    const formBirthDay       = document.getElementById('form_birth_day');
+    const formBirthMonth     = document.getElementById('form_birth_month');
+    const formBirthYear      = document.getElementById('form_birth_year');
+    const inputBirthDate     = document.getElementById('input_birth_date');
+
+    function updateFormBirthDateFromDropdowns() {
+        adjustFormDaysInMonth();
+        const d = formBirthDay ? formBirthDay.value : '';
+        const m = formBirthMonth ? formBirthMonth.value : '';
+        const y = formBirthYear ? formBirthYear.value : '';
+
+        if (d && m && y && inputBirthDate) {
+            inputBirthDate.value = `${y}-${m}-${d}`;
+        } else if (inputBirthDate) {
+            inputBirthDate.value = '';
+        }
+    }
+
+    function adjustFormDaysInMonth() {
+        if (!formBirthMonth || !formBirthYear || !formBirthDay) return;
+        const m = parseInt(formBirthMonth.value, 10);
+        const y = parseInt(formBirthYear.value, 10);
+        if (!m) return;
+
+        const year = y || 2024;
+        const daysInMonth = new Date(year, m, 0).getDate();
+
+        Array.from(formBirthDay.options).forEach(opt => {
+            if (!opt.value) return;
+            const d = parseInt(opt.value, 10);
+            if (d > daysInMonth) {
+                opt.hidden = true;
+                opt.disabled = true;
+            } else {
+                opt.hidden = false;
+                opt.disabled = false;
+            }
+        });
+
+        if (parseInt(formBirthDay.value, 10) > daysInMonth) {
+            formBirthDay.value = String(daysInMonth).padStart(2, '0');
+        }
+    }
+
+    function syncFormDropdownsFromBirthDate(dateStr) {
+        if (!formBirthDay || !formBirthMonth || !formBirthYear) return;
+        if (!dateStr) {
+            formBirthDay.value   = '';
+            formBirthMonth.value = '';
+            formBirthYear.value  = '';
+            adjustFormDaysInMonth();
+            return;
+        }
+
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const y = parts[0];
+            const m = parts[1].padStart(2, '0');
+            const d = parts[2].padStart(2, '0');
+
+            if (formBirthYear.querySelector(`option[value="${y}"]`)) {
+                formBirthYear.value = y;
+            }
+            if (formBirthMonth.querySelector(`option[value="${m}"]`)) {
+                formBirthMonth.value = m;
+            }
+            adjustFormDaysInMonth();
+            if (formBirthDay.querySelector(`option[value="${d}"]`)) {
+                formBirthDay.value = d;
+            }
+        }
+    }
+
+    if (formBirthDay && formBirthMonth && formBirthYear) {
+        formBirthDay.addEventListener('change', updateFormBirthDateFromDropdowns);
+        formBirthMonth.addEventListener('change', updateFormBirthDateFromDropdowns);
+        formBirthYear.addEventListener('change', updateFormBirthDateFromDropdowns);
+
+        if (inputBirthDate && inputBirthDate.value) {
+            syncFormDropdownsFromBirthDate(inputBirthDate.value);
+        }
+    }
+
     // 1. ALERT NOTIFICATIONS
     function showStepAlert(message) {
         if (stepAlertBox && stepAlertMsg) {
@@ -1190,6 +1340,7 @@
         document.getElementById('input_gender').value = p.gender || 'L';
         document.getElementById('input_birth_place').value = p.birth_place || '';
         document.getElementById('input_birth_date').value = p.birth_date || '';
+        syncFormDropdownsFromBirthDate(p.birth_date || '');
         document.getElementById('input_marital_status').value = p.marital_status || 'belum_menikah';
         document.getElementById('input_blood_type').value = p.blood_type || 'tidak_tahu';
         document.getElementById('input_phone').value = p.phone || '';
@@ -1353,7 +1504,10 @@
         inputName.value = w.name || '';
         document.getElementById('input_gender').value = w.gender || 'L';
         if (w.birth_place) document.getElementById('input_birth_place').value = w.birth_place;
-        if (w.birth_date) document.getElementById('input_birth_date').value = w.birth_date;
+        if (w.birth_date) {
+            document.getElementById('input_birth_date').value = w.birth_date;
+            syncFormDropdownsFromBirthDate(w.birth_date);
+        }
         if (w.marital_status) document.getElementById('input_marital_status').value = w.marital_status;
         if (w.blood_type) document.getElementById('input_blood_type').value = w.blood_type;
         if (w.phone) document.getElementById('input_phone').value = w.phone;
@@ -1805,9 +1959,15 @@
                 return false;
             }
             const birthDate = document.getElementById('input_birth_date');
-            if (!birthDate.value) {
-                showStepAlert('Silakan isi Tanggal Lahir Anda.');
-                birthDate.focus();
+            if (!birthDate || !birthDate.value) {
+                showStepAlert('Silakan pilih Tanggal Lahir Anda secara lengkap (Tanggal, Bulan, dan Tahun).');
+                if (formBirthDay && !formBirthDay.value) {
+                    formBirthDay.focus();
+                } else if (formBirthMonth && !formBirthMonth.value) {
+                    formBirthMonth.focus();
+                } else if (formBirthYear) {
+                    formBirthYear.focus();
+                }
                 return false;
             }
             const phone = document.getElementById('input_phone');
