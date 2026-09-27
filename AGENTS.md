@@ -1316,6 +1316,38 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-27 — Pembaruan & Pelengkapan Data Alamat Kabupaten Sragen (20 Kecamatan & 208 Kelurahan/Desa)
+
+- **Pelengkapan Data Master Regional Kabupaten Sragen (Kode Wilayah 3314):**
+  - Memperbarui dan melengkapi seluruh data kelurahan dan desa di Kabupaten Sragen sesuai data resmi Kemendagri & BPS: **20 Kecamatan, 12 Kelurahan, dan 196 Desa (total 208 Kelurahan/Desa)**.
+  - Memperbaiki data kelurahan/desa yang sebelumnya hilang, tidak lengkap, salah penempatan kecamatan, atau berupa duplikasi nama kecamatan:
+    1. **Kecamatan Sragen (8):** Menambahkan desa *Kedungupit* yang sebelumnya belum terdaftar; memindahkan kelurahan *Kroyo* ke Kecamatan Karangmalang tempat semestinya.
+    2. **Kecamatan Karangmalang (10):** Menambahkan *Kroyo* (Kelurahan) dan *Plosokerep* (Desa); membersihkan data spurious (*Kujon*, *Ngringkwit*).
+    3. **Kecamatan Gemolong (14):** Menambahkan *Geneng Duwur*, *Kalangan*, dan *Tegaldowo*; membersihkan *Kalenan*.
+    4. **Kecamatan Kalijambe (14):** Menambahkan 6 desa lengkap (*Jetiskarangpung*, *Kalimacan*, *Keden*, *Ngebung*, *Samberembe*, *Tegalombo*); membersihkan placeholder nama kecamatan & dukuh.
+    5. **Kecamatan Plupuh (16):** Menambahkan 5 desa lengkap (*Cangkol*, *Jembangan*, *Karungan*, *Pungsari*, *Sidokerto*); membersihkan entri non-desa.
+    6. **Kecamatan Masaran (13):** Menambahkan desa *Jirapan* dan *Krikilan*.
+    7. **Kecamatan Kedawung (10):** Menambahkan desa *Jenggrik* dan *Mojodoyong*; membersihkan entri dukuh *Jatimulyo*.
+    8. **Kecamatan Sambirejo (9):** Menambahkan desa *Kadipiro* dan *Sambi*.
+    9. **Kecamatan Gondang (9):** Menambahkan desa *Bumiaji* dan *Srimulyo*; membersihkan entri *Banyurip* yang keliru.
+    10. **Kecamatan Sambungmacan (9):** Menambahkan desa *Banyuurip*.
+    11. **Kecamatan Ngrampal (8):** Menambahkan desa *Bandung*; membersihkan entri placeholder nama kecamatan.
+    12. **Kecamatan Tanon (16):** Menambahkan 4 desa lengkap (*Gabugan*, *Gawan*, *Jono*, *Kecik*); membersihkan entri dukuh *Gentan*.
+    13. **Kecamatan Sumberlawang (11):** Menstandarkan *Tlogotirto*; membersihkan placeholder nama kecamatan.
+    14. **Kecamatan Mondokan (9):** Menambahkan desa *Jambangan* dan *Jekani*; membersihkan placeholder nama kecamatan.
+    15. **Kecamatan Sukodono (9):** Menstandarkan 9 desa resmi; membersihkan placeholder nama kecamatan.
+    16. **Kecamatan Gesi (7):** Menambahkan desa *Pilangsari*.
+    17. **Kecamatan Tangen (7):** Menempatkan desa *Jekawal*; membersihkan placeholder nama kecamatan.
+    18. **Kecamatan Jenar (7):** Memverifikasi 7 desa resmi secara akurat.
+    19. **Kecamatan Miri (10):** Menambahkan desa *Gilirejo* dan *Gilirejo Baru*; membersihkan placeholder nama kecamatan.
+    20. **Kecamatan Sidoharjo (12):** Memverifikasi 12 desa lengkap.
+  - **Integritas Relasi Database & Keamanan Data:**
+    - Seluruh 734 data alamat pemuda existing tetap terjaga 100% utuh tanpa ada foreign key yang putus (*0 broken references*).
+    - Dibuatkan migrasi khusus `2026_09_27_210000_update_sragen_complete_villages_data.php` dan seeder `RegionalSeeder.php` diperbarui agar sinkronisasi data konsisten di seluruh deployment.
+- **Pengujian & Verifikasi:**
+  - Endpoint API `api/villages/{districtId}` dan `admin/ajax/villages/{districtId}` berjalan lancar merespons seluruh daftar desa/kelurahan per kecamatan secara lengkap.
+  - Seluruh test suite otomatis (79 tests, 576 assertions) lulus 100%.
+
 ### 2026-09-27 — Penyederhanaan Input Tanggal Lahir (Pilihan 3 Dropdown: Tanggal, Bulan, Tahun Maksimal 40 Tahun)
 
 - **Penyederhanaan Input Tanggal Lahir pada Autentikasi (`auth.blade.php`) & Formulir Pendataan (`form.blade.php`):**

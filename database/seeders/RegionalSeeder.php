@@ -52,38 +52,36 @@ class RegionalSeeder extends Seeder
             );
         }
 
-        // 4. Villages
+        // 4. Villages (Total 208: 12 Kelurahan & 196 Desa)
         $sragenVillages = [
-            1 => ["Sragen Wetan", "Sragen Kulon", "Sragen Tengah", "Nglorog", "Sine", "Karangtengah", "Kroyo", "Tangkil"],
-            2 => ["Kujon", "Plumbungan", "Puro", "Saradan", "Guworejo", "Mojorejo", "Jurangjero", "Pelemgadung", "Kedungwaduk", "Ngringkwit"],
-            3 => ["Sidoharjo", "Jetak", "Purwosuman", "Patihan", "Bentak", "Duyungan", "Sribit", "Taraman", "Tenggak", "Jambanan", "Pandak", "Singopadu"],
-            4 => ["Gemolong", "Kwangen", "Ngembatpadas", "Kragilan", "Jenalas", "Kaloran", "Purworejo", "Peleman", "Brangkal", "Tlogotirto", "Jatibatur", "Nganti", "Kalenan"],
-            5 => ["Kalijambe", "Banaran", "Donoyudan", "Krikilan", "Ngetal", "Saren", "Tegaldowo", "Trobayan", "Wonorejo", "Bukuran", "Karangjati"],
-            6 => ["Plupuh", "Dari", "Gedongan", "Gentanbanaran", "Jabung", "Karanganyar", "Karangwaru", "Krikil", "Manyarejo", "Ngrombo", "Padas", "Sambirejo", "Somomorodukuh"],
-            7 => ["Masaran", "Dawungan", "Gebang", "Jati", "Karangmalang", "Kliwonan", "Krebet", "Pilang", "Pringanom", "Sepat", "Sidodadi"],
-            8 => ["Kedawung", "Bendungan", "Celep", "Jatimulyo", "Karangpelem", "Mojokerto", "Pengkok", "Wonokerso", "Wonorejo"],
-            9 => ["Sambirejo", "Blimbing", "Dawung", "Jambeyan", "Jetis", "Musuk", "Sukorejo"],
-            10 => ["Gondang", "Banyurip", "Glonggong", "Kaliwedi", "Plosorejo", "Tegalrejo", "Tunggul", "Wonotolo"],
-            11 => ["Sambungmacan", "Banaran", "Bedoro", "Cemeng", "Gringging", "Karanganyar", "Plumbon", "Toyogo"],
-            12 => ["Ngrampal", "Bener", "Gabus", "Karangudi", "Kebonromo", "Klandungan", "Pilangsari", "Ngarum"],
-            13 => ["Tanon", "Bonagung", "Gading", "Gentan", "Kalikobok", "Karangtalun", "Karangasem", "Ketro", "Padas", "Pengkol", "Sambiduwur", "Slogo", "Suwatu"],
-            14 => ["Sumberlawang", "Cepoko", "Hadiluwih", "Jati", "Kacangan", "Mojopuro", "Ngandul", "Ngargosari", "Ngargotirto", "Pagak", "Pendem", "Tlogorejo"],
-            15 => ["Mondokan", "Gemantar", "Jekawal", "Kedawung", "Pare", "Sono", "Sumberejo", "Tempelrejo", "Trombol"],
-            16 => ["Sukodono", "Baleharjo", "Bendo", "Gebang", "Jatitengah", "Juwok", "Karang Anom", "Majenang", "Newung", "Pantirejo"],
-            17 => ["Gesi", "Blangu", "Poleng", "Slendro", "Srawung", "Tanggan"],
-            18 => ["Tangen", "Denanyar", "Dukuh", "Galeh", "Katelan", "Ngrombo", "Sigit"],
-            19 => ["Jenar", "Banyurip", "Dawung", "Japoh", "Kandangsapi", "Mlale", "Ngepringan"],
-            20 => ["Miri", "Bagor", "Doyong", "Geneng", "Girimargo", "Jeruk", "Soko", "Sunggingan", "Brojol"],
+            1 => ['Sragen Wetan', 'Sragen Kulon', 'Sragen Tengah', 'Nglorog', 'Sine', 'Karangtengah', 'Tangkil', 'Kedungupit'],
+            2 => ['Kroyo', 'Plumbungan', 'Guworejo', 'Jurangjero', 'Kedungwaduk', 'Mojorejo', 'Pelemgadung', 'Plosokerep', 'Puro', 'Saradan'],
+            3 => ['Sidoharjo', 'Jetak', 'Purwosuman', 'Patihan', 'Bentak', 'Duyungan', 'Sribit', 'Taraman', 'Tenggak', 'Jambanan', 'Pandak', 'Singopadu'],
+            4 => ['Gemolong', 'Kwangen', 'Ngembatpadas', 'Kragilan', 'Jenalas', 'Kaloran', 'Purworejo', 'Peleman', 'Brangkal', 'Jatibatur', 'Nganti', 'Geneng Duwur', 'Kalangan', 'Tegaldowo'],
+            5 => ['Banaran', 'Bukuran', 'Donoyudan', 'Jetiskarangpung', 'Kalimacan', 'Karangjati', 'Keden', 'Krikilan', 'Ngebung', 'Samberembe', 'Saren', 'Tegalombo', 'Trobayan', 'Wonorejo'],
+            6 => ['Cangkol', 'Dari', 'Gedongan', 'Gentanbanaran', 'Jabung', 'Jembangan', 'Karanganyar', 'Karangwaru', 'Karungan', 'Manyarejo', 'Ngrombo', 'Plupuh', 'Pungsari', 'Sambirejo', 'Sidokerto', 'Somomorodukuh'],
+            7 => ['Masaran', 'Dawungan', 'Gebang', 'Jati', 'Jirapan', 'Karangmalang', 'Kliwonan', 'Krebet', 'Krikilan', 'Pilang', 'Pringanom', 'Sepat', 'Sidodadi'],
+            8 => ['Kedawung', 'Bendungan', 'Celep', 'Jenggrik', 'Karangpelem', 'Mojodoyong', 'Mojokerto', 'Pengkok', 'Wonokerso', 'Wonorejo'],
+            9 => ['Sambirejo', 'Blimbing', 'Dawung', 'Jambeyan', 'Jetis', 'Kadipiro', 'Musuk', 'Sambi', 'Sukorejo'],
+            10 => ['Gondang', 'Bumiaji', 'Glonggong', 'Kaliwedi', 'Plosorejo', 'Srimulyo', 'Tegalrejo', 'Tunggul', 'Wonotolo'],
+            11 => ['Sambungmacan', 'Banaran', 'Banyuurip', 'Bedoro', 'Cemeng', 'Gringging', 'Karanganyar', 'Plumbon', 'Toyogo'],
+            12 => ['Bandung', 'Bener', 'Gabus', 'Karangudi', 'Kebonromo', 'Klandungan', 'Ngarum', 'Pilangsari'],
+            13 => ['Tanon', 'Bonagung', 'Gabugan', 'Gading', 'Gawan', 'Jono', 'Kalikobok', 'Karangtalun', 'Karangasem', 'Kecik', 'Ketro', 'Padas', 'Pengkol', 'Sambiduwur', 'Slogo', 'Suwatu'],
+            14 => ['Cepoko', 'Hadiluwih', 'Jati', 'Kacangan', 'Mojopuro', 'Ngandul', 'Ngargosari', 'Ngargotirto', 'Pagak', 'Pendem', 'Tlogotirto'],
+            15 => ['Gemantar', 'Jambangan', 'Jekani', 'Kedawung', 'Pare', 'Sono', 'Sumberejo', 'Tempelrejo', 'Trombol'],
+            16 => ['Baleharjo', 'Bendo', 'Gebang', 'Jatitengah', 'Juwok', 'Karang Anom', 'Majenang', 'Newung', 'Pantirejo'],
+            17 => ['Gesi', 'Blangu', 'Pilangsari', 'Poleng', 'Slendro', 'Srawung', 'Tanggan'],
+            18 => ['Denanyar', 'Dukuh', 'Galeh', 'Jekawal', 'Katelan', 'Ngrombo', 'Sigit'],
+            19 => ['Jenar', 'Banyuurip', 'Dawung', 'Japoh', 'Kandangsapi', 'Mlale', 'Ngepringan'],
+            20 => ['Bagor', 'Brojol', 'Doyong', 'Geneng', 'Gilirejo', 'Gilirejo Baru', 'Girimargo', 'Jeruk', 'Soko', 'Sunggingan'],
         ];
 
-        $villageId = 1;
         foreach ($sragenVillages as $districtId => $villages) {
             foreach ($villages as $villageName) {
                 DB::table('villages')->updateOrInsert(
-                    ['id' => $villageId],
-                    ['district_id' => $districtId, 'name' => $villageName]
+                    ['district_id' => $districtId, 'name' => $villageName],
+                    []
                 );
-                $villageId++;
             }
         }
     }
