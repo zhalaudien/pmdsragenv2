@@ -590,6 +590,118 @@ class PendataanFlowTest extends TestCase
         $interestsData = collect($getRes->json('data.interests_data'))->pluck('name')->toArray();
         $this->assertContains(ucwords($customInterest1), $interestsData);
     }
+
+    public function test_submit_form_without_address_detail_succeeds(): void
+    {
+        $cabang = Cabang::first();
+        $eduLevel = EducationLevel::first() ?? EducationLevel::create(['name' => 'SMA/SMK', 'level_order' => 1]);
+        $jobStatus = JobStatus::first() ?? JobStatus::create(['name' => 'Karyawan Swasta']);
+        $district = \App\Models\District::first();
+        $village = \App\Models\Village::where('district_id', $district->id)->first();
+
+        $name = 'Pemuda Tanpa Alamat Detail ' . uniqid();
+        $birthDate = '2001-05-15';
+
+        // Establish session through auth gate
+        $authResponse = $this->post('/pendataan/auth', [
+            'cabang_id'  => $cabang->id,
+            'name'       => $name,
+            'birth_date' => $birthDate,
+        ]);
+        $authResponse->assertRedirect('/pendataan/form');
+
+        $payload = [
+            'cabang_id'          => $cabang->id,
+            'name'               => $name,
+            'gender'             => 'P',
+            'marital_status'     => 'belum_menikah',
+            'blood_type'         => 'B',
+            'birth_place'        => 'Sragen',
+            'birth_date'         => $birthDate,
+            'phone'              => '082199887766',
+            'email'              => 'noaddress@example.com',
+            'district_id'        => $district->id,
+            'village_id'         => $village->id,
+            'address_detail'     => '', // Submitted empty
+            'education_level_id' => $eduLevel->id,
+            'school_name'        => 'SMAN 2 Sragen',
+            'education_status'   => 'lulus',
+            'job_status_id'      => $jobStatus->id,
+        ];
+
+        $response = $this->from('/pendataan')->post('/pendataan/simpan', $payload);
+        $response->assertRedirect('/pendataan/sukses');
+
+        $created = Pemuda::where('name', $name)->where('cabang_id', $cabang->id)->first();
+        $this->assertNotNull($created);
+        $this->assertNotNull($created->alamat);
+        $this->assertNull($created->alamat->address_detail);
+    }
+
+    public function test_submit_form_with_wirausaha_fields_persists_successfully(): void
+    {
+        $cabang = Cabang::first();
+        $eduLevel = EducationLevel::first() ?? EducationLevel::create(['name' => 'SMA/SMK', 'level_order' => 1]);
+        $wirausahaStatus = JobStatus::where('name', 'LIKE', '%Wirausaha%')->first();
+        if (!$wirausahaStatus) {
+            $wirausahaStatus = JobStatus::create(['name' => 'Wirausaha / Pemilik Usaha']);
+        }
+        $district = \App\Models\District::first();
+        $village = \App\Models\Village::where('district_id', $district->id)->first();
+
+        $name = 'Pemuda Pengusaha ' . uniqid();
+        $birthDate = '1998-08-17';
+
+        $authResponse = $this->post('/pendataan/auth', [
+            'cabang_id'  => $cabang->id,
+            'name'       => $name,
+            'birth_date' => $birthDate,
+        ]);
+        $authResponse->assertRedirect('/pendataan/form');
+
+        $payload = [
+            'cabang_id'          => $cabang->id,
+            'name'               => $name,
+            'gender'             => 'P',
+            'marital_status'     => 'belum_menikah',
+            'blood_type'         => 'O',
+            'birth_place'        => 'Sragen',
+            'birth_date'         => $birthDate,
+            'phone'              => '081299887766',
+            'email'              => 'pengusaha@example.com',
+            'district_id'        => $district->id,
+            'village_id'         => $village->id,
+            'education_level_id' => $eduLevel->id,
+            'school_name'        => 'Universitas Sebelas Maret',
+            'education_status'   => 'lulus',
+            'job_status_id'      => $wirausahaStatus->id,
+            'job_title'          => 'Owner / Pengusaha',
+            'business_field'     => 'Kuliner Nusantara',
+            'business_name'      => 'Ayam Bakar Barokah',
+            'business_social'    => 'WA 081299887766, IG @ayambakarbarokah',
+            'business_address'   => 'Jl. Raya Sukowati No. 88, Sragen Kulon',
+            'business_maps_url'  => 'https://maps.app.goo.gl/sample123',
+        ];
+
+        $response = $this->from('/pendataan')->post('/pendataan/simpan', $payload);
+        $response->assertRedirect('/pendataan/sukses');
+
+        $created = Pemuda::where('name', $name)->where('cabang_id', $cabang->id)->first();
+        $this->assertNotNull($created);
+        $this->assertNotNull($created->pekerjaan);
+        $this->assertEquals($wirausahaStatus->id, $created->pekerjaan->job_status_id);
+        $this->assertEquals('Kuliner Nusantara', $created->pekerjaan->business_field);
+        $this->assertEquals('Ayam Bakar Barokah', $created->pekerjaan->business_name);
+        $this->assertEquals('WA 081299887766, IG @ayambakarbarokah', $created->pekerjaan->business_social);
+        $this->assertEquals('Jl. Raya Sukowati No. 88, Sragen Kulon', $created->pekerjaan->business_address);
+        $this->assertEquals('https://maps.app.goo.gl/sample123', $created->pekerjaan->business_maps_url);
+
+        // Verify get-pemuda returns business_maps_url
+        $getRes = $this->getJson("/pendataan/get-pemuda/{$created->id}?cabang_id={$cabang->id}");
+        $getRes->assertStatus(200);
+        $this->assertEquals('https://maps.app.goo.gl/sample123', $getRes->json('data.pekerjaan.business_maps_url'));
+        $this->assertEquals('Kuliner Nusantara', $getRes->json('data.pekerjaan.business_field'));
+    }
 }
 
 

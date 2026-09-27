@@ -245,8 +245,9 @@ class PendataanController extends Controller
                         'business_field'   => $pemuda->pekerjaan?->business_field,
                         'business_name'    => $pemuda->pekerjaan?->business_name,
                         'business_address' => $pemuda->pekerjaan?->business_address,
-                        'business_contact' => $pemuda->pekerjaan?->business_contact,
-                        'business_social'  => $pemuda->pekerjaan?->business_social,
+                        'business_contact'  => $pemuda->pekerjaan?->business_contact,
+                        'business_social'   => $pemuda->pekerjaan?->business_social,
+                        'business_maps_url' => $pemuda->pekerjaan?->business_maps_url,
                     ],
                     'organisasi'          => $pemuda->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
                     'organizations'       => $pemuda->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
@@ -265,7 +266,8 @@ class PendataanController extends Controller
         $jobStatuses       = JobStatus::orderBy('id', 'ASC')->get();
         $skills            = Skill::orderBy('name', 'ASC')->get();
         $interests         = Interest::orderBy('name', 'ASC')->get();
-        $districts         = \App\Models\District::where('regency_id', 3314)->orderBy('name', 'ASC')->get();
+        $regencies         = \App\Models\Regency::whereIn('id', [3314, 3313])->orderByRaw('CASE WHEN id = 3314 THEN 0 ELSE 1 END')->get();
+        $districts         = \App\Models\District::whereIn('regency_id', [3314, 3313])->orderBy('name', 'ASC')->get();
         $defaultOrgs       = ['SATGAS', 'BANKOM', 'SAR MTA', 'TIM PARKIR', 'ELFATA', 'TIM IKHROM'];
         $customOrgs        = Organisasi::select('organization_name')
             ->distinct()
@@ -282,6 +284,7 @@ class PendataanController extends Controller
             'existingPemudaData' => $existingPemudaData,
             'wilayahList'        => $wilayahWithCabang,
             'cabangList'         => $cabangList,
+            'regencies'          => $regencies,
             'districts'          => $districts,
             'educationLevels'    => $educationLevels,
             'jobStatuses'        => $jobStatuses,
@@ -486,15 +489,17 @@ class PendataanController extends Controller
         // Gunakan MtaSyncService helper untuk matching yang konsisten
         $syncService = new \App\Services\MtaSyncService($apiService);
 
-        // Cari pencocokan kecamatan & desa Sragen jika ada
+        // Cari pencocokan kecamatan & desa (Sragen & Karanganyar) jika ada
+        $regencyId  = 3314;
         $districtId = null;
         $villageId  = null;
         if (!empty($w['kecamatan'])) {
             $cleanKec = trim(str_replace('Kec.', '', $w['kecamatan']));
-            $dist = \App\Models\District::where('regency_id', 3314)
+            $dist = \App\Models\District::whereIn('regency_id', [3314, 3313])
                 ->where('name', 'LIKE', '%' . $cleanKec . '%')
                 ->first();
             if ($dist) {
+                $regencyId  = $dist->regency_id;
                 $districtId = $dist->id;
                 if (!empty($w['desa'])) {
                     $cleanDesa = trim(str_replace(['Desa', 'Kel.', 'Kelurahan'], '', $w['desa']));
@@ -530,6 +535,7 @@ class PendataanController extends Controller
                 'marital_status' => $marital,
                 'blood_type'     => $bloodType,
                 'alamat'         => [
+                    'regency_id'     => $regencyId,
                     'district_id'    => $districtId,
                     'village_id'     => $villageId,
                     'dusun'          => $w['desa'] ?? ($w['alamat'] ?? null),
@@ -587,6 +593,7 @@ class PendataanController extends Controller
                 'email'              => $p->email,
                 'foto'               => $p->foto ? asset('uploads/pemuda/' . $p->foto) : null,
                 'alamat'             => [
+                    'regency_id'     => $p->alamat?->regency_id ?: ($p->alamat?->district?->regency_id ?? 3314),
                     'district_id'    => $p->alamat?->district_id,
                     'village_id'     => $p->alamat?->village_id,
                     'dusun'          => $p->alamat?->dusun,
@@ -608,8 +615,9 @@ class PendataanController extends Controller
                     'business_field'   => $p->pekerjaan?->business_field,
                     'business_name'    => $p->pekerjaan?->business_name,
                     'business_address' => $p->pekerjaan?->business_address,
-                    'business_contact' => $p->pekerjaan?->business_contact,
-                    'business_social'  => $p->pekerjaan?->business_social,
+                    'business_contact'  => $p->pekerjaan?->business_contact,
+                    'business_social'   => $p->pekerjaan?->business_social,
+                    'business_maps_url' => $p->pekerjaan?->business_maps_url,
                 ],
                 'organisasi'         => $p->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
                 'organizations'      => $p->organisasi->pluck('organization_name')->map(fn($o) => strtoupper($o))->values()->toArray(),
@@ -657,9 +665,10 @@ class PendataanController extends Controller
             'birth_date'         => 'required|date',
             'phone'              => 'required|min:9|max:20',
             'email'              => 'nullable|email|max:100',
+            'regency_id'         => 'nullable|integer',
             'district_id'        => 'required|integer',
             'village_id'         => 'required|integer',
-            'address_detail'     => 'required|min:5',
+            'address_detail'     => 'nullable|string|max:500',
             'education_level_id' => 'required|integer',
             'school_name'        => 'required|min:3|max:150',
             'education_status'   => 'required|in:sedang_sekolah,lulus,putus_sekolah',
@@ -667,8 +676,9 @@ class PendataanController extends Controller
             'business_name'      => 'nullable|max:150',
             'business_field'     => 'nullable|max:150',
             'business_address'   => 'nullable|max:500',
-            'business_contact'   => 'nullable|max:50',
+            'business_contact'   => 'nullable|max:100',
             'business_social'    => 'nullable|max:255',
+            'business_maps_url'  => 'nullable|max:500',
             'foto'               => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
         ];
 
@@ -779,17 +789,20 @@ class PendataanController extends Controller
             }
 
             // 2. Alamat
+            $district = \App\Models\District::find((int) $request->input('district_id'));
+            $regencyId = $district ? $district->regency_id : ((int) $request->input('regency_id') ?: 3314);
+
             Alamat::updateOrCreate(
                 ['pemuda_id' => $pemudaId],
                 [
                     'province_id'    => 33, // Jawa Tengah
-                    'regency_id'     => 3314, // Sragen
+                    'regency_id'     => $regencyId,
                     'district_id'    => (int) $request->input('district_id'),
                     'village_id'     => (int) $request->input('village_id'),
                     'dusun'          => $request->input('dusun') ?: null,
                     'rt'             => $request->input('rt') ?: null,
                     'rw'             => $request->input('rw') ?: null,
-                    'address_detail' => $request->input('address_detail'),
+                    'address_detail' => $request->input('address_detail') ?: null,
                 ]
             );
 
@@ -815,8 +828,9 @@ class PendataanController extends Controller
                     'business_field'   => $request->input('business_field') ?: null,
                     'business_name'    => $request->input('business_name') ?: null,
                     'business_address' => $request->input('business_address') ?: null,
-                    'business_contact' => $request->input('business_contact') ?: null,
-                    'business_social'  => $request->input('business_social') ?: null,
+                    'business_contact'  => $request->input('business_contact') ?: null,
+                    'business_social'   => $request->input('business_social') ?: null,
+                    'business_maps_url' => $request->input('business_maps_url') ?: null,
                 ]
             );
 

@@ -188,14 +188,23 @@
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Alamat Domisili</h3>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                <!-- Kabupaten / Kota -->
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Kabupaten / Kota <span class="text-red-500">*</span></label>
+                    <select name="regency_id" id="regency_id" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>
+                        <option value="3314" {{ old('regency_id', $pemuda->alamat->regency_id ?? 3314) == 3314 ? 'selected' : '' }}>Kabupaten Sragen</option>
+                        <option value="3313" {{ old('regency_id', $pemuda->alamat->regency_id ?? 3314) == 3313 ? 'selected' : '' }}>Kabupaten Karanganyar</option>
+                    </select>
+                </div>
+
                 <!-- Kecamatan -->
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Kecamatan <span class="text-red-500">*</span></label>
                     <select name="district_id" id="district_id" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>
                         <option value="">-- Pilih Kecamatan --</option>
                         @foreach($districts as $d)
-                            <option value="{{ $d->id }}" {{ old('district_id', $pemuda->alamat->district_id ?? '') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                            <option value="{{ $d->id }}" data-regency="{{ $d->regency_id }}" {{ old('district_id', $pemuda->alamat->district_id ?? '') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -212,7 +221,9 @@
                         @endif
                     </select>
                 </div>
+            </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs mt-4">
                 <!-- Dusun -->
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Dusun / Kampung</label>
@@ -232,7 +243,7 @@
                 </div>
 
                 <!-- Detail Alamat -->
-                <div class="sm:col-span-2 lg:col-span-4">
+                <div class="sm:col-span-2 lg:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Lengkap <span class="text-red-500">*</span></label>
                     <textarea name="address_detail" rows="2" placeholder="Nama Jalan, nomor rumah, atau patokan lokasi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>{{ old('address_detail', $pemuda->alamat->address_detail ?? '') }}</textarea>
                 </div>
@@ -284,12 +295,12 @@
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pekerjaan &amp; Wirausaha</h3>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Status Pekerjaan <span class="text-red-500">*</span></label>
-                    <select name="job_status_id" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>
+                    <select name="job_status_id" id="admin_job_status_id" onchange="toggleAdminWirausahaFields()" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500" required>
                         @foreach($jobStatuses as $js)
-                            <option value="{{ $js->id }}" {{ old('job_status_id', $pemuda->pekerjaan->job_status_id ?? '') == $js->id ? 'selected' : '' }}>{{ $js->name }}</option>
+                            <option value="{{ $js->id }}" data-is-wirausaha="{{ str_contains(strtolower($js->name), 'wirausaha') ? '1' : '0' }}" {{ old('job_status_id', $pemuda->pekerjaan->job_status_id ?? '') == $js->id ? 'selected' : '' }}>{{ $js->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -304,9 +315,38 @@
                     <input type="text" name="company_name" value="{{ old('company_name', $pemuda->pekerjaan->company_name ?? '') }}" placeholder="PT / Toko / Sekolah" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Bidang Usaha (Jika Wirausaha)</label>
-                    <input type="text" name="business_field" value="{{ old('business_field', $pemuda->pekerjaan->business_field ?? '') }}" placeholder="Kuliner, Jasa, Konveksi, dll" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                <!-- Detail Informasi Usaha Mandiri (Admin) -->
+                <div class="sm:col-span-2 lg:col-span-3 pt-1 hidden" id="admin_wirausaha_container">
+                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                        <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-amber-200/80">
+                            <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                                <i class="bi bi-shop"></i>
+                            </span>
+                            <span class="font-bold text-slate-800 uppercase tracking-wider text-xs">Detail Informasi Usaha Mandiri (Khusus Wirausaha)</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase mb-1">Bidang Usaha</label>
+                                <input type="text" name="business_field" id="admin_business_field" value="{{ old('business_field', $pemuda->pekerjaan->business_field ?? '') }}" placeholder="Kuliner, Fashion, Bengkel, dll" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Usaha / Brand</label>
+                                <input type="text" name="business_name" id="admin_business_name" value="{{ old('business_name', $pemuda->pekerjaan->business_name ?? '') }}" placeholder="Nama Toko / Usaha Mandiri" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase mb-1">Kontak / Sosmed (WA / IG / TikTok)</label>
+                                <input type="text" name="business_social" id="admin_business_social" value="{{ old('business_social', $pemuda->pekerjaan->business_social ?? ($pemuda->pekerjaan->business_contact ?? '')) }}" placeholder="WA 0812xxx, IG @namausaha, dll" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Lokasi Usaha</label>
+                                <input type="text" name="business_address" id="admin_business_address" value="{{ old('business_address', $pemuda->pekerjaan->business_address ?? '') }}" placeholder="Alamat lengkap toko / tempat usaha..." class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase mb-1">Link Google Maps Usaha</label>
+                                <input type="text" name="business_maps_url" id="admin_business_maps_url" value="{{ old('business_maps_url', $pemuda->pekerjaan->business_maps_url ?? '') }}" placeholder="https://maps.app.goo.gl/..." class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -420,10 +460,45 @@
 
 @section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // AJAX update desa based on kecamatan
+        // AJAX update kecamatan & desa based on kabupaten
+        const regSelect      = document.getElementById('regency_id');
         const districtSelect = document.getElementById('district_id');
         const villageSelect  = document.getElementById('village_id');
+
+        const allDistrictOptions = districtSelect ? Array.from(districtSelect.querySelectorAll('option[data-regency]')) : [];
+
+        function filterAdminDistricts(regencyId, targetDistrictId = null) {
+            if (!districtSelect) return;
+            const currentVal = targetDistrictId !== null ? String(targetDistrictId) : districtSelect.value;
+            districtSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
+
+            let hasSelected = false;
+            allDistrictOptions.forEach(opt => {
+                if (String(opt.getAttribute('data-regency')) === String(regencyId)) {
+                    const newOpt = opt.cloneNode(true);
+                    if (currentVal && String(newOpt.value) === String(currentVal)) {
+                        newOpt.selected = true;
+                        hasSelected = true;
+                    }
+                    districtSelect.appendChild(newOpt);
+                }
+            });
+
+            if (!hasSelected && targetDistrictId === null) {
+                districtSelect.value = '';
+                if (villageSelect) {
+                    villageSelect.innerHTML = '<option value="">-- Pilih Desa/Kelurahan --</option>';
+                }
+            }
+        }
+
+        if (regSelect) {
+            regSelect.addEventListener('change', function () {
+                filterAdminDistricts(this.value, null);
+            });
+            const currentDistVal = districtSelect ? districtSelect.value : null;
+            filterAdminDistricts(regSelect.value, currentDistVal);
+        }
 
         if (districtSelect && villageSelect) {
             districtSelect.addEventListener('change', function () {
@@ -479,6 +554,38 @@
                         cabangSelect.innerHTML = '<option value="">-- Gagal memuat cabang --</option>';
                     });
             });
+        }
+
+        // Toggle Admin Wirausaha Fields
+        function toggleAdminWirausahaFields() {
+            const sel = document.getElementById('admin_job_status_id');
+            const box = document.getElementById('admin_wirausaha_container');
+            if (!sel || !box) return;
+
+            let isWira = String(sel.value) === '5';
+            if (!isWira && sel.selectedIndex >= 0) {
+                const opt = sel.options[sel.selectedIndex];
+                const text = (opt?.text || '').toLowerCase();
+                isWira = opt?.getAttribute('data-is-wirausaha') === '1' || text.includes('wirausaha') || text.includes('usaha');
+            }
+
+            if (isWira) {
+                box.classList.remove('hidden');
+                box.classList.remove('d-none');
+                box.style.setProperty('display', 'block', 'important');
+            } else {
+                box.classList.add('hidden');
+                box.classList.add('d-none');
+                box.style.setProperty('display', 'none', 'important');
+            }
+        }
+        window.toggleAdminWirausahaFields = toggleAdminWirausahaFields;
+
+        const adminJobSelect = document.getElementById('admin_job_status_id');
+        if (adminJobSelect) {
+            adminJobSelect.addEventListener('change', toggleAdminWirausahaFields);
+            adminJobSelect.addEventListener('input', toggleAdminWirausahaFields);
+            toggleAdminWirausahaFields();
         }
     });
 </script>

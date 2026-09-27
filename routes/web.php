@@ -49,6 +49,7 @@ Route::get('monitoring-cabang', fn () => redirect()->route('guru-daerah.index'))
 
 // Public API for form dropdowns
 Route::get('api/cabang/{wilayahId}', [AjaxController::class, 'getCabangByWilayah'])->name('api.cabang');
+Route::get('api/districts/{regencyId}', [AjaxController::class, 'getDistrictsByRegency'])->name('api.districts');
 Route::get('api/villages/{districtId}', [AjaxController::class, 'getVillagesByDistrict'])->name('api.villages');
 
 // ==========================================
@@ -178,5 +179,6 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
 
     // Ajax Helpers
     Route::get('ajax/cabang/{wilayahId}', [AjaxController::class, 'getCabangByWilayah'])->name('ajax.cabang');
+    Route::get('ajax/districts/{regencyId}', [AjaxController::class, 'getDistrictsByRegency'])->name('ajax.districts');
     Route::get('ajax/villages/{districtId}', [AjaxController::class, 'getVillagesByDistrict'])->name('ajax.villages');
 });

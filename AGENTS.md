@@ -1316,6 +1316,62 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-27 — Penambahan Kolom Dinamis Wirausaha / Pemilik Usaha pada Form Pendataan
+
+- **Pembaruan Formulir Pendataan Publik (`resources/views/pendataan/form.blade.php`):**
+  - Pada Langkah 4 (Pekerjaan & Aktivitas Ekonomi), ditambahkan kontainer dinamis `#wirausaha_container` yang otomatis muncul saat status pekerjaan memilih **Wirausaha / Pemilik Usaha** dan tersembunyi untuk status pekerjaan lainnya.
+  - Menyediakan 5 kolom khusus profil usaha mandiri:
+    1. **Bidang Usaha** (`business_field`): Contoh Kuliner, Fashion, Bengkel, Agribisnis, Jasa, dsb.
+    2. **Nama Usaha / Brand** (`business_name`): Nama toko, brand, atau usaha.
+    3. **Kontak / Sosmed** (`business_social`): No. WhatsApp bisnis, akun Instagram (@namausaha), TikTok, dsb.
+    4. **Alamat Usaha** (`business_address`): Alamat lengkap lokasi toko/tempat usaha.
+    5. **Link Google Maps** (`business_maps_url`): Tautan pin lokasi atau Google Maps ruko/toko.
+  - Terintegrasi dengan logika JavaScript (`toggleWirausahaFields`):
+    - Berfungsi saat pengguna mengubah dropdown status pekerjaan secara langsung (`change` event).
+    - Berfungsi saat form dimuat (`DOMContentLoaded`) menyesuaikan nilai yang sudah dipilih sebelumnya (`old('job_status_id')`).
+    - Berfungsi saat mode pembaruan/update (`populateFormWithData`) dan saat data ditarik dari Warga MTA Pusat (`selectWargaMta`).
+  - Pratinjau pada Langkah 7 (Ringkasan) menampilkan kartu info usaha mandiri (`#summary_business_box`) jika status wirausaha dipilih dan diisi.
+- **Database & Model Eloquent:**
+  - Migrasi `2026_09_27_220000_add_business_maps_url_to_pekerjaan_table.php` menambahkan kolom `business_maps_url` (VARCHAR 500, nullable) pada tabel `pekerjaan`.
+  - Memperbarui `$fillable` pada Model `App\Models\Pekerjaan`.
+- **Backend Controller & API (`app/Http/Controllers/PendataanController.php`):**
+  - Menambahkan validasi `business_maps_url` (`nullable|max:500`) dan menyimpan seluruh kolom usaha mandiri ke tabel `pekerjaan`.
+  - Menyertakan `business_maps_url` pada respon `form()` dan endpoint `getPemuda()`.
+- **Jaminan Mutu & Pengujian Otomatis:**
+  - Menambahkan pengujian `test_submit_form_with_wirausaha_fields_persists_successfully` pada `tests/Feature/PendataanFlowTest.php`.
+  - Seluruh 81 test suite sistem lulus 100% (606 assertions).
+
+### 2026-09-27 — Pengubahan Kolom Alamat Lengkap / Patokan Rumah Menjadi Opsional pada Form Pendataan
+
+- **Pembaruan Formulir Pendataan Publik (`resources/views/pendataan/form.blade.php`):**
+  - Mengubah label kolom dari `Alamat Lengkap / Patokan Rumah *` menjadi `Alamat Lengkap / Patokan Rumah (Opsional)` pada Langkah 2 (Alamat Domisili).
+  - Menghapus atribut `required` pada elemen textarea `address_detail`.
+  - Menghapus validasi wajib dan minimal 5 karakter pada validasi JavaScript sisi klien (Step 2 wizard).
+  - Pratinjau alamat pada Langkah 7 (Review) tetap menangani alamat lengkap secara dinamis dan rapi jika dikosongkan.
+- **Pembaruan Backend Controller & Model (`app/Http/Controllers/PendataanController.php`):**
+  - Mengubah aturan validasi backend `$rules['address_detail']` dari `'required|min:5'` menjadi `'nullable|string|max:500'`.
+  - Menyimpan nilai sebagai `null` secara bersih pada tabel `alamat` jika pengguna tidak mengisinya (`$request->input('address_detail') ?: null`).
+- **Jaminan Mutu & Pengujian Otomatis:**
+  - Menambahkan pengujian `test_submit_form_without_address_detail_succeeds` pada `tests/Feature/PendataanFlowTest.php`. Seluruh 80 test suite lulus 100% (589 assertions).
+
+### 2026-09-27 — Penambahan Pilihan Kabupaten Karanganyar (17 Kecamatan & 177 Kelurahan/Desa) pada Formulir Pendataan & Manajemen Admin
+
+- **Penambahan Master Regional Kabupaten Karanganyar (Kode Wilayah 3313):**
+  - Menambahkan data master Kabupaten Karanganyar (`regencies`: id 3313, nama 'KABUPATEN KARANGANYAR'), 17 kecamatan (`districts`: Colomadu, Gondangrejo, Jaten, Jatipuro, Jatiyoso, Jenawi, Jumantono, Jumapolo, Karanganyar, Karangpandan, Kebakkramat, Kerjo, Matesih, Mojogedang, Ngargoyoso, Tasikmadu, Tawangmangu), dan 177 kelurahan/desa resmi.
+  - Dibuatkan migrasi `2026_09_27_213000_add_karanganyar_regency_districts_villages.php` dan seeder `RegionalSeeder.php` diperbarui agar sinkron di seluruh environment.
+- **Dukungan Formulir Pendataan Publik (`/pendataan/form`):**
+  - Menambahkan dropdown pilihan Kabupaten/Kota pada Langkah 2 (Alamat Domisili) dengan opsi: **Kabupaten Sragen** (default) dan **Kabupaten Karanganyar**.
+  - Dropdown Kecamatan menyaring secara dinamis berdasarkan Kabupaten terpilih (`filterDistrictsByRegency`), dan memilih kecamatan akan memuat daftar kelurahan/desa yang bersangkutan via AJAX `api/villages/{districtId}`.
+  - Kompatibel dengan autofill update data pemuda dan sinkronisasi warga MTA.
+  - Ringkasan alamat pada Langkah 7 (Review) menyertakan informasi Kabupaten/Kota terpilih.
+- **Dukungan Manajemen Pemuda Admin (`/admin/pemuda/create` & `/admin/pemuda/{id}/edit`):**
+  - Menambahkan pilihan dropdown Kabupaten/Kota pada form tambah & edit pemuda admin.
+  - Filter kecamatan dinamis (`filterAdminDistricts`) dan pemuatan desa otomatis.
+- **Backend & API:**
+  - Route baru: `GET api/districts/{regencyId}` dan `GET admin/ajax/districts/{regencyId}` handled oleh `Admin\AjaxController::getDistrictsByRegency`.
+  - Validasi controller (`PendataanController` & `Admin\PemudaController`) mendukung `regency_id` dan secara otomatis mengasosiasikannya ke record `alamat`.
+  - Menjaga keutuhan 734 data alamat pemuda existing tanpa regresi.
+
 ### 2026-09-27 — Pembaruan & Pelengkapan Data Alamat Kabupaten Sragen (20 Kecamatan & 208 Kelurahan/Desa)
 
 - **Pelengkapan Data Master Regional Kabupaten Sragen (Kode Wilayah 3314):**

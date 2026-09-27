@@ -18,6 +18,7 @@ use App\Models\PemudaSkill;
 use App\Models\PemudaInterest;
 use App\Models\District;
 use App\Models\Village;
+use App\Models\Regency;
 use App\Services\PemudaImportService;
 use App\Services\PemudaExportService;
 use App\Services\PemudaBackupService;
@@ -168,7 +169,8 @@ class PemudaController extends Controller
             'pemuda'          => null,
             'wilayahList'     => $wilayahList,
             'cabangList'      => $cabangList,
-            'districts'       => District::where('regency_id', 3314)->orderBy('name', 'ASC')->get(),
+            'regencies'       => Regency::whereIn('id', [3314, 3313])->orderByRaw('CASE WHEN id = 3314 THEN 0 ELSE 1 END')->get(),
+            'districts'       => District::whereIn('regency_id', [3314, 3313])->orderBy('name', 'ASC')->get(),
             'educationLevels' => EducationLevel::orderBy('id', 'ASC')->get(),
             'jobStatuses'     => JobStatus::orderBy('id', 'ASC')->get(),
             'skills'          => Skill::orderBy('name', 'ASC')->get(),
@@ -193,6 +195,7 @@ class PemudaController extends Controller
             'birth_date'         => 'required|date',
             'phone'              => 'required|min:9|max:20',
             'email'              => 'nullable|email|max:100',
+            'regency_id'         => 'nullable|integer',
             'district_id'        => 'required|integer',
             'village_id'         => 'required|integer',
             'address_detail'     => 'required|min:5',
@@ -200,6 +203,7 @@ class PemudaController extends Controller
             'school_name'        => 'required|min:3|max:150',
             'education_status'   => 'required|in:sedang_sekolah,lulus,putus_sekolah',
             'job_status_id'      => 'required|integer',
+            'business_maps_url'  => 'nullable|max:500',
             'foto'               => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
         ];
 
@@ -249,10 +253,13 @@ class PemudaController extends Controller
                 'created_by'          => auth()->id(),
             ]);
 
+            $district = District::find((int) $request->input('district_id'));
+            $regencyId = $district ? $district->regency_id : ((int) $request->input('regency_id') ?: 3314);
+
             Alamat::create([
                 'pemuda_id'      => $pemuda->id,
                 'province_id'    => 33,
-                'regency_id'     => 3314,
+                'regency_id'     => $regencyId,
                 'district_id'    => (int) $request->input('district_id'),
                 'village_id'     => (int) $request->input('village_id'),
                 'dusun'          => $request->input('dusun') ?: null,
@@ -278,8 +285,9 @@ class PemudaController extends Controller
                 'business_field'   => $request->input('business_field') ?: null,
                 'business_name'    => $request->input('business_name') ?: null,
                 'business_address' => $request->input('business_address') ?: null,
-                'business_contact' => $request->input('business_contact') ?: null,
-                'business_social'  => $request->input('business_social') ?: null,
+                'business_contact'  => $request->input('business_contact') ?: null,
+                'business_social'   => $request->input('business_social') ?: null,
+                'business_maps_url' => $request->input('business_maps_url') ?: null,
             ]);
 
             Organisasi::where('pemuda_id', $pemuda->id)->delete();
@@ -446,7 +454,8 @@ class PemudaController extends Controller
             'pemuda'          => $pemuda,
             'wilayahList'     => $wilayahList,
             'cabangList'      => $cabangList,
-            'districts'       => District::where('regency_id', 3314)->orderBy('name', 'ASC')->get(),
+            'regencies'       => Regency::whereIn('id', [3314, 3313])->orderByRaw('CASE WHEN id = 3314 THEN 0 ELSE 1 END')->get(),
+            'districts'       => District::whereIn('regency_id', [3314, 3313])->orderBy('name', 'ASC')->get(),
             'villages'        => $villages,
             'educationLevels' => EducationLevel::orderBy('id', 'ASC')->get(),
             'jobStatuses'     => JobStatus::orderBy('id', 'ASC')->get(),
@@ -477,6 +486,7 @@ class PemudaController extends Controller
             'birth_date'         => 'required|date',
             'phone'              => 'required|min:9|max:20',
             'email'              => 'nullable|email|max:100',
+            'regency_id'         => 'nullable|integer',
             'district_id'        => 'required|integer',
             'village_id'         => 'required|integer',
             'address_detail'     => 'required|min:5',
@@ -484,6 +494,7 @@ class PemudaController extends Controller
             'school_name'        => 'required|min:3|max:150',
             'education_status'   => 'required|in:sedang_sekolah,lulus,putus_sekolah',
             'job_status_id'      => 'required|integer',
+            'business_maps_url'  => 'nullable|max:500',
             'foto'               => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
         ];
 
@@ -523,11 +534,14 @@ class PemudaController extends Controller
                 'foto'              => $fotoFilename,
             ]);
 
+            $district = District::find((int) $request->input('district_id'));
+            $regencyId = $district ? $district->regency_id : ((int) $request->input('regency_id') ?: 3314);
+
             Alamat::updateOrCreate(
                 ['pemuda_id' => $pemuda->id],
                 [
                     'province_id'    => 33,
-                    'regency_id'     => 3314,
+                    'regency_id'     => $regencyId,
                     'district_id'    => (int) $request->input('district_id'),
                     'village_id'     => (int) $request->input('village_id'),
                     'dusun'          => $request->input('dusun') ?: null,
@@ -557,8 +571,9 @@ class PemudaController extends Controller
                     'business_field'   => $request->input('business_field') ?: null,
                     'business_name'    => $request->input('business_name') ?: null,
                     'business_address' => $request->input('business_address') ?: null,
-                    'business_contact' => $request->input('business_contact') ?: null,
-                    'business_social'  => $request->input('business_social') ?: null,
+                    'business_contact'  => $request->input('business_contact') ?: null,
+                    'business_social'   => $request->input('business_social') ?: null,
+                    'business_maps_url' => $request->input('business_maps_url') ?: null,
                 ]
             );
 

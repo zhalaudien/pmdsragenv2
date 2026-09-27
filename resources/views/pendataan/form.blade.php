@@ -432,15 +432,25 @@
                     <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider">Alamat Domisili Tempat Tinggal Saat Ini</h3>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     <div>
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
-                            Kecamatan di Sragen <span class="text-red-500">*</span>
+                            Kabupaten / Kota <span class="text-red-500">*</span>
+                        </label>
+                        <select name="regency_id" id="public_regency_id" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
+                            <option value="3314" {{ old('regency_id', 3314) == 3314 ? 'selected' : '' }}>Kabupaten Sragen</option>
+                            <option value="3313" {{ old('regency_id', 3314) == 3313 ? 'selected' : '' }}>Kabupaten Karanganyar</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
+                            Kecamatan <span class="text-red-500">*</span>
                         </label>
                         <select name="district_id" id="public_district_id" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
                             <option value="">-- Pilih Kecamatan --</option>
                             @foreach($districts as $d)
-                                <option value="{{ $d->id }}" {{ old('district_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                                <option value="{{ $d->id }}" data-regency="{{ $d->regency_id }}" {{ old('district_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -453,7 +463,9 @@
                             <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
                         </select>
                     </div>
+                </div>
 
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs mt-4">
                     <div>
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">Dukuh / Dusun / Kampung</label>
                         <input type="text" name="dusun" id="input_dusun" value="{{ old('dusun') }}" placeholder="Nama Dukuh / Dusun" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
@@ -472,9 +484,9 @@
 
                     <div class="sm:col-span-2">
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
-                            Alamat Lengkap / Patokan Rumah <span class="text-red-500">*</span>
+                            Alamat Lengkap / Patokan Rumah <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
                         </label>
-                        <textarea name="address_detail" id="input_address_detail" rows="3" placeholder="Nama jalan, nomor rumah, atau patokan lokasi domisili..." required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">{{ old('address_detail') }}</textarea>
+                        <textarea name="address_detail" id="input_address_detail" rows="3" placeholder="Nama jalan, nomor rumah, atau patokan lokasi domisili (opsional)..." class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">{{ old('address_detail') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -544,9 +556,9 @@
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
                             Status Pekerjaan <span class="text-red-500">*</span>
                         </label>
-                        <select name="job_status_id" id="input_job_status_id" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
+                        <select name="job_status_id" id="input_job_status_id" onchange="toggleWirausahaFields()" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
                             @foreach($jobStatuses as $js)
-                                <option value="{{ $js->id }}" {{ old('job_status_id') == $js->id ? 'selected' : '' }}>{{ $js->name }}</option>
+                                <option value="{{ $js->id }}" data-is-wirausaha="{{ str_contains(strtolower($js->name), 'wirausaha') ? '1' : '0' }}" {{ old('job_status_id') == $js->id ? 'selected' : '' }}>{{ $js->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -561,21 +573,54 @@
                         <input type="text" name="company_name" id="input_company_name" value="{{ old('company_name') }}" placeholder="Nama Perusahaan / Kantor / Toko / Tempat Usaha" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
                     </div>
 
-                    <div class="sm:col-span-2 pt-2">
-                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                            <span class="block font-bold text-slate-800 mb-2">Informasi Usaha Mandiri (Khusus Wirausaha):</span>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- DETAIL KHUSUS WIRAUSAHA / PEMILIK USAHA -->
+                    <div class="sm:col-span-2 pt-2 hidden transition-all duration-300" id="wirausaha_container">
+                        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 border border-amber-200/90 shadow-xs">
+                            <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-amber-200/70">
+                                <span class="w-7 h-7 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                                    <i class="bi bi-shop"></i>
+                                </span>
                                 <div>
-                                    <label class="block font-semibold text-slate-600 text-[11px] mb-1">Bidang Usaha</label>
-                                    <input type="text" name="business_field" id="input_business_field" value="{{ old('business_field') }}" placeholder="Kuliner, Bengkel, Konveksi, dll" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs shadow-sm">
+                                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Detail Informasi Usaha Mandiri (Wirausaha)</h4>
+                                    <p class="text-[11px] text-slate-500 font-medium">Lengkapi profil usaha Anda untuk pemetaan potensi dan jejaring ekonomi pemuda</p>
                                 </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                 <div>
-                                    <label class="block font-semibold text-slate-600 text-[11px] mb-1">Nama Brand / Usaha</label>
-                                    <input type="text" name="business_name" id="input_business_name" value="{{ old('business_name') }}" placeholder="Nama Toko / Usaha Mandiri" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs shadow-sm">
+                                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
+                                        Bidang Usaha <span class="text-slate-400 font-normal normal-case text-[10px]">(Opsional)</span>
+                                    </label>
+                                    <input type="text" name="business_field" id="input_business_field" value="{{ old('business_field') }}" placeholder="Contoh: Kuliner, Fashion, Bengkel, Agribisnis, Jasa, dll" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs shadow-sm">
                                 </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
+                                        Nama Usaha / Brand <span class="text-slate-400 font-normal normal-case text-[10px]">(Opsional)</span>
+                                    </label>
+                                    <input type="text" name="business_name" id="input_business_name" value="{{ old('business_name') }}" placeholder="Contoh: Toko Berkah, Warung Bu Siti, dll" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs shadow-sm">
+                                </div>
+
                                 <div class="sm:col-span-2">
-                                    <label class="block font-semibold text-slate-600 text-[11px] mb-1">Kontak / Medsos Bisnis</label>
-                                    <input type="text" name="business_contact" id="input_business_contact" value="{{ old('business_contact') }}" placeholder="No. WhatsApp Bisnis / Akun Instagram Usaha" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs shadow-sm">
+                                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
+                                        Kontak / Sosmed (No. WA, IG, TikTok, dll) <span class="text-slate-400 font-normal normal-case text-[10px]">(Opsional)</span>
+                                    </label>
+                                    <input type="text" name="business_social" id="input_business_social" value="{{ old('business_social') }}" placeholder="Contoh: WA 08123456789, IG @namausaha, TikTok @namausaha" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs shadow-sm">
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
+                                        Alamat Usaha <span class="text-slate-400 font-normal normal-case text-[10px]">(Opsional)</span>
+                                    </label>
+                                    <textarea name="business_address" id="input_business_address" rows="2" placeholder="Nama jalan, ruko, pasar, atau patokan lokasi toko/tempat usaha..." class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs shadow-sm">{{ old('business_address') }}</textarea>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5 flex items-center justify-between">
+                                        <span>Link Google Maps Usaha <span class="text-slate-400 font-normal normal-case text-[10px]">(Opsional)</span></span>
+                                        <span class="text-[10px] text-slate-400 font-normal normal-case"><i class="bi bi-geo-alt-fill text-red-500 mr-0.5"></i> Tautan Maps / Pin Lokasi</span>
+                                    </label>
+                                    <input type="text" name="business_maps_url" id="input_business_maps_url" value="{{ old('business_maps_url') }}" placeholder="Contoh: https://maps.app.goo.gl/... atau tautan lokasi Google Maps" class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs shadow-sm">
                                 </div>
                             </div>
                         </div>
@@ -788,6 +833,12 @@
                         <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs sm:col-span-2">
                             <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alamat Domisili</dt>
                             <dd id="summary_address" class="font-semibold text-slate-800 mt-0.5">-</dd>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 shadow-2xs sm:col-span-2 hidden" id="summary_business_box">
+                            <dt class="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <i class="bi bi-shop text-amber-600"></i> Informasi Usaha Mandiri (Wirausaha)
+                            </dt>
+                            <dd id="summary_business" class="font-semibold text-slate-800 mt-0.5 leading-relaxed">-</dd>
                         </div>
                         <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs sm:col-span-2" id="summary_org_box">
                             <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Elemen Dakwah yang Dipilih</dt>
@@ -1321,6 +1372,40 @@
             });
     }
 
+    function isWirausahaSelected() {
+        const jobSelect = document.getElementById('input_job_status_id');
+        if (!jobSelect) return false;
+        const val = String(jobSelect.value || '');
+        if (val === '5') return true;
+        if (jobSelect.selectedIndex >= 0) {
+            const opt = jobSelect.options[jobSelect.selectedIndex];
+            if (opt) {
+                if (opt.getAttribute('data-is-wirausaha') === '1') return true;
+                const text = (opt.text || opt.textContent || '').toLowerCase();
+                if (text.includes('wirausaha') || text.includes('pemilik usaha') || text.includes('usaha')) return true;
+            }
+        }
+        return false;
+    }
+
+    function toggleWirausahaFields() {
+        const wiraContainer = document.getElementById('wirausaha_container');
+        if (!wiraContainer) return;
+
+        const isWira = isWirausahaSelected();
+        if (isWira) {
+            wiraContainer.classList.remove('hidden');
+            wiraContainer.classList.remove('d-none');
+            wiraContainer.style.setProperty('display', 'block', 'important');
+        } else {
+            wiraContainer.classList.add('hidden');
+            wiraContainer.classList.add('d-none');
+            wiraContainer.style.setProperty('display', 'none', 'important');
+        }
+    }
+    window.toggleWirausahaFields = toggleWirausahaFields;
+    window.isWirausahaSelected = isWirausahaSelected;
+
     function populateFormWithData(p) {
         inputExistingId.value = p.id;
         inputMtaUuid.value = p.mta_warga_uuid || '';
@@ -1356,8 +1441,14 @@
 
         // Step 2 (Alamat)
         if (p.alamat) {
+            const regSelect = document.getElementById('public_regency_id');
             const distSelect = document.getElementById('public_district_id');
-            distSelect.value = p.alamat.district_id || '';
+            if (regSelect) {
+                regSelect.value = p.alamat.regency_id || '3314';
+                filterDistrictsByRegency(regSelect.value, p.alamat.district_id);
+            } else if (distSelect) {
+                distSelect.value = p.alamat.district_id || '';
+            }
             loadVillagesAndSet(p.alamat.district_id, p.alamat.village_id);
 
             document.getElementById('input_dusun').value = p.alamat.dusun || '';
@@ -1380,7 +1471,13 @@
             document.getElementById('input_job_status_id').value = p.pekerjaan.job_status_id || '';
             document.getElementById('input_company_name').value = p.pekerjaan.company_name || '';
             document.getElementById('input_job_title').value = p.pekerjaan.job_title || '';
-            document.getElementById('input_income_range').value = p.pekerjaan.income_range || '';
+            if (document.getElementById('input_income_range')) document.getElementById('input_income_range').value = p.pekerjaan.income_range || '';
+            if (document.getElementById('input_business_field')) document.getElementById('input_business_field').value = p.pekerjaan.business_field || '';
+            if (document.getElementById('input_business_name')) document.getElementById('input_business_name').value = p.pekerjaan.business_name || '';
+            if (document.getElementById('input_business_social')) document.getElementById('input_business_social').value = p.pekerjaan.business_social || (p.pekerjaan.business_contact || '');
+            if (document.getElementById('input_business_address')) document.getElementById('input_business_address').value = p.pekerjaan.business_address || '';
+            if (document.getElementById('input_business_maps_url')) document.getElementById('input_business_maps_url').value = p.pekerjaan.business_maps_url || '';
+            toggleWirausahaFields();
         }
 
         // Step 5 (Organisasi)
@@ -1523,9 +1620,15 @@
 
         // Step 2: Alamat Domisili
         if (w.alamat) {
+            const regSelect = document.getElementById('public_regency_id');
             const distSelect = document.getElementById('public_district_id');
-            if (w.alamat.district_id) {
+            if (regSelect && w.alamat.regency_id) {
+                regSelect.value = w.alamat.regency_id;
+                filterDistrictsByRegency(w.alamat.regency_id, w.alamat.district_id);
+            } else if (distSelect && w.alamat.district_id) {
                 distSelect.value = w.alamat.district_id;
+            }
+            if (w.alamat.district_id) {
                 loadVillagesAndSet(w.alamat.district_id, w.alamat.village_id);
             }
             if (w.alamat.dusun) document.getElementById('input_dusun').value = w.alamat.dusun;
@@ -1555,6 +1658,7 @@
             if (w.pekerjaan.job_title && document.getElementById('input_job_title')) {
                 document.getElementById('input_job_title').value = w.pekerjaan.job_title;
             }
+            toggleWirausahaFields();
         }
     }
 
@@ -1980,22 +2084,22 @@
         }
 
         if (stepNumber === 2) {
+            const reg  = document.getElementById('public_regency_id');
             const dist = document.getElementById('public_district_id');
             const vill = document.getElementById('public_village_id');
-            const addr = document.getElementById('input_address_detail');
+            if (reg && !reg.value) {
+                showStepAlert('Silakan pilih Kabupaten / Kota domisili Anda.');
+                reg.focus();
+                return false;
+            }
             if (!dist.value) {
-                showStepAlert('Silakan pilih Kecamatan domisili Anda di Sragen.');
+                showStepAlert('Silakan pilih Kecamatan domisili Anda.');
                 dist.focus();
                 return false;
             }
             if (!vill.value) {
                 showStepAlert('Silakan pilih Desa / Kelurahan domisili Anda.');
                 vill.focus();
-                return false;
-            }
-            if (!addr.value.trim() || addr.value.trim().length < 5) {
-                showStepAlert('Silakan lengkapi Alamat Lengkap / Patokan Rumah (minimal 5 karakter).');
-                addr.focus();
                 return false;
             }
             return true;
@@ -2100,12 +2204,14 @@
         if (summaryPhone) summaryPhone.textContent = document.getElementById('input_phone').value || '-';
         
         if (summaryAddr) {
+            const regSelect = document.getElementById('public_regency_id');
             const distSelect = document.getElementById('public_district_id');
             const villSelect = document.getElementById('public_village_id');
+            const regText = regSelect && regSelect.selectedIndex >= 0 ? regSelect.options[regSelect.selectedIndex].text : '';
             const distText = distSelect.selectedIndex > 0 ? distSelect.options[distSelect.selectedIndex].text : '';
             const villText = villSelect.selectedIndex > 0 ? villSelect.options[villSelect.selectedIndex].text : '';
             const detailText = document.getElementById('input_address_detail').value.trim();
-            summaryAddr.textContent = `${detailText ? detailText + ', ' : ''}${villText ? 'Ds. ' + villText + ', ' : ''}${distText ? 'Kec. ' + distText : '-'}`;
+            summaryAddr.textContent = `${detailText ? detailText + ', ' : ''}${villText ? 'Ds. ' + villText + ', ' : ''}${distText ? 'Kec. ' + distText + ', ' : ''}${regText ? regText : ''}`;
         }
 
         if (summaryBadge) {
@@ -2153,11 +2259,71 @@
                 summaryInterests.innerHTML = '<span class="text-slate-400 italic">Belum memilih minat</span>';
             }
         }
+
+        // Business preview if Wirausaha
+        const summaryBusinessBox = document.getElementById('summary_business_box');
+        const summaryBusiness = document.getElementById('summary_business');
+        if (summaryBusinessBox && summaryBusiness) {
+            const bField = document.getElementById('input_business_field')?.value?.trim();
+            const bName  = document.getElementById('input_business_name')?.value?.trim();
+            const bSoc   = document.getElementById('input_business_social')?.value?.trim();
+            const bAddr  = document.getElementById('input_business_address')?.value?.trim();
+            const bMaps  = document.getElementById('input_business_maps_url')?.value?.trim();
+
+            if (isWirausahaSelected() && (bField || bName || bSoc || bAddr || bMaps)) {
+                summaryBusinessBox.classList.remove('hidden');
+                let parts = [];
+                if (bName) parts.push(`<strong>${escapeHtml(bName)}</strong>`);
+                if (bField) parts.push(`Bidang: ${escapeHtml(bField)}`);
+                if (bSoc) parts.push(`Kontak/Sosmed: ${escapeHtml(bSoc)}`);
+                if (bAddr) parts.push(`Alamat: ${escapeHtml(bAddr)}`);
+                if (bMaps) parts.push(`<a href="${escapeHtml(bMaps)}" target="_blank" class="text-blue-600 underline inline-flex items-center gap-0.5"><i class="bi bi-geo-alt"></i> Maps</a>`);
+                summaryBusiness.innerHTML = parts.join(' • ');
+            } else {
+                summaryBusinessBox.classList.add('hidden');
+            }
+        }
     }
 
-    // 12. DYNAMIC VILLAGES LOAD
+    // 12. DYNAMIC REGENCY, DISTRICTS & VILLAGES LOAD
+    const regSelect  = document.getElementById('public_regency_id');
     const distSelect = document.getElementById('public_district_id');
     const villSelect = document.getElementById('public_village_id');
+
+    const allDistrictOptions = distSelect ? Array.from(distSelect.querySelectorAll('option[data-regency]')) : [];
+
+    function filterDistrictsByRegency(regencyId, targetDistrictId = null) {
+        if (!distSelect) return;
+        const currentVal = targetDistrictId !== null ? String(targetDistrictId) : distSelect.value;
+        distSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
+
+        let hasSelected = false;
+        allDistrictOptions.forEach(opt => {
+            if (String(opt.getAttribute('data-regency')) === String(regencyId)) {
+                const newOpt = opt.cloneNode(true);
+                if (currentVal && String(newOpt.value) === String(currentVal)) {
+                    newOpt.selected = true;
+                    hasSelected = true;
+                }
+                distSelect.appendChild(newOpt);
+            }
+        });
+
+        if (!hasSelected && targetDistrictId === null) {
+            distSelect.value = '';
+            if (villSelect) {
+                villSelect.innerHTML = '<option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>';
+            }
+        }
+    }
+
+    if (regSelect) {
+        regSelect.addEventListener('change', function () {
+            filterDistrictsByRegency(this.value, null);
+            loadVillagesAndSet(null, null);
+        });
+    }
+
     if (distSelect && villSelect) {
         distSelect.addEventListener('change', function () {
             loadVillagesAndSet(this.value, null);
@@ -2277,9 +2443,25 @@
             if (btnSubmitText) btnSubmitText.textContent = 'Kirim Pendaftaran Pemuda Baru';
         }
 
-        if (distSelect && distSelect.value) {
+        if (regSelect) {
+            const oldReg = "{{ old('regency_id', 3314) }}";
+            const oldDist = "{{ old('district_id') }}";
+            regSelect.value = oldReg || '3314';
+            filterDistrictsByRegency(regSelect.value, oldDist || null);
+            if (oldDist) {
+                const oldVillage = "{{ old('village_id') }}";
+                loadVillagesAndSet(oldDist, oldVillage || null);
+            }
+        } else if (distSelect && distSelect.value) {
             const oldVillage = "{{ old('village_id') }}";
             loadVillagesAndSet(distSelect.value, oldVillage || null);
+        }
+
+        const jobSelect = document.getElementById('input_job_status_id');
+        if (jobSelect) {
+            jobSelect.addEventListener('change', toggleWirausahaFields);
+            jobSelect.addEventListener('input', toggleWirausahaFields);
+            toggleWirausahaFields();
         }
 
         const inputNewOrg = document.getElementById('input_new_org');

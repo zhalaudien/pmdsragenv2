@@ -18,6 +18,7 @@ class Pekerjaan extends Model
         'business_address',
         'business_contact',
         'business_social',
+        'business_maps_url',
     ];
 
     public function pemuda()

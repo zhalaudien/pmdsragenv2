@@ -29,6 +29,16 @@ class AjaxController extends Controller
         return response()->json($query->get());
     }
 
+    public function getDistrictsByRegency(int $regencyId)
+    {
+        $districts = \App\Models\District::select(['id', 'regency_id', 'name'])
+            ->where('regency_id', $regencyId)
+            ->orderBy('name', 'ASC')
+            ->get();
+
+        return response()->json($districts);
+    }
+
     public function getVillagesByDistrict(int $districtId)
     {
         $villages = Village::select(['id', 'district_id', 'name'])
