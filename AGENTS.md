@@ -1316,6 +1316,80 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-28 — Pemisahan Komponen Header Judul "Dashboard Management API & Mobile Presensi PMD" dengan Tombol Menu Cepat
+
+- **Pemisahan Tata Letak (Layout Decoupling) pada Dashboard Presensi (`/admin/presensi/dashboard`):**
+  - **Banner Judul & Status Independen:** Bagian hero banner atas difokuskan murni sebagai identitas visual halaman yang memuat status live REST API, versi aplikasi mobile Flutter, lencana otorisasi user (Superadmin/Wilayah/Cabang), judul utama *"Dashboard Management API & Mobile Presensi PMD"*, serta deskripsi sistem dengan tipografi yang luas dan tidak berdesakan.
+  - **Dedicated Card "Tombol Menu & Navigasi Cepat":** Memisahkan seluruh tombol aksi operasional ke dalam kartu navigasi tersendiri di bawah hero banner dengan pembagian ikon dan styling yang bersih:
+    - *Dashboard Pemuda* (Kembali ke sistem sensus pemuda)
+    - *Reset Pra-Launching* (Aksi Superadmin dengan modal selektif dan proteksi teks)
+    - *Seting API Presensi* (Akses langsung ke pengaturan konfigurasi API & Sanctum)
+    - *Agenda Perwakilan* (Pengelolaan agenda presensi perwakilan/daerah)
+    - *Unduh APK Mobile* (Tautan unduh build aplikasi Flutter)
+    - *Config API (JSON)* (Inspeksi respon konfigurasi JSON endpoint v1)
+- **Jaminan Kualitas & Pengujian Otomatis:**
+  - Seluruh 90 test suite sistem lulus 100% (668 assertions).
+  - Aset CSS dan JS sukses di-compile ulang dengan Vite.
+
+### 2026-09-27 — Penyempurnaan Tampilan & Interaktivitas Dashboard Presensi PMD Mobile
+
+- **Penyegaran Tampilan Visual (UI/UX Redesign):**
+  - **Hero Header Modern:** Menggunakan perpaduan gradien Slate & Emerald dengan aksen lencana status server API live (`Online` / `Maintenance Mode`), versi APK mobile (`Min: vX.X | App: vY.Y`), serta tombol aksi cepat (Seting API, Reset Pra-Launch, Kelola Agenda Perwakilan, dan Sinkronisasi).
+  - **4 Metrik Utama Dinamis:** Kartu ringkasan interaktif dengan ikon kontras (Status API & Konfigurasi, Sesi Presensi Cabang dengan rincian Selesai/Aktif, Total Rekap Kehadiran dengan persentase hadir pemuda, serta Jumlah Perangkat Mobile Aktif).
+  - **Progress Bar Status Kehadiran:** Widget proporsi kehadiran horizontal yang menampilkan jumlah dan persentase untuk Hadir (Emerald), Izin (Amber), Sakit (Sky), dan Alpa (Rose) secara rapi dan proporsional.
+  - **Visualisasi Chart Komprehensif:** Grafik batang interaktif Chart.js untuk sesi per wilayah, donut chart untuk status kehadiran, serta ringkasan parameter sync (batas bulk sync & quick chips).
+  - **Tabel Monitoring Sesi Presensi Responsif:** Tabel kegiatan dilengkapi filter pencarian langsung, indikator tanggal & jam, lencana status (`selesai`, `berlangsung`, `draft`), rasio kehadiran (`X Hadir dari Y tercatat`), dan tombol aksi modal rincian rekap.
+  - **Modal Rincian Rekap & Salin Laporan WhatsApp 1-Klik:** Modal interaktif yang menampilkan statistik kehadiran sesi kegiatan, daftar nama pemuda izin/sakit beserta keterangan alasan, serta fitur generate teks laporan format WhatsApp yang dapat disalin ke clipboard dalam satu klik.
+  - **Tabel Sesi Perangkat Mobile (Sanctum Tokens):** Menampilkan nama pengguna, perangkat/token, tanggal login pertama kali, serta waktu aktivitas terakhir dengan indikator online/idle.
+- **Kesesuaian Pengujian Otomatis:**
+  - Seluruh 90 test suite sistem lulus 100% (666 assertions) termasuk pengujian integrasi pemisahan dashboard dan scoping multi-role.
+
+### 2026-09-27 — Penambahan Fitur Reset & Pembersihan Data Uji Coba Pra-Launching Aplikasi Mobile Presensi PMD
+
+- **Fitur Pembersihan Data Pra-Launching pada Menu API (`/admin/api-settings`):**
+  - Menyediakan kartu khusus *Zona Persiapan Peluncuran Resmi (Pre-Launch Data Cleanup)* dan tombol aksi cepat *"Reset Data Pra-Launching"* pada header panel API serta Dashboard Presensi.
+  - Membuka modal interaktif terperinci yang memungkinkan Superadmin memilih secara fleksibel data apa saja yang ingin dibersihkan sebelum aplikasi resmi dirilis:
+    1. **Sesi Kegiatan & Catatan Kehadiran Presensi Cabang:** Mengosongkan data simulasi pada tabel `kegiatan_presensi` dan `presensi_detail`, serta me-reset counter ID Auto-Increment ke angka 1.
+    2. **Sesi Login Mobile & Token Perangkat Penguji (Force Logout):** Mencabut seluruh `personal_access_tokens` Sanctum pada perangkat tester sehingga seluruh sekretaris cabang wajib login ulang saat peluncuran resmi.
+    3. **Pengaturan Konfigurasi API:** Opsi mengembalikan parameter status API (Online), pesan pemeliharaan, batas bulk sync, dan quick chips izin/sakit ke nilai default standar pabrik.
+    4. **Reset Agenda Perwakilan:** Opsi membersihkan agenda perwakilan kustom pengujian dan mengembalikan 5 template agenda resmi perwakilan.
+- **Proteksi Keamanan Berlapis (Safety Guarantee):**
+  - **Jaminan Integritas Data:** Master database pemuda, nomor registrasi, data warga MTA, master wilayah, cabang, dan akun user sistem dipastikan 100% AMAN dan tidak akan tersentuh ataupun terhapus oleh proses reset presensi ini.
+  - **Konfirmasi Teks Keamanan:** Mewajibkan pengetikan teks verifikasi persis `RESET-LAUNCHING` untuk mencegah eksekusi reset yang tidak disengaja.
+- **Backend Controller & Route (`app/Http/Controllers/Admin/ApiSettingController.php`):**
+  - Menambahkan method `preLaunchReset(Request $request)` dan rute POST `admin/api-settings/prelaunch-reset` (khusus role `superadmin`).
+  - Menangani pembersihan database dengan penonaktifan foreign key check sementara (`SET FOREIGN_KEY_CHECKS=0`) untuk keamanan truncate tanpa melanggar constraint integritas referensial.
+- **Jaminan Mutu & Pengujian Otomatis:**
+  - Ditambahkan 3 test case pengujian pada `tests/Feature/PresensiDashboardSeparationTest.php` (`test_prelaunch_reset_fails_with_invalid_confirmation`, `test_prelaunch_reset_fails_without_selected_options`, `test_prelaunch_reset_clears_presensi_and_tokens_while_preserving_master_pemuda`).
+  - Seluruh 90 test suite sistem lulus 100% (664 assertions).
+
+### 2026-09-27 — Pemisahan Dashboard Admin Data Pemuda dengan Dashboard Management API & Mobile Presensi PMD
+
+- **Pemisahan Arsitektural Menjadi Dua Dashboard Mandiri:**
+  1. **Dashboard Sistem Pendataan Pemuda (`/admin/dashboard` & `/admin`):**
+     - Fokus murni pada sensus pendataan pemuda, statistik demografi, verifikasi MTA Pusat, status pernikahan, jenjang pendidikan, profesi/pekerjaan, serta pendaftaran pemuda terbaru.
+     - Dilengkapi tombol cepat integrasi ke "Dashboard Presensi", "Persebaran Data", "Tambah Pemuda", "Kelola Data", dan "Export Excel".
+  2. **Dashboard Management API & Presensi PMD Mobile (`/admin/presensi/dashboard` & alias `/admin/presensi-dashboard`):**
+     - Dikelola oleh `App\Http\Controllers\Admin\PresensiDashboardController`.
+     - Menyajikan metrik real-time REST API Flutter Android: status server API (Online vs Mode Pemeliharaan), versi minimum (force update) dan versi terbaru APK, total sesi presensi cabang (selesai, berlangsung, draft), total rekap kehadiran pemuda, serta jumlah sesi perangkat mobile aktif (Sanctum Tokens).
+     - Visualisasi Chart.js: Distribusi Kegiatan Presensi per Wilayah dan Komposisi Status Kehadiran (Hadir, Izin, Sakit, Alpa).
+     - Tabel interaktif monitoring sesi kegiatan presensi cabang dengan filter wilayah, cabang, status, dan pencarian cepat.
+     - Modal interaktif rekap presensi per kegiatan yang menyertakan rincian pemuda izin/sakit beserta alasan, serta format laporan teks WhatsApp yang siap disalin ke clipboard hanya dengan 1 klik (`copyWhatsAppReport`).
+     - Tabel monitoring sesi login perangkat mobile aktif (Sanctum Tokens) dengan status keaktifan 7 hari terakhir.
+- **Penataan Ulang Menu Navigasi Sidebar (`resources/views/admin/layouts/main.blade.php`):**
+  - Mengelompokkan navigasi ke dalam dua domain utama yang terpisah dan jelas:
+    1. **PENDATAAN PEMUDA (Aksen Merah):** Dashboard Pemuda, Persebaran Data, Daftar Pemuda, Tambah Pemuda, Export Data Excel, Import Excel, dan Backup & Reset Data.
+    2. **PRESENSI PMD (MOBILE API) (Aksen Hijau Emerald/Indigo):** Dashboard Presensi (`admin.presensi.dashboard`), Agenda Perwakilan (`admin.kegiatan-perwakilan.index`), dan Seting API Presensi (`admin.api-settings.index`).
+    3. **MASTER DATA & INTEGRASI:** Master Wilayah, Master Cabang, Pengguna & Hak Akses, Data Warga MTA, Sinkronisasi API MTA, dan Konten Beranda.
+  - Dropdown profil navbar atas menyediakan tautan cepat ke kedua dashboard secara independen.
+- **Otorisasi & Keamanan Data (RBAC Scoping):**
+  - Superadmin memiliki akses menyeluruh ke seluruh cabang, pengaturan API, dan pembatalan token.
+  - Admin Wilayah dan Admin Cabang dibatasi secara otomatis di sisi server (query scope) hanya dapat memantau data sesi presensi dan rekap kehadiran di wilayah atau cabangnya sendiri.
+  - Endpoint JSON `admin/presensi/kegiatan/{id}/rekap` memvalidasi otorisasi kepemilikan cabang dan mengembalikan HTTP 403 Forbidden bila diakses di luar cakupannya.
+- **Jaminan Mutu & Pengujian Otomatis:**
+  - Dibuatkan feature test terisolasi `tests/Feature/PresensiDashboardSeparationTest.php` (6 test cases, 34 assertions).
+  - Seluruh test suite sistem (87 feature tests, 649 assertions) lulus 100% tanpa regresi.
+
 ### 2026-09-27 — Penambahan Kolom Dinamis Wirausaha / Pemilik Usaha pada Form Pendataan
 
 - **Pembaruan Formulir Pendataan Publik (`resources/views/pendataan/form.blade.php`):**

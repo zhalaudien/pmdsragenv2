@@ -121,19 +121,21 @@
 
         <!-- Navigation Links -->
         <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-1 text-xs font-medium">
-            <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Menu Utama</div>
+            <!-- KELOMPOK 1: SISTEM PENDATAAN PEMUDA -->
+            <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Pendataan Pemuda</span>
+                <i class="bi bi-people-fill text-red-500 text-xs"></i>
+            </div>
 
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.dashboard') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="bi bi-speedometer2 text-base"></i>
-                <span>Dashboard</span>
+                <span>Dashboard Pemuda</span>
             </a>
 
             <a href="{{ route('admin.persebaran') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.persebaran*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="bi bi-pie-chart-fill text-base"></i>
                 <span>Persebaran Data</span>
             </a>
-
-            <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Data Pemuda</div>
 
             <a href="{{ route('admin.pemuda.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.pemuda.index') || request()->routeIs('admin.pemuda.detail') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="bi bi-people-fill text-base"></i>
@@ -160,8 +162,32 @@
                     <i class="bi bi-database-fill-gear text-base"></i>
                     <span>Backup &amp; Reset Data</span>
                 </a>
+            @endif
 
-                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</div>
+            <!-- KELOMPOK 2: PRESENSI PMD & MOBILE API -->
+            <div class="px-3 pt-5 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                <span>Presensi PMD (Mobile API)</span>
+                <i class="bi bi-phone-fill text-emerald-400 text-xs"></i>
+            </div>
+
+            <a href="{{ route('admin.presensi.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.presensi.dashboard*') ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-phone-vibrate-fill text-base"></i>
+                <span>Dashboard Presensi</span>
+            </a>
+
+            <a href="{{ route('admin.kegiatan-perwakilan.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.kegiatan-perwakilan*') ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-calendar-event-fill text-base"></i>
+                <span>Agenda Perwakilan</span>
+            </a>
+
+            @if($currRole === 'superadmin')
+                <a href="{{ route('admin.api-settings.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.api-settings*') ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <i class="bi bi-sliders2-vertical text-base"></i>
+                    <span>Seting API Presensi</span>
+                </a>
+
+                <!-- KELOMPOK 3: MASTER DATA -->
+                <div class="px-3 pt-5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</div>
 
                 <a href="{{ route('admin.wilayah.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.wilayah*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <i class="bi bi-geo-alt-fill text-base"></i>
@@ -178,7 +204,8 @@
                     <span>Pengguna &amp; Hak Akses</span>
                 </a>
 
-                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Integrasi &amp; Web</div>
+                <!-- KELOMPOK 4: INTEGRASI & SISTEM -->
+                <div class="px-3 pt-5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Integrasi &amp; Web</div>
 
                 <a href="{{ route('admin.warga-mta.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.warga-mta*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <i class="bi bi-cloud-arrow-down-fill text-base"></i>
@@ -193,16 +220,6 @@
                 <a href="{{ route('admin.homepage.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.homepage*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <i class="bi bi-window-sidebar text-base"></i>
                     <span>Konten Beranda</span>
-                </a>
-
-                <a href="{{ route('admin.kegiatan-perwakilan.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.kegiatan-perwakilan*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                    <i class="bi bi-calendar-event-fill text-base"></i>
-                    <span>Info Kegiatan Mobile</span>
-                </a>
-
-                <a href="{{ route('admin.api-settings.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.api-settings*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                    <i class="bi bi-phone-fill text-base"></i>
-                    <span>Seting API Presensi</span>
                 </a>
             @endif
 
@@ -297,11 +314,15 @@
                                 </span>
                             </div>
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
-                                <i class="bi bi-speedometer2 text-slate-400"></i>
-                                <span>Dashboard</span>
+                                <i class="bi bi-people text-slate-400"></i>
+                                <span>Dashboard Pemuda</span>
+                            </a>
+                            <a href="{{ route('admin.presensi.dashboard') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
+                                <i class="bi bi-phone-vibrate text-indigo-500"></i>
+                                <span>Dashboard Presensi</span>
                             </a>
                             <a href="{{ route('admin.pemuda.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
-                                <i class="bi bi-people text-slate-400"></i>
+                                <i class="bi bi-person-lines-fill text-slate-400"></i>
                                 <span>Data Pemuda</span>
                             </a>
                             <div class="my-1 border-t border-slate-100"></div>

@@ -48,8 +48,11 @@
                 @endif
             </p>
         </div>
-
         <div class="flex flex-wrap gap-2.5 lg:justify-end flex-shrink-0">
+            <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md">
+                <i class="bi bi-phone-vibrate-fill"></i>
+                <span>Dashboard Presensi</span>
+            </a>
             <a href="{{ route('admin.persebaran') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-md">
                 <i class="bi bi-pie-chart-fill"></i>
                 <span>Persebaran Data</span>

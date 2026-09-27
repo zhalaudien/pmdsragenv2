@@ -82,6 +82,11 @@ class PmdSragenRoutesTest extends TestCase
 
         // Homepage Settings
         $this->get('/admin/homepage')->assertStatus(200);
+
+        // Presensi PMD Mobile & API Settings
+        $this->get('/admin/presensi/dashboard')->assertStatus(200);
+        $this->get('/admin/api-settings')->assertStatus(200);
+        $this->get('/admin/kegiatan-perwakilan')->assertStatus(200);
     }
 
     public function test_admin_wilayah_cannot_access_user_management(): void

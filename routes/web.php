@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\WargaMtaController;
 use App\Http\Controllers\Admin\MtaSyncController;
 use App\Http\Controllers\Admin\HomepageSettingController;
 use App\Http\Controllers\Admin\ApiSettingController;
+use App\Http\Controllers\Admin\PresensiDashboardController;
 use App\Http\Controllers\Admin\KegiatanPerwakilanController;
 use App\Http\Controllers\Admin\AjaxController;
 use App\Http\Controllers\GuruDaerahController;
@@ -64,11 +65,18 @@ Route::get('admin/logout', fn () => redirect()->route('login'));
 // 3. ADMIN PANEL (PROTECTED)
 // ==========================================
 Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function () {
-    // Dashboard & Persebaran
+    // Dashboard & Persebaran Data Pemuda
     Route::get('/', [DashboardController::class, 'index']);
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('persebaran', [PersebaranController::class, 'index'])->name('persebaran');
     Route::get('dashboard/persebaran', [PersebaranController::class, 'index']);
+
+    // Dashboard & Monitoring Mobile Presensi PMD
+    Route::prefix('presensi')->name('presensi.')->group(function () {
+        Route::get('dashboard', [PresensiDashboardController::class, 'index'])->name('dashboard');
+        Route::get('kegiatan/{id}/rekap', [PresensiDashboardController::class, 'rekapDetail'])->name('kegiatan.rekap');
+    });
+    Route::get('presensi-dashboard', fn () => redirect()->route('admin.presensi.dashboard'));
 
     // Manajemen Data Pemuda
     Route::prefix('pemuda')->name('pemuda.')->group(function () {
@@ -163,6 +171,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('revoke-token/{id}', [ApiSettingController::class, 'revokeToken'])->name('revoke-token');
         Route::post('revoke-all-tokens', [ApiSettingController::class, 'revokeAllTokens'])->name('revoke-all-tokens');
         Route::post('reset', [ApiSettingController::class, 'resetDefaults'])->name('reset');
+        Route::post('prelaunch-reset', [ApiSettingController::class, 'preLaunchReset'])->name('prelaunch-reset');
     });
 
     // Kelola Info Kegiatan Pemuda Perwakilan untuk Mobile Presensi

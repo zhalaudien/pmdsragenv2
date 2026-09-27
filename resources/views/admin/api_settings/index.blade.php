@@ -43,6 +43,10 @@
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" onclick="openLaunchResetModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs transition shadow-md flex items-center gap-2">
+            <i class="bi bi-rocket-takeoff-fill"></i>
+            <span>Reset Data Pra-Launching</span>
+        </button>
         <button type="button" onclick="copyBaseUrl()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-2">
             <i class="bi bi-link-45deg text-base"></i>
             <span>Salin Base URL API</span>
@@ -111,6 +115,46 @@
             <div class="text-base font-black text-slate-800 mt-0.5">
                 {{ number_format($totalPresensi) }} <span class="text-xs font-normal text-slate-500">kehadiran</span>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- PRE-LAUNCH CLEANUP BANNER CARD -->
+<div id="launchResetCard" class="mb-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white border border-rose-800/40 shadow-xl relative overflow-hidden">
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold mb-2.5">
+                <i class="bi bi-rocket-takeoff-fill text-rose-400"></i>
+                <span>Persiapan Peluncuran Resmi (Pre-Launch Cleanup)</span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-black text-white tracking-tight">
+                Reset Data Uji Coba Sebelum Launching Aplikasi Mobile Presensi
+            </h3>
+            <p class="text-slate-300 text-xs mt-1.5 leading-relaxed">
+                Gunakan opsi ini sebelum aplikasi Android <strong>Presensi PMD</strong> resmi dirilis ke seluruh cabang MTA di Kabupaten Sragen. Fitur ini membersihkan sesi simulasi pengajian, rekaman presensi testing, dan sesi login tester.
+                <span class="block mt-1 font-semibold text-emerald-400"><i class="bi bi-shield-check"></i> Master data pemuda, cabang, wilayah, dan akun pengguna dijamin 100% AMAN dan tidak akan terhapus.</span>
+            </p>
+            <div class="flex flex-wrap gap-4 mt-3 text-xs text-slate-300">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span>Sesi Uji Coba: <strong class="text-white">{{ number_format($totalSessions) }} agenda</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                    <span>Catatan Kehadiran: <strong class="text-white">{{ number_format($totalPresensi) }} presensi</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                    <span>Token Tester: <strong class="text-white">{{ number_format($totalTokens) }} perangkat</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-shrink-0">
+            <button type="button" onclick="openLaunchResetModal()" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-lg flex items-center justify-center gap-2 border border-rose-500/50">
+                <i class="bi bi-trash3-fill text-sm"></i>
+                <span>Pilih Data yang Direset</span>
+            </button>
         </div>
     </div>
 </div>
@@ -373,10 +417,127 @@
     </div>
 </div>
 
+<!-- MODAL RESET PRA-LAUNCHING -->
+<div id="modalLaunchReset" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between pb-4 border-b border-slate-100 mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="bi bi-rocket-takeoff-fill"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Reset Data Pra-Launching Mobile</h3>
+                    <p class="text-xs text-slate-500">Pilih komponen data uji coba yang ingin dibersihkan</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeLaunchResetModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                <i class="bi bi-x-lg text-sm"></i>
+            </button>
+        </div>
+
+        <form action="{{ route('admin.api-settings.prelaunch-reset') }}" method="POST" class="space-y-4 text-xs">
+            @csrf
+
+            <!-- Safe Notice -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-2.5">
+                <i class="bi bi-shield-check text-emerald-600 text-lg flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <div class="font-bold">Keamanan Master Data Terjamin:</div>
+                    <div class="text-[11px] text-emerald-800 leading-relaxed mt-0.5">
+                        Database pemuda, nomor registrasi, data warga MTA, master wilayah, cabang, dan akun admin <strong>TIDAK AKAN terhapus</strong> oleh proses ini.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkbox Options -->
+            <div class="space-y-2.5">
+                <label class="font-bold text-slate-700 uppercase tracking-wider block text-[11px]">Pilih Data yang Akan Direset:</label>
+
+                <!-- Option 1: Sesi Kegiatan & Detail Presensi -->
+                <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50/40">
+                    <input type="checkbox" name="reset_presensi" value="1" checked class="mt-0.5 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300">
+                    <div class="min-w-0">
+                        <div class="font-bold text-slate-900 flex items-center gap-2">
+                            <span>Sesi Kegiatan &amp; Catatan Kehadiran Cabang</span>
+                            <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">{{ number_format($totalSessions) }} agenda / {{ number_format($totalPresensi) }} presensi</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Mengosongkan tabel kegiatan_presensi dan presensi_detail, serta me-reset ID counter ke angka 1.</p>
+                    </div>
+                </label>
+
+                <!-- Option 2: Sesi Token Login Mobile -->
+                <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50/40">
+                    <input type="checkbox" name="reset_tokens" value="1" checked class="mt-0.5 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300">
+                    <div class="min-w-0">
+                        <div class="font-bold text-slate-900 flex items-center gap-2">
+                            <span>Sesi Login Mobile &amp; Token Perangkat (Force Logout)</span>
+                            <span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-bold">{{ number_format($totalTokens) }} perangkat</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Mencabut seluruh sesi token akses mobile sehingga semua tester/pengurus cabang wajib login ulang saat rilis resmi.</p>
+                    </div>
+                </label>
+
+                <!-- Option 3: Reset Pengaturan API -->
+                <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50/40">
+                    <input type="checkbox" name="reset_settings" value="1" class="mt-0.5 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300">
+                    <div class="min-w-0">
+                        <div class="font-bold text-slate-900">
+                            Kembalikan Pengaturan API ke Nilai Standar Pabrik
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Mengatur ulang status API (Online), batas bulk sync, masa berlaku token, dan preset tombol cepat izin/sakit.</p>
+                    </div>
+                </label>
+
+                <!-- Option 4: Reset Agenda Perwakilan -->
+                <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50/40">
+                    <input type="checkbox" name="reset_agenda" value="1" class="mt-0.5 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300">
+                    <div class="min-w-0">
+                        <div class="font-bold text-slate-900 flex items-center gap-2">
+                            <span>Reset Agenda Perwakilan ke Template Standar</span>
+                            <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">{{ number_format($totalAgendaPerwakilan ?? 0) }} kegiatan</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Membersihkan kegiatan perwakilan custom dan mengembalikan 5 agenda resmi perwakilan Sragen.</p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Security Confirmation Input -->
+            <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 space-y-2">
+                <label class="block font-bold text-rose-900 text-xs">
+                    Konfirmasi Keamanan:
+                </label>
+                <p class="text-[11px] text-rose-700">
+                    Ketik persis kata <strong class="font-mono bg-rose-200/80 px-1.5 py-0.5 rounded text-rose-950">RESET-LAUNCHING</strong> pada kotak di bawah ini untuk mengonfirmasi:
+                </p>
+                <input type="text" name="confirm_text" required placeholder="RESET-LAUNCHING" autocomplete="off" class="w-full py-2.5 px-3 rounded-xl border border-rose-300 bg-white focus:ring-rose-500 focus:border-rose-500 font-mono font-bold text-slate-900 uppercase">
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeLaunchResetModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">
+                    Batalkan
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-md flex items-center gap-2">
+                    <i class="bi bi-trash3-fill"></i>
+                    <span>Bersihkan Data Uji Coba</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script>
+function openLaunchResetModal() {
+    document.getElementById('modalLaunchReset').classList.remove('hidden');
+}
+
+function closeLaunchResetModal() {
+    document.getElementById('modalLaunchReset').classList.add('hidden');
+}
+
 function copyBaseUrl() {
     const url = "{{ url('/api/v1') }}";
     navigator.clipboard.writeText(url).then(() => {

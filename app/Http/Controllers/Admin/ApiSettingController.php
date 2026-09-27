@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiSetting;
+use App\Models\KegiatanPerwakilan;
 use App\Models\KegiatanPresensi;
 use App\Models\PresensiDetail;
 use App\Models\User;
@@ -47,18 +48,21 @@ class ApiSettingController extends Controller
             ->limit(20)
             ->get();
 
+        $totalAgendaPerwakilan = KegiatanPerwakilan::count();
+
         // Katalog endpoint API
         $endpoints = $this->getEndpointCatalog();
 
         return view('admin.api_settings.index', [
-            'title'         => 'Pengaturan API Mobile Presensi',
-            'settings'      => $settings,
-            'quickChips'    => $quickChips,
-            'totalSessions' => $totalSessions,
-            'totalPresensi' => $totalPresensi,
-            'totalTokens'   => $totalTokens,
-            'tokens'        => $tokens,
-            'endpoints'     => $endpoints,
+            'title'                 => 'Pengaturan API Mobile Presensi',
+            'settings'              => $settings,
+            'quickChips'            => $quickChips,
+            'totalSessions'         => $totalSessions,
+            'totalPresensi'         => $totalPresensi,
+            'totalTokens'           => $totalTokens,
+            'totalAgendaPerwakilan' => $totalAgendaPerwakilan,
+            'tokens'                => $tokens,
+            'endpoints'             => $endpoints,
         ]);
     }
 
@@ -142,6 +146,94 @@ class ApiSettingController extends Controller
         }
 
         return redirect()->route('admin.api-settings.index')->with('success', 'Pengaturan API berhasil dikembalikan ke nilai bawaan pabrik.');
+    }
+
+    /**
+     * Pembersihan data uji coba sebelum peluncuran resmi aplikasi mobile presensi
+     */
+    public function preLaunchReset(Request $request)
+    {
+        $request->validate([
+            'confirm_text' => 'required|string',
+        ], [
+            'confirm_text.required' => 'Teks konfirmasi keamanan wajib diisi.',
+        ]);
+
+        if (strtoupper(trim((string)$request->input('confirm_text'))) !== 'RESET-LAUNCHING') {
+            return redirect()->route('admin.api-settings.index')
+                ->with('error', 'Konfirmasi keamanan gagal. Anda harus mengetik persis "RESET-LAUNCHING" untuk melanjutkan proses pembersihan data.');
+        }
+
+        $resetPresensi = $request->boolean('reset_presensi', false);
+        $resetTokens   = $request->boolean('reset_tokens', false);
+        $resetSettings = $request->boolean('reset_settings', false);
+        $resetAgenda   = $request->boolean('reset_agenda', false);
+
+        if (!$resetPresensi && !$resetTokens && !$resetSettings && !$resetAgenda) {
+            return redirect()->route('admin.api-settings.index')
+                ->with('warning', 'Tidak ada opsi pembersihan data yang dipilih. Silakan pilih minimal satu opsi.');
+        }
+
+        $deletedPresensi = 0;
+        $deletedKegiatan = 0;
+        $deletedTokens   = 0;
+
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // 1. Reset data kehadiran & sesi kegiatan presensi cabang
+            if ($resetPresensi) {
+                $deletedPresensi = DB::table('presensi_detail')->count();
+                DB::table('presensi_detail')->truncate();
+
+                $deletedKegiatan = DB::table('kegiatan_presensi')->count();
+                DB::table('kegiatan_presensi')->truncate();
+            }
+
+            // 2. Reset token login perangkat mobile (force logout tester)
+            if ($resetTokens) {
+                $deletedTokens = DB::table('personal_access_tokens')->count();
+                DB::table('personal_access_tokens')->truncate();
+            }
+
+            // 3. Reset pengaturan API ke nilai standar pabrik
+            if ($resetSettings) {
+                ApiSetting::seedDefaults();
+                foreach (ApiSetting::getDefaults() as $key => $meta) {
+                    ApiSetting::set($key, $meta['value']);
+                }
+            }
+
+            // 4. Reset agenda perwakilan ke nilai bawaan seeder
+            if ($resetAgenda) {
+                DB::table('kegiatan_perwakilan')->truncate();
+                KegiatanPerwakilan::seedDefaults(true);
+            }
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            $summaryParts = [];
+            if ($resetPresensi) {
+                $summaryParts[] = "{$deletedKegiatan} sesi kegiatan presensi & {$deletedPresensi} catatan kehadiran dihapus";
+            }
+            if ($resetTokens) {
+                $summaryParts[] = "{$deletedTokens} sesi login mobile dicabut (force logout)";
+            }
+            if ($resetSettings) {
+                $summaryParts[] = "pengaturan API dikembalikan ke nilai awal";
+            }
+            if ($resetAgenda) {
+                $summaryParts[] = "agenda perwakilan di-reset ke template standar";
+            }
+
+            $successMsg = 'Pembersihan data pra-launching berhasil! ' . implode(', ', $summaryParts) . '. Master data pemuda, cabang, wilayah, dan akun pengguna tetap aman dan tidak terpengaruh.';
+
+            return redirect()->route('admin.api-settings.index')->with('success', $successMsg);
+        } catch (\Throwable $e) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return redirect()->route('admin.api-settings.index')
+                ->with('error', 'Terjadi kesalahan sistem saat membersihkan data: ' . $e->getMessage());
+        }
     }
 
     /**
