@@ -15,7 +15,7 @@
         </span>
     </div>
     <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Cabang Binaan</h2>
-    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Kelola informasi 61+ cabang MTA, jadwal gelombang pembinaan, dan lokasi peta se-Kabupaten Sragen.</p>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Kelola informasi 61+ cabang MTA, jadwal kajian pemuda, dan lokasi peta se-Kabupaten Sragen.</p>
 </div>
 
 <!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
@@ -151,7 +151,7 @@
             <i class="bi bi-check2-circle"></i>
         </div>
         <div>
-            <div class="text-[11px] font-semibold text-slate-400 uppercase">Sudah Bergelombang</div>
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Sudah Ada Kajian Pemuda</div>
             <div class="text-xl font-black text-emerald-600">{{ number_format($totalSudahGelombang) }} Cabang</div>
         </div>
     </div>
@@ -161,7 +161,7 @@
             <i class="bi bi-clock"></i>
         </div>
         <div>
-            <div class="text-[11px] font-semibold text-slate-400 uppercase">Belum Bergelombang</div>
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Belum Ada Kajian Pemuda</div>
             <div class="text-xl font-black text-amber-600">{{ number_format($totalBelumGelombang) }} Cabang</div>
         </div>
     </div>
@@ -193,11 +193,11 @@
         </div>
 
         <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">Status Gelombang</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Status Kajian Pemuda</label>
             <select name="has_gelombang" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 <option value="">-- Semua Status --</option>
-                <option value="sudah" {{ ($selectedGelombang ?? '') === 'sudah' ? 'selected' : '' }}>Sudah Bergelombang</option>
-                <option value="belum" {{ ($selectedGelombang ?? '') === 'belum' ? 'selected' : '' }}>Belum Bergelombang</option>
+                <option value="sudah" {{ ($selectedGelombang ?? '') === 'sudah' ? 'selected' : '' }}>Sudah Ada Kajian</option>
+                <option value="belum" {{ ($selectedGelombang ?? '') === 'belum' ? 'selected' : '' }}>Belum Ada Kajian</option>
             </select>
         </div>
 
@@ -238,7 +238,7 @@
                     <th class="py-3 px-4">Nama Cabang</th>
                     <th class="py-3 px-4">Wilayah</th>
                     <th class="py-3 px-4">Pimpinan &amp; Kontak</th>
-                    <th class="py-3 px-4">Gelombang Pengajian</th>
+                    <th class="py-3 px-4">Kajian Pemuda</th>
                     <th class="py-3 px-4 text-center">Total Pemuda</th>
                     <th class="py-3 px-4 text-center">Aksi</th>
                 </tr>
@@ -266,14 +266,17 @@
                         <td class="py-3 px-4">
                             @if($c->has_gelombang === 'sudah')
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                                    <i class="bi bi-check-circle-fill"></i> Sudah Bergelombang
+                                    <i class="bi bi-check-circle-fill"></i> Sudah Ada Kajian
                                 </span>
-                                @if($c->gelombang_hari)
-                                    <div class="text-[11px] text-slate-500 mt-0.5">{{ $c->gelombang_hari }} - {{ $c->gelombang_jam }}</div>
+                                @if($c->gelombang_hari || $c->gelombang_jam)
+                                    <div class="text-[11px] text-slate-600 mt-0.5 font-medium">{{ $c->gelombang_hari ?: '-' }} &bull; {{ $c->gelombang_jam ?: '-' }}</div>
+                                @endif
+                                @if($c->gelombang_ustadz)
+                                    <div class="text-[10px] text-slate-400 mt-0.5"><i class="bi bi-person-fill"></i> {{ $c->gelombang_ustadz }}</div>
                                 @endif
                             @else
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold text-[10px]">
-                                    Belum Bergelombang
+                                    Belum Ada Kajian
                                 </span>
                             @endif
                         </td>
@@ -316,7 +319,7 @@
 
 <!-- MODAL TAMBAH CABANG -->
 <div id="modalAddCabang" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-plus-circle text-red-600"></i>
@@ -329,8 +332,8 @@
 
         <form action="{{ route('admin.cabang.simpan') }}" method="POST" class="space-y-4 text-xs">
             @csrf
-            <div class="grid grid-cols-2 gap-3">
-                <div class="col-span-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Wilayah <span class="text-red-500">*</span></label>
                     <select name="wilayah_id" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                         <option value="">-- Pilih Wilayah --</option>
@@ -360,36 +363,54 @@
                     <input type="tel" name="no_wa" placeholder="08xxxxxxxxxx" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
-                <div class="col-span-2">
+                <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Cabang</label>
-                    <textarea name="alamat" rows="2" placeholder="Dukuh, Desa, Kec..." class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
+                    <textarea name="alamat" rows="2" placeholder="Dukuh, Desa, RT/RW, Kec..." class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Tautan / Link Google Maps (URL)</label>
+                    <input type="url" name="maps_url" placeholder="https://maps.app.goo.gl/..." class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Deskripsi / Catatan Cabang</label>
+                    <textarea name="description" rows="2" placeholder="Catatan mengenai operasional cabang, agenda khusus, dll..." class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
+                </div>
+
+                <!-- Bagian Kajian Pemuda -->
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100">
+                    <h4 class="text-[11px] font-bold text-red-700 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <i class="bi bi-book-half"></i> Sesi Kajian Pemuda Cabang
+                    </h4>
+                    <p class="text-[10px] text-slate-400">Informasi pelaksanaan pengajian / kajian khusus pemuda di cabang ini</p>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Gelombang <span class="text-red-500">*</span></label>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Kajian Pemuda <span class="text-red-500">*</span></label>
                     <select name="has_gelombang" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
-                        <option value="belum">Belum Bergelombang</option>
-                        <option value="sudah">Sudah Bergelombang</option>
+                        <option value="belum">Belum Ada Kajian</option>
+                        <option value="sudah">Sudah Ada Kajian</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari Gelombang</label>
-                    <input type="text" name="gelombang_hari" placeholder="Ahad Pagi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari Kajian</label>
+                    <input type="text" name="gelombang_hari" placeholder="Contoh: Ahad Pagi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Gelombang</label>
-                    <input type="text" name="gelombang_jam" placeholder="06:00 - 07:30" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam / Waktu Kajian</label>
+                    <input type="text" name="gelombang_jam" placeholder="Contoh: 06:00 - 07:30 WIB" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengisi</label>
-                    <input type="text" name="gelombang_ustadz" placeholder="Nama Ustadz" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
+                    <input type="text" name="gelombang_ustadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
             </div>
 
-            <div class="pt-2 flex items-center justify-end gap-2">
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button type="button" onclick="closeModal('modalAddCabang')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Batal</button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-md">Simpan Cabang</button>
             </div>
@@ -399,7 +420,7 @@
 
 <!-- MODAL EDIT CABANG -->
 <div id="modalEditCabang" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-pencil-square text-amber-500"></i>
@@ -412,8 +433,8 @@
 
         <form id="formEditCabang" method="POST" class="space-y-4 text-xs">
             @csrf
-            <div class="grid grid-cols-2 gap-3">
-                <div class="col-span-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Wilayah <span class="text-red-500">*</span></label>
                     <select name="wilayah_id" id="editWilayahId" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                         @foreach($wilayahList as $w)
@@ -442,36 +463,54 @@
                     <input type="tel" name="no_wa" id="editNoWa" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
-                <div class="col-span-2">
+                <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Cabang</label>
                     <textarea name="alamat" id="editAlamat" rows="2" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
                 </div>
 
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Tautan / Link Google Maps (URL)</label>
+                    <input type="url" name="maps_url" id="editMapsUrl" placeholder="https://maps.app.goo.gl/..." class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Deskripsi / Catatan Cabang</label>
+                    <textarea name="description" id="editDescription" rows="2" placeholder="Catatan mengenai operasional cabang, agenda khusus, dll..." class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
+                </div>
+
+                <!-- Bagian Kajian Pemuda -->
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100">
+                    <h4 class="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <i class="bi bi-book-half"></i> Sesi Kajian Pemuda Cabang
+                    </h4>
+                    <p class="text-[10px] text-slate-400">Informasi pelaksanaan pengajian / kajian khusus pemuda di cabang ini</p>
+                </div>
+
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Gelombang <span class="text-red-500">*</span></label>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Status Kajian Pemuda <span class="text-red-500">*</span></label>
                     <select name="has_gelombang" id="editHasGelombang" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
-                        <option value="belum">Belum Bergelombang</option>
-                        <option value="sudah">Sudah Bergelombang</option>
+                        <option value="belum">Belum Ada Kajian</option>
+                        <option value="sudah">Sudah Ada Kajian</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari Gelombang</label>
-                    <input type="text" name="gelombang_hari" id="editGelombangHari" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Hari Kajian</label>
+                    <input type="text" name="gelombang_hari" id="editGelombangHari" placeholder="Contoh: Ahad Pagi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam Gelombang</label>
-                    <input type="text" name="gelombang_jam" id="editGelombangJam" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Jam / Waktu Kajian</label>
+                    <input type="text" name="gelombang_jam" id="editGelombangJam" placeholder="Contoh: 06:00 - 07:30 WIB" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengisi</label>
-                    <input type="text" name="gelombang_ustadz" id="editGelombangUstadz" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
+                    <input type="text" name="gelombang_ustadz" id="editGelombangUstadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
             </div>
 
-            <div class="pt-2 flex items-center justify-end gap-2">
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button type="button" onclick="closeModal('modalEditCabang')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Batal</button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition shadow-md">Simpan Perubahan</button>
             </div>
@@ -481,8 +520,8 @@
 
 <!-- MODAL DETAIL CABANG -->
 <div id="modalDetailCabang" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 text-xs">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 text-xs max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-info-circle text-sky-600"></i>
                 <span id="detailCabangTitle">Detail Cabang</span>
@@ -492,12 +531,12 @@
             </button>
         </div>
 
-        <div id="detailCabangBody" class="space-y-2.5 divide-y divide-slate-100">
-            <!-- Content loaded via JS -->
+        <div id="detailCabangBody" class="space-y-3">
+            <!-- Content loaded via JS viewDetailCabang -->
         </div>
 
         <div class="pt-4 mt-4 border-t border-slate-100 text-right">
-            <button type="button" onclick="closeModal('modalDetailCabang')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Tutup</button>
+            <button type="button" onclick="closeModal('modalDetailCabang')" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Tutup</button>
         </div>
     </div>
 </div>
@@ -539,7 +578,7 @@
                 </div>
                 <div class="text-[11px] text-slate-600 leading-relaxed">
                     <span class="font-bold text-slate-800 block">Isi Data &amp; Unggah</span>
-                    Isi data cabang pada sheet <em>"Format Import Cabang"</em>. Kolom <strong>Nama Cabang</strong>, <strong>Wilayah</strong>, dan <strong>Status Gelombang</strong> wajib diisi. Sheet <em>"Referensi Wilayah"</em> memuat daftar kode dan nama wilayah yang valid.
+                    Isi data cabang pada sheet <em>"Format Import Cabang"</em>. Kolom <strong>Nama Cabang</strong>, <strong>Wilayah</strong>, dan <strong>Status Kajian Pemuda</strong> wajib diisi. Sheet <em>"Referensi Wilayah"</em> memuat daftar kode dan nama wilayah yang valid.
                 </div>
             </div>
         </div>
@@ -588,6 +627,16 @@
 
 @section('scripts')
 <script>
+    function escapeHtmlCabang(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function displayCabangFileName(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -614,6 +663,8 @@
         document.getElementById('editPimpinanNama').value = c.pimpinan_nama || '';
         document.getElementById('editNoWa').value = c.no_wa || '';
         document.getElementById('editAlamat').value = c.alamat || '';
+        document.getElementById('editMapsUrl').value = c.maps_url || '';
+        document.getElementById('editDescription').value = c.description || '';
         document.getElementById('editHasGelombang').value = c.has_gelombang || 'belum';
         document.getElementById('editGelombangHari').value = c.gelombang_hari || '';
         document.getElementById('editGelombangJam').value = c.gelombang_jam || '';
@@ -627,17 +678,159 @@
             .then(res => {
                 if (res.status === 'success') {
                     const c = res.data;
+                    const safeName = escapeHtmlCabang(c.name);
+                    const safeCode = escapeHtmlCabang(c.code);
+                    const safeWilayah = escapeHtmlCabang(c.wilayah?.name || '-');
+                    const safeWilayahCode = escapeHtmlCabang(c.wilayah?.code || '');
+                    const safePimpinan = escapeHtmlCabang(c.pimpinan_nama || '-');
+                    const safeNoWa = escapeHtmlCabang(c.no_wa || '-');
+                    const safeAlamat = escapeHtmlCabang(c.alamat || '-');
+                    const safeMapsUrl = c.maps_url ? escapeHtmlCabang(c.maps_url) : null;
+                    const safeDesc = escapeHtmlCabang(c.description || '');
+                    const safeHari = escapeHtmlCabang(c.gelombang_hari || '-');
+                    const safeJam = escapeHtmlCabang(c.gelombang_jam || '-');
+                    const safeUstadz = escapeHtmlCabang(c.gelombang_ustadz || '-');
+                    const isSudah = c.has_gelombang === 'sudah';
+                    const pemudaCount = c.total_pemuda || 0;
+                    const mtaUuid = escapeHtmlCabang(c.mta_uuid || '');
+                    const mtaSync = c.mta_last_synced_at ? escapeHtmlCabang(c.mta_last_synced_at) : '';
+
+                    let waLink = '';
+                    if (c.no_wa) {
+                        const cleanPhone = c.no_wa.replace(/\D/g, '').replace(/^0/, '62');
+                        waLink = `https://wa.me/${cleanPhone}`;
+                    }
+
                     document.getElementById('detailCabangTitle').textContent = c.name;
                     document.getElementById('detailCabangBody').innerHTML = `
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Wilayah:</span> <strong class="text-slate-800">${c.wilayah?.name || '-'}</strong></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Kode:</span> <strong class="font-mono text-slate-800">${c.code || '-'}</strong></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Pimpinan:</span> <strong class="text-slate-800">${c.pimpinan_nama || '-'}</strong></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">No. WhatsApp:</span> <span class="text-emerald-600 font-semibold">${c.no_wa || '-'}</span></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Status Gelombang:</span> <span class="font-bold ${c.has_gelombang === 'sudah' ? 'text-emerald-600' : 'text-slate-500'}">${c.has_gelombang === 'sudah' ? 'Sudah Bergelombang' : 'Belum'}</span></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Jadwal:</span> <span>${c.gelombang_hari || '-'} (${c.gelombang_jam || '-'})</span></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Ustadz:</span> <span>${c.gelombang_ustadz || '-'}</span></div>
-                        <div class="py-1.5 flex justify-between"><span class="text-slate-400">Total Pemuda:</span> <strong class="text-red-600">${c.total_pemuda || 0} Pemuda</strong></div>
-                        <div class="py-1.5"><span class="text-slate-400 block mb-1">Alamat:</span> <div class="bg-slate-50 p-2 rounded-lg border text-slate-700">${c.alamat || '-'}</div></div>
+                        <div class="space-y-3.5">
+                            <!-- Identitas Cabang & Wilayah -->
+                            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                <div class="grid grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Nama Cabang</span>
+                                        <span class="font-bold text-slate-900 text-sm">${safeName}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Kode Cabang</span>
+                                        <span class="font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border inline-block text-[11px]">${safeCode || '<span class="text-slate-400 font-normal italic">Tidak ada kode</span>'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Wilayah</span>
+                                        <span class="font-semibold text-slate-800">${safeWilayah} ${safeWilayahCode ? `(${safeWilayahCode})` : ''}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Total Pemuda Terdaftar</span>
+                                        <a href="{{ route('admin.pemuda.index') }}?cabang_id=${c.id}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition border border-emerald-200/70">
+                                            <i class="bi bi-people-fill"></i> ${pemudaCount} Pemuda
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kepemimpinan & Kontak -->
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                                <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="bi bi-person-badge text-indigo-600"></i> Pimpinan &amp; Kontak Cabang
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Pimpinan / Ketua:</span>
+                                        <strong class="text-slate-800">${safePimpinan}</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Nomor WhatsApp:</span>
+                                        ${waLink ? `
+                                            <a href="${waLink}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-semibold">
+                                                <i class="bi bi-whatsapp"></i> ${safeNoWa}
+                                            </a>
+                                        ` : `
+                                            <span class="text-slate-600">${safeNoWa}</span>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lokasi & Peta Cabang -->
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                                <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="bi bi-geo-alt-fill text-rose-600"></i> Lokasi Cabang &amp; Peta
+                                </h4>
+                                <div class="text-xs space-y-2">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block mb-0.5">Alamat Lengkap / Sekretariat:</span>
+                                        <div class="p-2 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-700 text-[11px] leading-relaxed">
+                                            ${safeAlamat}
+                                        </div>
+                                    </div>
+                                    ${safeMapsUrl ? `
+                                        <div class="flex items-center justify-between pt-1">
+                                            <span class="text-[10px] text-slate-400">Tautan Google Maps:</span>
+                                            <a href="${safeMapsUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] transition border border-rose-200/80">
+                                                <i class="bi bi-map-fill"></i> Buka Google Maps <i class="bi bi-box-arrow-up-right text-[10px]"></i>
+                                            </a>
+                                        </div>
+                                    ` : `
+                                        <div class="text-[11px] text-slate-400 italic">Belum ada tautan Google Maps.</div>
+                                    `}
+                                </div>
+                            </div>
+
+                            <!-- Sesi Kajian Pemuda Cabang -->
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+                                    <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="bi bi-book-half text-emerald-600"></i> Sesi Kajian Pemuda
+                                    </h4>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${isSudah ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'} font-bold text-[10px]">
+                                        <i class="bi ${isSudah ? 'bi-check-circle-fill' : 'bi-dash-circle'}"></i>
+                                        ${isSudah ? 'Sudah Ada Kajian' : 'Belum Ada Kajian'}
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1">
+                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                        <span class="text-[10px] text-slate-400 block font-medium">Hari Kajian</span>
+                                        <span class="font-bold text-slate-800">${safeHari}</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                        <span class="text-[10px] text-slate-400 block font-medium">Waktu / Jam</span>
+                                        <span class="font-bold text-slate-800">${safeJam}</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 sm:col-span-1">
+                                        <span class="text-[10px] text-slate-400 block font-medium">Ustadz Pengampu</span>
+                                        <span class="font-bold text-slate-800">${safeUstadz}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deskripsi / Catatan Tambahan -->
+                            ${safeDesc ? `
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                                <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="bi bi-card-text text-amber-600"></i> Deskripsi &amp; Catatan
+                                </h4>
+                                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-700 text-[11px] leading-relaxed">
+                                    ${safeDesc}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <!-- Integrasi MTA Pusat -->
+                            <div class="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 text-[11px]">
+                                <div class="flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5 font-semibold text-slate-600">
+                                        <i class="bi bi-shield-check text-indigo-500"></i> Integrasi MTA Pusat
+                                    </span>
+                                    <span class="font-mono text-[10px] text-slate-500">${mtaUuid || '<span class="text-slate-400 italic">Belum terhubung</span>'}</span>
+                                </div>
+                                ${mtaSync ? `
+                                <div class="mt-1 text-[10px] text-slate-400">
+                                    Terakhir sinkronisasi: ${mtaSync}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
                     `;
                     openModal('modalDetailCabang');
                 }

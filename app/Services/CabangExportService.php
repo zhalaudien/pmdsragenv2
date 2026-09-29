@@ -66,7 +66,7 @@ class CabangExportService
             if ($w) $filterDesc .= ' | Wilayah: ' . $w->name;
         }
         if (!empty($filters['has_gelombang'])) {
-            $filterDesc .= ' | Gelombang: ' . ($filters['has_gelombang'] === 'sudah' ? 'Sudah' : 'Belum');
+            $filterDesc .= ' | Kajian Pemuda: ' . ($filters['has_gelombang'] === 'sudah' ? 'Sudah Ada' : 'Belum Ada');
         }
         if (!empty($filters['search'])) {
             $filterDesc .= ' | Kata Kunci: "' . $filters['search'] . '"';
@@ -93,10 +93,10 @@ class CabangExportService
             'F4' => 'No. WhatsApp',
             'G4' => 'Alamat Sekretariat',
             'H4' => 'Link Maps',
-            'I4' => 'Status Gelombang',
-            'J4' => 'Hari Gelombang',
-            'K4' => 'Jam Gelombang',
-            'L4' => 'Ustadz Pengampu',
+            'I4' => 'Status Kajian Pemuda',
+            'J4' => 'Hari Kajian Pemuda',
+            'K4' => 'Jam Kajian Pemuda',
+            'L4' => 'Ustadz Pengampu Kajian',
             'M4' => 'Total Pemuda',
             'N4' => 'Keterangan',
         ];
@@ -128,7 +128,7 @@ class CabangExportService
 
         foreach ($cabangList as $c) {
             $wilayahText = $c->wilayah ? ($c->wilayah->name . ' (' . $c->wilayah->code . ')') : '-';
-            $statusGelombang = $c->has_gelombang === 'sudah' ? 'Sudah Bergelombang' : 'Belum Bergelombang';
+            $statusGelombang = $c->has_gelombang === 'sudah' ? 'Sudah Ada Kajian' : 'Belum Ada Kajian';
 
             $sheet->setCellValue('A' . $row, $no);
             $sheet->setCellValue('B' . $row, $wilayahText);

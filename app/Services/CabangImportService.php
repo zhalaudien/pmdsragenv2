@@ -35,10 +35,10 @@ class CabangImportService
             'E1' => 'No. WhatsApp (Opsional)',
             'F1' => 'Alamat Cabang (Opsional)',
             'G1' => 'Link Google Maps (Opsional)',
-            'H1' => 'Status Gelombang * (WAJIB: sudah / belum)',
-            'I1' => 'Hari Gelombang (Opsional)',
-            'J1' => 'Jam Gelombang (Opsional)',
-            'K1' => 'Ustadz Pengampu (Opsional)',
+            'H1' => 'Status Kajian Pemuda * (WAJIB: sudah / belum)',
+            'I1' => 'Hari Kajian Pemuda (Opsional)',
+            'J1' => 'Jam Kajian Pemuda (Opsional)',
+            'K1' => 'Ustadz Pengampu Kajian (Opsional)',
             'L1' => 'Deskripsi / Keterangan (Opsional)',
         ];
 
@@ -95,7 +95,7 @@ class CabangImportService
                 '',
                 '',
                 '',
-                'Rencana perintisan gelombang pemuda awal bulan depan',
+                'Rencana perintisan kajian pemuda awal bulan depan',
             ],
         ];
 

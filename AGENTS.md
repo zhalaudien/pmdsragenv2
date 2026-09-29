@@ -1316,6 +1316,29 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-30 — Penyesuaian Kolom Database Detail & Edit Master Cabang Serta Transisi Terminologi ke "Kajian Pemuda"
+
+- **Penyesuaian Modal Edit, Tambah & Detail Cabang Sesuai Skema Database:**
+  - **Modal Tambah Cabang (`#modalAddCabang`):** Menambahkan field input `maps_url` (Tautan Google Maps) dan `description` (Deskripsi / Catatan Cabang), membagi form ke dalam section logis data identitas, pimpinan, lokasi, dan informasi sesi kajian pemuda.
+  - **Modal Edit Cabang (`#modalEditCabang`):** Menambahkan field `maps_url` (`#editMapsUrl`) dan `description` (`#editDescription`), serta mengintegrasikan parsing data pada fungsi JavaScript `editCabang(c)` agar seluruh atribut termuat sempurna saat modal dibuka.
+  - **Modal Detail Cabang (`#modalDetailCabang`):** Memperluas modal menjadi kartu komprehensif terstruktur (`max-w-xl`) yang menampilkan:
+    1. *Identitas & Wilayah*: Nama Cabang, Kode Cabang, Wilayah, Total Pemuda Terdaftar (dengan tautan filter langsung).
+    2. *Pimpinan & Kontak*: Nama Pimpinan / Ketua Cabang, Kontak WhatsApp dengan tautan langsung (`https://wa.me/...`).
+    3. *Lokasi & Peta Cabang*: Alamat Lengkap / Sekretariat, Tautan Google Maps dengan tombol langsung buka peta (`maps_url`).
+    4. *Sesi Kajian Pemuda*: Status Kajian (Sudah/Belum), Hari Kajian, Waktu/Jam Kajian, Ustadz Pengampu Kajian.
+    5. *Deskripsi & Catatan*: Catatan operasional cabang jika diisi.
+    6. *Integrasi MTA Pusat*: MTA UUID dan timestamp sinkronisasi API MTA Pusat terakhir.
+- **Transisi Terminologi dari "Gelombang" ke "Kajian Pemuda":**
+  - Mengganti seluruh istilah "Gelombang" menjadi "Kajian Pemuda" pada antarmuka master cabang:
+    - Judul header deskripsi: "jadwal kajian pemuda".
+    - Kartu ringkasan statistik (KPI): "Sudah Ada Kajian Pemuda" dan "Belum Ada Kajian Pemuda".
+    - Dropdown filter: "Status Kajian Pemuda" (Pilihan: *Sudah Ada Kajian*, *Belum Ada Kajian*).
+    - Tabel Master Cabang: Kolom *Kajian Pemuda*, badge status *Sudah Ada Kajian* dan *Belum Ada Kajian*, rincian hari, jam, serta nama ustadz pengampu.
+    - Template & Layanan Ekspor/Impor Excel (`CabangExportService` & `CabangImportService`): Menyelaraskan header kolom menjadi *Status Kajian Pemuda*, *Hari Kajian Pemuda*, *Jam Kajian Pemuda*, dan *Ustadz Pengampu Kajian*, dengan tetap mempertahankan kompatibilitas backwards terhadap data kolom underlying database (`has_gelombang`, `gelombang_hari`, dll.).
+- **Pengujian & Verifikasi:**
+  - Menambahkan test suite `tests/Feature/CabangDetailAndEditSyncTest.php` untuk memvalidasi rendering terminologi Kajian Pemuda, kelengkapan input modal, keakuratan respon JSON endpoint `/admin/cabang/detail/{id}`, serta kelancaran penyimpanan dan pembaruan field `maps_url` dan `description`.
+  - Seluruh 105 pengujian fitur dan unit (`php artisan test`) lulus 100% tanpa regresi (757 assertions).
+
 ### 2026-09-30 — Standarisasi Pemisahan Tombol Navigasi Cepat dari Banner di Seluruh Halaman Admin
 
 - **Standarisasi Tata Letak Global (Universal Layout Decoupling):**
