@@ -75,6 +75,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     Route::prefix('presensi')->name('presensi.')->group(function () {
         Route::get('dashboard', [PresensiDashboardController::class, 'index'])->name('dashboard');
         Route::get('kegiatan/{id}/rekap', [PresensiDashboardController::class, 'rekapDetail'])->name('kegiatan.rekap');
+        Route::post('kegiatan/{id}/notulensi', [PresensiDashboardController::class, 'updateNotulensi'])->name('kegiatan.notulensi');
     });
     Route::get('presensi-dashboard', fn () => redirect()->route('admin.presensi.dashboard'));
 

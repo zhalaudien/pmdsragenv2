@@ -1316,6 +1316,54 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-30 — Penghapusan Widget Monitoring Presensi & Notulensi Kajian Cabang pada Dashboard Pemuda
+
+- **Penyelarasan & Fokus Dashboard Pemuda (`/admin/dashboard`):**
+  - **Pembersihan Widget Presensi:** Menghapus tabel monitoring agenda presensi kajian cabang, kartu metrik KPI presensi, dan modal `#modalKajianNotulensi` beserta script JavaScript terkait dari Dashboard Pemuda (`resources/views/admin/dashboard/index.blade.php`).
+  - **Optimasi Kueri Backend:** Menghapus query `$presensiStats` dan kueri terkait tabel `kegiatan_presensi` dan `presensi_detail` dari `DashboardController.php`, sehingga memangkas beban query database dan mempercepat waktu rendering Dashboard Pemuda.
+  - **Sentralisasi Monitoring Presensi:** Seluruh monitoring presensi, kehadiran jamaah, dan pencatatan notulensi kajian cabang dipusatkan secara eksklusif pada **Dashboard Mobile Presensi PMD** (`/admin/presensi/dashboard`), dengan akses instan melalui tombol *"Dashboard Presensi"* pada kartu menu navigasi cepat Dashboard Pemuda.
+  - **Fitur Notulensi Tetap Utuh:** Migrasi database kolom `notulensi` & `notulis` pada `kegiatan_presensi`, REST API mobile `KegiatanController`, serta fitur preview, edit AJAX, salin notulensi, dan format WhatsApp pada Dashboard Presensi tetap aktif dan berfungsi penuh.
+  - **Pengujian Otomatis:** Memperbarui `tests/Feature/MonitoringPresensiNotulensiDashboardTest.php` untuk memastikan Dashboard Pemuda bersih dari widget presensi sekaligus memvalidasi ketersediaan fitur notulensi di Dashboard Presensi. Seluruh test suite lulus 100%.
+
+### 2026-09-29 — Pemisahan Komponen Header Banner Dashboard Pemuda dengan Tombol Navigasi Cepat
+
+- **Pemisahan Tata Letak (Layout Decoupling) pada Dashboard Utama Pemuda (`/admin/dashboard`):**
+  - **Banner Identitas & Status Sistem Independen:** Bagian hero banner difokuskan murni sebagai identitas visual halaman (lencana role pengguna, indikator status sistem aktif, sapaan selamat datang, dan penjelasan ringkas cakupan wilayah/cabang) dengan latar gradien Slate-Red yang elegan serta aksen blur glow dekoratif.
+  - **Dedicated Card "Tombol Menu & Navigasi Cepat":** Tombol-tombol aksi utama dipisahkan ke dalam kartu tersendiri di bawah hero banner dengan tampilan yang terorganisir rapi dan responsif:
+    - *Tambah Pemuda* (Aksen merah utama)
+    - *Kelola Data* (Akses tabel data pemuda)
+    - *Dashboard Presensi* (Pintasan ke Dashboard Mobile Presensi PMD)
+    - *Persebaran Data* (Akses statistik persebaran wilayah & cabang)
+    - *Export Excel* (Akses laporan & ekspor file spreadsheet)
+    - *Import Data* (Khusus Superadmin: impor data sensus)
+    - *Sinkronisasi Pusat* (Khusus Superadmin: integrasi data Warga MTA Pusat)
+  - **Kerapian & Konsistensi UI:** Tata letak antarmuka kini selaras dengan standar pemisahan header pada Dashboard Presensi, mencegah penumpukan tombol di dalam hero banner pada tampilan desktop maupun mobile.
+
+### 2026-09-29 — Penambahan Monitoring Presensi & Notulensi Kajian Cabang pada Dashboard Superadmin
+
+- **Fitur Monitoring Terintegrasi Presensi & Notulensi Kajian Cabang pada Dashboard Utama (`/admin/dashboard`):**
+  - **Banner Header Hero Monitoring:** Panel khusus dengan gradien elegan Slate & Indigo, status live badge Mobile Presensi PMD, serta tombol pintasan langsung ke *Dashboard Presensi Lengkap* dan *Agenda Perwakilan*.
+  - **4 KPI Metrik Presensi & Notulensi Cabang:**
+    1. *Sesi Kajian Presensi:* Jumlah total agenda pengajian cabang (dengan rincian sesi Selesai dan Berlangsung).
+    2. *Kehadiran Jamaah:* Persentase rata-rata kehadiran pemuda dan total kehadiran tercatat.
+    3. *Cabang Aktif Presensi:* Jumlah cabang yang telah menyelenggarakan kegiatan presensi berbasis mobile.
+    4. *Notulensi Terhimpun:* Jumlah sesi kajian yang telah memiliki notulensi/rangkuman materi tausiyah beserta tingkat kelengkapannya.
+  - **Tabel Monitoring Real-Time Agenda Kajian Cabang:** Menampilkan 10 sesi kajian cabang terbaru yang memuat identitas cabang & wilayah, agenda kajian & ustadz pemateri, waktu & tempat pelaksanaan, status kehadiran pemuda (dengan mini progress bar), status ketersediaan notulensi (dengan preview kutipan teks notulensi), serta status sesi (`selesai`, `berlangsung`, `draft`).
+  - **Modal Interaktif Detail Kajian, Presensi & Notulensi (`#modalKajianNotulensi`):**
+    - Metadata lengkap pengajian, lokasi, dan pemateri.
+    - Grid statistik presensi (Hadir, Izin, Sakit, Alpa) dan daftar rincian izin/sakit dengan keterangannya.
+    - **Modul Notulensi Kajian:** Tampilan formatted view notulensi materi tausiyah/musyawarah cabang, info nama notulis, tombol 1-klik *Salin Notulensi*, serta fitur *Edit / Isi Notulensi* langsung dari dashboard via AJAX ke endpoint `POST /admin/presensi/kegiatan/{id}/notulensi`.
+    - Format laporan terpadu WhatsApp (rekap presensi + rangkuman notulensi kajian) siap salin dengan 1 klik.
+- **Database & Model Updates:**
+  - Migrasi `2026_09_29_230000_add_notulensi_to_kegiatan_presensi_table.php` menambahkan kolom `notulensi` (`LONGTEXT`) dan `notulis` (`VARCHAR(150)`) pada tabel `kegiatan_presensi`.
+  - Update model `KegiatanPresensi` dengan fillable `notulensi` & `notulis`, helper method `hasNotulensi()`, serta otomatisasi pencantuman notulensi pada WhatsApp report generator.
+- **REST API & Presensi Dashboard Enhancement:**
+  - Endpoint REST API Mobile `KegiatanController` (v1) mendukung pembacaan dan penyimpanan field `notulensi` dan `notulis`.
+  - Halaman Dashboard Presensi (`/admin/presensi/dashboard`) diperkaya dengan kolom status notulensi pada tabel sesi dan integrasi notulensi pada modal rekap kegiatan.
+- **Pengujian Otomatis (Feature Test):**
+  - Menambahkan file pengujian `tests/Feature/MonitoringPresensiNotulensiDashboardTest.php` mencakup pengujian akses tampilan dashboard superadmin, update notulensi via AJAX, pembatasan otorisasi cabang (data-scoping RBAC), dan format WhatsApp generator.
+  - Seluruh 94 test suite sistem lulus 100% tanpa error (691 assertions).
+
 ### 2026-09-28 — Pemisahan Komponen Header Judul "Dashboard Management API & Mobile Presensi PMD" dengan Tombol Menu Cepat
 
 - **Pemisahan Tata Letak (Layout Decoupling) pada Dashboard Presensi (`/admin/presensi/dashboard`):**

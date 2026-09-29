@@ -65,6 +65,9 @@ class KegiatanController extends BaseApiController
                     'target_peserta'   => $item->target_peserta,
                     'status'           => $item->status,
                     'catatan'          => $item->catatan,
+                    'notulensi'        => $item->notulensi,
+                    'notulis'          => $item->notulis,
+                    'has_notulensi'    => $item->hasNotulensi(),
                     'creator'          => $item->creator ? ['id' => $item->creator->id, 'name' => $item->creator->name] : null,
                     'created_at'       => $item->created_at?->toIso8601String(),
                     'summary'          => [
@@ -99,6 +102,8 @@ class KegiatanController extends BaseApiController
             'target_peserta' => 'nullable|in:semua,pemuda,pemudi',
             'status'         => 'nullable|in:draft,berlangsung,selesai',
             'catatan'        => 'nullable|string',
+            'notulensi'      => 'nullable|string',
+            'notulis'        => 'nullable|string|max:150',
         ], [
             'nama_kegiatan.required' => 'Nama kegiatan presensi wajib diisi.',
             'tanggal.required'       => 'Tanggal kegiatan wajib diisi.',
@@ -120,6 +125,8 @@ class KegiatanController extends BaseApiController
             'target_peserta' => $request->input('target_peserta', 'semua'),
             'status'         => $request->input('status', 'berlangsung'),
             'catatan'        => $request->input('catatan'),
+            'notulensi'      => $request->input('notulensi'),
+            'notulis'        => $request->input('notulis'),
             'created_by'     => $request->user()->id,
         ]);
 
@@ -137,6 +144,9 @@ class KegiatanController extends BaseApiController
             'target_peserta' => $kegiatan->target_peserta,
             'status'         => $kegiatan->status,
             'catatan'        => $kegiatan->catatan,
+            'notulensi'      => $kegiatan->notulensi,
+            'notulis'        => $kegiatan->notulis,
+            'has_notulensi'  => $kegiatan->hasNotulensi(),
             'creator'        => $kegiatan->creator ? ['id' => $kegiatan->creator->id, 'name' => $kegiatan->creator->name] : null,
             'created_at'     => $kegiatan->created_at?->toIso8601String(),
         ];
@@ -218,6 +228,9 @@ class KegiatanController extends BaseApiController
                 'target_peserta' => $kegiatan->target_peserta,
                 'status'         => $kegiatan->status,
                 'catatan'        => $kegiatan->catatan,
+                'notulensi'      => $kegiatan->notulensi,
+                'notulis'        => $kegiatan->notulis,
+                'has_notulensi'  => $kegiatan->hasNotulensi(),
                 'creator'        => $kegiatan->creator ? ['id' => $kegiatan->creator->id, 'name' => $kegiatan->creator->name] : null,
                 'created_at'     => $kegiatan->created_at?->toIso8601String(),
             ],

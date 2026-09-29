@@ -470,6 +470,7 @@
                     <th class="py-3 px-4">Waktu &amp; Tempat</th>
                     <th class="py-3 px-4">Pemateri</th>
                     <th class="py-3 px-4 text-center">Kehadiran</th>
+                    <th class="py-3 px-4 text-center">Notulensi</th>
                     <th class="py-3 px-4 text-center">Status</th>
                     <th class="py-3 px-4 text-center">Aksi &amp; Rekap</th>
                 </tr>
@@ -512,6 +513,17 @@
                                 <span class="text-xs font-bold text-emerald-600">{{ $hadir }} Hadir</span>
                                 <span class="text-[10px] text-slate-400">dari {{ $recorded }} tercatat</span>
                             </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            @if($keg->hasNotulensi())
+                                <button type="button" onclick="showRekapModal({{ $keg->id }})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-bold transition shadow-2xs" title="Lihat notulensi kajian">
+                                    <i class="bi bi-journal-check text-emerald-600"></i> Ada Notulensi
+                                </button>
+                            @else
+                                <button type="button" onclick="showRekapModal({{ $keg->id }})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] transition" title="Isi notulensi kajian">
+                                    <i class="bi bi-journal-plus text-slate-400"></i> + Isi
+                                </button>
+                            @endif
                         </td>
                         <td class="py-3 px-4 text-center">
                             @if($keg->status === 'selesai')
@@ -680,6 +692,57 @@
             <!-- List Izin & Sakit if any -->
             <div id="rekapDetailLists" class="space-y-3"></div>
 
+            <!-- Bagian Khusus: Notulensi Kajian Cabang -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Notulensi / Rangkuman Materi Kajian</h4>
+                            <p id="rekapNotulisInfo" class="text-[11px] text-amber-800">Notulis: -</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 self-start sm:self-auto">
+                        <button type="button" id="btnCopyNotulensiRekap" onclick="copyRekapNotulensiText()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition shadow-xs">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Salin Notulensi</span>
+                        </button>
+                        <button type="button" id="btnToggleEditRekapNotulensi" onclick="toggleRekapNotulensiEdit()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold transition">
+                            <i class="bi bi-pencil-square"></i>
+                            <span id="btnToggleEditRekapText">Edit / Isi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- View Mode Notulensi -->
+                <div id="rekapNotulensiViewBox" class="p-4 bg-white rounded-xl border border-amber-200/70 text-slate-800 text-xs leading-relaxed font-sans whitespace-pre-wrap min-h-[90px]">
+                    <span class="text-slate-400 italic">Belum ada notulensi yang dicatat untuk sesi kajian ini.</span>
+                </div>
+
+                <!-- Edit Mode Notulensi -->
+                <div id="rekapNotulensiEditBox" class="hidden mt-3 space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Notulis / Pencatat:</label>
+                        <input type="text" id="inputRekapNotulis" placeholder="Contoh: Ahmad (Sekretaris Cabang)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Isi Notulensi / Ringkasan Materi Kajian:</label>
+                        <textarea id="textareaRekapNotulensi" rows="6" placeholder="Tuliskan pokok-pokok tausiyah, rangkuman materi kajian, ayat/hadits yang dibahas, atau keputusan musyawarah..." class="w-full p-3 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="button" onclick="toggleRekapNotulensiEdit(false)" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                            Batal
+                        </button>
+                        <button type="button" id="btnSaveRekapNotulensi" onclick="saveRekapNotulensiAjax()" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs">
+                            <i class="bi bi-check2"></i>
+                            <span>Simpan Notulensi</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Format Teks WhatsApp -->
             <div>
                 <div class="flex items-center justify-between mb-2">
@@ -796,7 +859,10 @@
     });
 
     // Modal Rekap Handlers
+    let currentRekapKegiatanId = null;
+
     function showRekapModal(id) {
+        currentRekapKegiatanId = id;
         const modal = document.getElementById('modalRekap');
         const loading = document.getElementById('modalLoading');
         const content = document.getElementById('modalContent');
@@ -806,6 +872,7 @@
         modal.classList.remove('hidden');
         loading.classList.remove('hidden');
         content.classList.add('hidden');
+        toggleRekapNotulensiEdit(false);
 
         fetch(`{{ url('admin/presensi/kegiatan') }}/${id}/rekap`, {
             headers: {
@@ -850,6 +917,10 @@
             }
 
             document.getElementById('rekapDetailLists').innerHTML = listHtml;
+
+            // Notulensi
+            renderRekapNotulensiData(data.notulensi, data.notulis);
+
             document.getElementById('rekapWaTextarea').value = data.whatsapp_text;
 
             loading.classList.add('hidden');
@@ -862,6 +933,138 @@
 
     function closeRekapModal() {
         document.getElementById('modalRekap').classList.add('hidden');
+        currentRekapKegiatanId = null;
+    }
+
+    function renderRekapNotulensiData(notulensi, notulis) {
+        const viewBox = document.getElementById('rekapNotulensiViewBox');
+        const notulisInfo = document.getElementById('rekapNotulisInfo');
+        const inputNotulis = document.getElementById('inputRekapNotulis');
+        const textarea = document.getElementById('textareaRekapNotulensi');
+
+        const hasText = notulensi && notulensi.trim() !== '';
+
+        if (hasText) {
+            viewBox.innerHTML = escapeHtml(notulensi);
+        } else {
+            viewBox.innerHTML = '<span class="text-slate-400 italic">Belum ada notulensi yang dicatat untuk sesi kajian ini. Klik tombol "Edit / Isi" untuk menambahkan notulensi.</span>';
+        }
+
+        if (notulis && notulis.trim() !== '') {
+            notulisInfo.textContent = `Notulis: ${notulis}`;
+        } else {
+            notulisInfo.textContent = 'Notulis: Belum dicatat';
+        }
+
+        inputNotulis.value = notulis || '';
+        textarea.value = notulensi || '';
+    }
+
+    function toggleRekapNotulensiEdit(forceState) {
+        const viewBox = document.getElementById('rekapNotulensiViewBox');
+        const editBox = document.getElementById('rekapNotulensiEditBox');
+        const btnToggle = document.getElementById('btnToggleEditRekapText');
+
+        if (!editBox) return;
+
+        const isCurrentlyEditing = !editBox.classList.contains('hidden');
+        const nextState = (typeof forceState === 'boolean') ? forceState : !isCurrentlyEditing;
+
+        if (nextState) {
+            editBox.classList.remove('hidden');
+            viewBox.classList.add('hidden');
+            if (btnToggle) btnToggle.textContent = 'Batal Edit';
+        } else {
+            editBox.classList.add('hidden');
+            viewBox.classList.remove('hidden');
+            if (btnToggle) btnToggle.textContent = 'Edit / Isi';
+        }
+    }
+
+    function saveRekapNotulensiAjax() {
+        if (!currentRekapKegiatanId) return;
+
+        const btnSave = document.getElementById('btnSaveRekapNotulensi');
+        const notulensiVal = document.getElementById('textareaRekapNotulensi').value;
+        const notulisVal = document.getElementById('inputRekapNotulis').value;
+
+        const origHtml = btnSave.innerHTML;
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Menyimpan...';
+
+        fetch(`{{ url('admin/presensi/kegiatan') }}/${currentRekapKegiatanId}/notulensi`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                notulensi: notulensiVal,
+                notulis: notulisVal
+            })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Gagal menyimpan notulensi');
+            return res.json();
+        })
+        .then(data => {
+            btnSave.disabled = false;
+            btnSave.innerHTML = origHtml;
+
+            if (data.success) {
+                renderRekapNotulensiData(data.notulensi, data.notulis);
+                if (data.whatsapp_text) {
+                    document.getElementById('rekapWaTextarea').value = data.whatsapp_text;
+                }
+                toggleRekapNotulensiEdit(false);
+
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-lg flex items-center gap-2';
+                toast.innerHTML = '<i class="bi bi-check-circle-fill"></i> Notulensi kajian berhasil disimpan!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3500);
+            }
+        })
+        .catch(err => {
+            btnSave.disabled = false;
+            btnSave.innerHTML = origHtml;
+            alert(err.message || 'Gagal menyimpan notulensi.');
+        });
+    }
+
+    function copyRekapNotulensiText() {
+        const textarea = document.getElementById('textareaRekapNotulensi');
+        const notulisVal = document.getElementById('inputRekapNotulis').value;
+        const notulensiVal = textarea ? textarea.value.trim() : '';
+
+        if (!notulensiVal) {
+            alert('Belum ada notulensi untuk disalin.');
+            return;
+        }
+
+        let fullText = '';
+        if (notulisVal) fullText += `*Notulis: ${notulisVal}*\n\n`;
+        fullText += notulensiVal;
+
+        navigator.clipboard.writeText(fullText).then(() => {
+            const btn = document.getElementById('btnCopyNotulensiRekap');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check2"></i> Tersalin!';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 
     function copyWhatsAppReport() {

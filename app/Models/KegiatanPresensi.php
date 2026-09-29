@@ -20,6 +20,8 @@ class KegiatanPresensi extends Model
         'target_peserta',
         'status',
         'catatan',
+        'notulensi',
+        'notulis',
         'created_by',
     ];
 
@@ -159,10 +161,27 @@ class KegiatanPresensi extends Model
             }
         }
 
+        if (!empty(trim($this->notulensi ?? ''))) {
+            $lines[] = "";
+            $lines[] = "*NOTULENSI / RANGKUMAN KAJIAN:*";
+            if (!empty($this->notulis)) {
+                $lines[] = "Notulis: {$this->notulis}";
+            }
+            $lines[] = trim($this->notulensi);
+        }
+
         $pencatat = $this->creator?->name ?? 'Sekretaris Cabang';
         $lines[] = "";
         $lines[] = "Pencatat: " . $pencatat;
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Cek ketersediaan notulensi kajian
+     */
+    public function hasNotulensi(): bool
+    {
+        return !empty(trim($this->notulensi ?? ''));
     }
 }

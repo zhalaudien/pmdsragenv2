@@ -222,9 +222,52 @@ class PresensiDashboardController extends Controller
             'pemateri'       => $kegiatan->pemateri ?: '-',
             'status'         => $kegiatan->status,
             'catatan'        => $kegiatan->catatan,
+            'notulensi'      => $kegiatan->notulensi,
+            'notulis'        => $kegiatan->notulis,
+            'has_notulensi'  => $kegiatan->hasNotulensi(),
             'creator_name'   => $kegiatan->creator?->name ?? '-',
             'rekap'          => $rekap,
             'whatsapp_text'  => $waText,
+        ]);
+    }
+
+    /**
+     * Simpan / Perbarui notulensi kegiatan kajian cabang
+     */
+    public function updateNotulensi(Request $request, $id)
+    {
+        $user = auth()->user();
+        $role = session('role') ?? $user?->role?->name;
+        $wilayahId = session('wilayah_id') ?? $user?->wilayah_id;
+        $cabangId = session('cabang_id') ?? $user?->cabang_id;
+
+        $kegiatan = KegiatanPresensi::with(['cabang.wilayah'])->findOrFail($id);
+
+        // Validasi Scope Akses
+        if (in_array($role, ['admin_cabang'], true) && $kegiatan->cabang_id != $cabangId) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak ke cabang lain.'], 403);
+        }
+        if (in_array($role, ['admin_wilayah', 'admin_wilayah_pemuda'], true) && $kegiatan->cabang?->wilayah_id != $wilayahId) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak ke wilayah lain.'], 403);
+        }
+
+        $request->validate([
+            'notulensi' => 'nullable|string',
+            'notulis'   => 'nullable|string|max:150',
+        ]);
+
+        $kegiatan->update([
+            'notulensi' => $request->input('notulensi'),
+            'notulis'   => $request->input('notulis'),
+        ]);
+
+        return response()->json([
+            'success'       => true,
+            'message'       => 'Notulensi kajian cabang berhasil diperbarui.',
+            'notulensi'     => $kegiatan->notulensi,
+            'notulis'       => $kegiatan->notulis,
+            'has_notulensi' => $kegiatan->hasNotulensi(),
+            'whatsapp_text' => $kegiatan->generateWhatsAppText(),
         ]);
     }
 }

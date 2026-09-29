@@ -10,11 +10,15 @@
     $cabangName  = session('cabang_name') ?? (session('cabang_id') ? 'Cabang ' . session('cabang_id') : null);
 @endphp
 
-<!-- WELCOME HERO BANNER -->
+<!-- WELCOME HERO BANNER (KHUSUS IDENTITAS & STATUS SISTEM) -->
 <div class="mb-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 p-6 sm:p-8 text-white shadow-xl border border-slate-700/50 relative overflow-hidden">
-    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-red-200 mb-3">
+    <!-- Decorative background glow -->
+    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10">
+        <div class="flex flex-wrap items-center gap-2 mb-3.5">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-red-200">
                 <i class="bi bi-shield-check text-red-400"></i>
                 @if ($userRole === 'superadmin')
                     Dashboard Super Administrator &bull; Seluruh Sistem
@@ -29,47 +33,95 @@
                 @else
                     Dashboard Admin Cabang &bull; {{ $cabangName }}
                 @endif
-            </div>
+            </span>
 
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
-                Selamat Datang, {{ $user['name'] ?? auth()->user()?->name ?? 'Administrator' }}! 👋
-            </h2>
-            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                @if ($userRole === 'superadmin')
-                    Pantau seluruh data pemuda, distribusi wilayah &amp; cabang, jenjang pendidikan, pekerjaan, serta verifikasi pendaftaran di Kabupaten Sragen.
-                @elseif ($userRole === 'admin_pemuda')
-                    Kelola, analisis, dan verifikasi seluruh data pemuda berjenis kelamin <strong>Laki-laki</strong> di seluruh wilayah &amp; cabang Kabupaten Sragen.
-                @elseif ($userRole === 'admin_pemudi')
-                    Kelola, analisis, dan verifikasi seluruh data pemudi berjenis kelamin <strong>Perempuan</strong> di seluruh wilayah &amp; cabang Kabupaten Sragen.
-                @elseif ($userRole === 'admin_wilayah' || $userRole === 'admin_wilayah_pemuda')
-                    Pantau dan analisis sebaran data pemuda pada seluruh cabang dalam lingkup <strong>{{ $wilayahName }}</strong>.
-                @else
-                    Kelola, input, dan verifikasi data pemuda khusus pada lingkup <strong>{{ $cabangName }}</strong>.
-                @endif
-            </p>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold text-xs shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Sistem Aktif (Asia/Jakarta)</span>
+            </span>
         </div>
-        <div class="flex flex-wrap gap-2.5 lg:justify-end flex-shrink-0">
-            <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md">
-                <i class="bi bi-phone-vibrate-fill"></i>
-                <span>Dashboard Presensi</span>
-            </a>
-            <a href="{{ route('admin.persebaran') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-md">
-                <i class="bi bi-pie-chart-fill"></i>
-                <span>Persebaran Data</span>
-            </a>
-            <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Tambah Pemuda</span>
-            </a>
-            <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition border border-slate-700">
-                <i class="bi bi-table"></i>
-                <span>Kelola Data</span>
-            </a>
-            <a href="{{ route('admin.pemuda.export') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition border border-slate-700">
-                <i class="bi bi-file-earmark-excel-fill text-emerald-400"></i>
-                <span>Export Excel</span>
-            </a>
+
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2.5 flex items-center gap-2.5">
+            <span>Selamat Datang, {{ $user['name'] ?? auth()->user()?->name ?? 'Administrator' }}!</span>
+            <span class="text-2xl sm:text-3xl">👋</span>
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-4xl">
+            @if ($userRole === 'superadmin')
+                Pantau seluruh data pemuda, distribusi wilayah &amp; cabang, jenjang pendidikan, pekerjaan, serta verifikasi pendaftaran di Kabupaten Sragen.
+            @elseif ($userRole === 'admin_pemuda')
+                Kelola, analisis, dan verifikasi seluruh data pemuda berjenis kelamin <strong>Laki-laki</strong> di seluruh wilayah &amp; cabang Kabupaten Sragen.
+            @elseif ($userRole === 'admin_pemudi')
+                Kelola, analisis, dan verifikasi seluruh data pemudi berjenis kelamin <strong>Perempuan</strong> di seluruh wilayah &amp; cabang Kabupaten Sragen.
+            @elseif ($userRole === 'admin_wilayah' || $userRole === 'admin_wilayah_pemuda')
+                Pantau dan analisis sebaran data pemuda pada seluruh cabang dalam lingkup <strong>{{ $wilayahName }}</strong>.
+            @else
+                Kelola, input, dan verifikasi data pemuda khusus pada lingkup <strong>{{ $cabangName }}</strong>.
+            @endif
+        </p>
+    </div>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT PEMUDA (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi utama pengelolaan data pemuda, monitoring presensi cabang, dan persebaran wilayah</p>
+            </div>
         </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Tombol Tambah Pemuda -->
+        <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-person-plus-fill text-sm"></i>
+            <span>Tambah Pemuda</span>
+        </a>
+
+        <!-- Tombol Kelola Data -->
+        <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-table text-slate-500 text-sm"></i>
+            <span>Kelola Data</span>
+        </a>
+
+        <!-- Tombol Dashboard Presensi -->
+        <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-phone-vibrate-fill text-sm"></i>
+            <span>Dashboard Presensi</span>
+        </a>
+
+        <!-- Tombol Persebaran Data -->
+        <a href="{{ route('admin.persebaran') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs transition border border-slate-200/90 hover:border-amber-300 shadow-2xs">
+            <i class="bi bi-pie-chart-fill text-amber-500 text-sm"></i>
+            <span>Persebaran Data</span>
+        </a>
+
+        <!-- Tombol Export Excel -->
+        <a href="{{ route('admin.pemuda.export') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs">
+            <i class="bi bi-file-earmark-excel-fill text-emerald-500 text-sm"></i>
+            <span>Export Excel</span>
+        </a>
+
+        @if($userRole === 'superadmin')
+            <!-- Tombol Import Data -->
+            <a href="{{ route('admin.pemuda.import') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 text-slate-700 hover:text-sky-800 font-semibold text-xs transition border border-slate-200/90 hover:border-sky-300 shadow-2xs">
+                <i class="bi bi-file-earmark-arrow-up-fill text-sky-500 text-sm"></i>
+                <span>Import Data</span>
+            </a>
+
+            <!-- Tombol Sinkronisasi MTA Pusat -->
+            <a href="{{ route('admin.mta-sync.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-800 font-semibold text-xs transition border border-slate-200/90 hover:border-purple-300 shadow-2xs">
+                <i class="bi bi-arrow-repeat text-purple-600 text-sm"></i>
+                <span>Sinkronisasi Pusat</span>
+            </a>
+        @endif
     </div>
 </div>
 
