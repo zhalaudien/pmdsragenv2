@@ -4,17 +4,56 @@
 
 @section('content')
 
-<!-- HEADER & ACTIONS -->
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Master Wilayah Koordinasi</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Kelola daftar 4 wilayah koordinasi pembinaan pemuda se-Kabupaten Sragen.</p>
+<!-- HEADER JUDUL HALAMAN -->
+<div class="mb-5">
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-700 text-xs font-bold">
+            <i class="bi bi-geo-alt-fill"></i> Master Wilayah Koordinasi
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+            Kabupaten Sragen
+        </span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Master Wilayah Koordinasi</h2>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Kelola daftar 4 wilayah koordinasi pembinaan pemuda se-Kabupaten Sragen.</p>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi penambahan wilayah koordinasi dan navigasi master data</p>
+            </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
     </div>
 
-    <button type="button" onclick="openModal('modalAddWilayah')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md flex items-center gap-2 self-start sm:self-auto">
-        <i class="bi bi-plus-lg"></i>
-        <span>Tambah Wilayah</span>
-    </button>
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Tambah Wilayah -->
+        <button type="button" onclick="openModal('modalAddWilayah')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
+            <i class="bi bi-plus-lg text-sm"></i>
+            <span>Tambah Wilayah</span>
+        </button>
+
+        <!-- Master Cabang -->
+        <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-diagram-3-fill text-slate-500 text-sm"></i>
+            <span>Master Cabang</span>
+        </a>
+
+        <!-- Kelola Data Pemuda -->
+        <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-people-fill text-slate-500 text-sm"></i>
+            <span>Data Pemuda</span>
+        </a>
+    </div>
 </div>
 
 <!-- WILAYAH LIST TABLE -->

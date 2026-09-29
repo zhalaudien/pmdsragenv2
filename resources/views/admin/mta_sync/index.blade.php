@@ -4,22 +4,61 @@
 
 @section('content')
 
-<!-- HEADER -->
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Integrasi API &amp; Sinkronisasi Warga MTA</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Penyelarasan basis data pemuda lokal Sragen dengan server pusat Majlis Tafsir Al-Qur'an (<code>api.mta.or.id</code>).</p>
+<!-- HEADER JUDUL HALAMAN -->
+<div class="mb-5">
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-700 text-xs font-bold">
+            <i class="bi bi-arrow-repeat"></i> Integrasi API Pusat
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+            api.mta.or.id
+        </span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Integrasi API &amp; Sinkronisasi Warga MTA</h2>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Penyelarasan basis data pemuda lokal Sragen dengan server pusat Majlis Tafsir Al-Qur'an (<code>api.mta.or.id</code>).</p>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi pengujian konektivitas, sinkronisasi cabang, dan eksplorasi data warga</p>
+            </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
     </div>
 
-    <div class="flex items-center gap-2">
-        <button type="button" id="btnTestConn" onclick="runTestConnection()" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition border border-slate-200 shadow-sm flex items-center gap-2">
-            <i class="bi bi-wifi" id="iconTestConn"></i>
-            <span>Uji Koneksi API</span>
-        </button>
-        <button type="button" onclick="runSyncCabang()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md flex items-center gap-2">
-            <i class="bi bi-arrow-repeat"></i>
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Sinkron Data Cabang -->
+        <button type="button" onclick="runSyncCabang()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
+            <i class="bi bi-arrow-repeat text-sm"></i>
             <span>Sinkron Data Cabang</span>
         </button>
+
+        <!-- Uji Koneksi API -->
+        <button type="button" id="btnTestConn" onclick="runTestConnection()" class="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs flex items-center gap-2">
+            <i class="bi bi-wifi text-slate-500 text-sm" id="iconTestConn"></i>
+            <span>Uji Koneksi API</span>
+        </button>
+
+        <!-- Data Warga MTA -->
+        <a href="{{ route('admin.warga-mta.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 text-slate-700 hover:text-sky-800 font-semibold text-xs transition border border-slate-200/90 hover:border-sky-300 shadow-2xs">
+            <i class="bi bi-people-fill text-sky-500 text-sm"></i>
+            <span>Data Warga Pusat</span>
+        </a>
+
+        <!-- Data Pemuda -->
+        <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-person-lines-fill text-slate-500 text-sm"></i>
+            <span>Data Pemuda Lokal</span>
+        </a>
     </div>
 </div>
 

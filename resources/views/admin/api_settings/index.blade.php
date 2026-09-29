@@ -31,33 +31,60 @@
     </div>
 @endif
 
-<!-- HEADER & ACTIONS -->
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Superadmin</span>
-            <span class="text-xs font-semibold text-slate-400">• Presensi PMD Flutter</span>
+<!-- HEADER JUDUL HALAMAN -->
+<div class="mb-5">
+    <div class="flex items-center gap-2 mb-2">
+        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Superadmin</span>
+        <span class="text-xs font-semibold text-slate-400">• Presensi PMD Flutter</span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Pengaturan API Mobile Presensi</h2>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Konfigurasi endpoint REST API, kebijakan sinkronisasi offline, versi aplikasi Android, dan kontrol sesi token perangkat cabang.</p>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi pemeliharaan API, kontrol sesi perangkat, dan navigasi dashboard</p>
+            </div>
         </div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">Pengaturan API Mobile Presensi</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Konfigurasi endpoint REST API, kebijakan sinkronisasi offline, versi aplikasi Android, dan kontrol sesi token perangkat cabang.</p>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
     </div>
 
-    <div class="flex items-center gap-2 flex-wrap">
-        <button type="button" onclick="openLaunchResetModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs transition shadow-md flex items-center gap-2">
-            <i class="bi bi-rocket-takeoff-fill"></i>
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Reset Data Pra-Launching -->
+        <button type="button" onclick="openLaunchResetModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
+            <i class="bi bi-rocket-takeoff-fill text-sm"></i>
             <span>Reset Data Pra-Launching</span>
         </button>
-        <button type="button" onclick="copyBaseUrl()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-2">
+
+        <!-- Salin Base URL API -->
+        <button type="button" onclick="copyBaseUrl()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
             <i class="bi bi-link-45deg text-base"></i>
             <span>Salin Base URL API</span>
         </button>
+
+        <!-- Reset Bawaan -->
         <form action="{{ route('admin.api-settings.reset') }}" method="POST" onsubmit="return confirm('Kembalikan semua pengaturan API ke nilai bawaan?')">
             @csrf
-            <button type="submit" class="px-4 py-2.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold text-xs transition border border-amber-200 flex items-center gap-2">
-                <i class="bi bi-arrow-counterclockwise"></i>
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs transition border border-slate-200/90 hover:border-amber-300 shadow-2xs flex items-center gap-2">
+                <i class="bi bi-arrow-counterclockwise text-amber-600"></i>
                 <span>Reset Bawaan</span>
             </button>
         </form>
+
+        <!-- Dashboard Presensi -->
+        <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 font-semibold text-xs transition border border-slate-200/90 hover:border-indigo-300 shadow-2xs">
+            <i class="bi bi-phone-vibrate-fill text-indigo-600 text-sm"></i>
+            <span>Dashboard Presensi</span>
+        </a>
     </div>
 </div>
 

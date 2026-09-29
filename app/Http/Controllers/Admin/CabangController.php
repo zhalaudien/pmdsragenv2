@@ -7,6 +7,9 @@ use App\Models\Cabang;
 use App\Models\Wilayah;
 use App\Models\Pemuda;
 use App\Models\User;
+use App\Services\CabangExportService;
+use App\Services\CabangImportService;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Http\Request;
 
 class CabangController extends Controller
@@ -181,5 +184,78 @@ class CabangController extends Controller
 
         $cabang->delete();
         return redirect()->route('admin.cabang.index')->with('success', 'Cabang berhasil dihapus.');
+    }
+
+    /**
+     * Export data cabang ke format Excel (.xlsx)
+     */
+    public function export(Request $request, CabangExportService $exportService)
+    {
+        $filters = [
+            'search'        => $request->input('search'),
+            'wilayah_id'    => $request->input('wilayah_id'),
+            'has_gelombang' => $request->input('has_gelombang'),
+        ];
+
+        $spreadsheet = $exportService->exportToExcel($filters);
+        $writer      = new Xlsx($spreadsheet);
+        $filename    = 'data_master_cabang_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Unduh template file Excel untuk import cabang
+     */
+    public function template(CabangImportService $importService)
+    {
+        $spreadsheet = $importService->generateTemplate();
+        $writer      = new Xlsx($spreadsheet);
+        $filename    = 'template_import_cabang_' . date('Ymd') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Memproses upload file Excel dan mengimpor data cabang
+     */
+    public function import(Request $request, CabangImportService $importService)
+    {
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls|max:10240',
+        ], [
+            'file_excel.required' => 'Silakan pilih file Excel yang akan diunggah.',
+            'file_excel.mimes'    => 'Format file harus berupa Excel (.xlsx atau .xls).',
+            'file_excel.max'      => 'Ukuran file maksimal adalah 10 MB.',
+        ]);
+
+        $file = $request->file('file_excel');
+        $options = [
+            'update_existing' => (bool) $request->input('update_existing', true),
+        ];
+
+        $result = $importService->importExcel($file->getRealPath(), $options);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        if ($result['success']) {
+            return redirect()->route('admin.cabang.index')
+                ->with('success', $result['message'])
+                ->with('import_result', $result);
+        }
+
+        return redirect()->route('admin.cabang.index')
+            ->with('error', $result['message'])
+            ->with('import_result', $result);
     }
 }

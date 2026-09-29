@@ -30,21 +30,54 @@
     };
 @endphp
 
-<!-- HEADER & ACTIONS -->
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Data Warga MTA — Perwakilan Sragen</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Eksplorasi dan import data warga langsung dari server REST API Pusat (<code>api.mta.or.id</code>).</p>
+<!-- HEADER JUDUL HALAMAN -->
+<div class="mb-5">
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-700 text-xs font-bold">
+            <i class="bi bi-cloud-check-fill"></i> Data Warga MTA Pusat
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+            Perwakilan Sragen
+        </span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Data Warga MTA — Perwakilan Sragen</h2>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Eksplorasi dan import data warga langsung dari server REST API Pusat (<code>api.mta.or.id</code>).</p>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi integrasi server pusat dan sinkronisasi data lokal</p>
+            </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
     </div>
 
-    <div class="flex items-center gap-2">
-        <a href="{{ route('admin.mta-sync.index') }}" class="px-4 py-2.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold text-xs transition border border-sky-200 flex items-center gap-2">
-            <i class="bi bi-arrow-repeat"></i>
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Sinkronisasi API -->
+        <a href="{{ route('admin.mta-sync.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-arrow-repeat text-sm"></i>
             <span>Sinkronisasi API</span>
         </a>
-        <a href="{{ route('admin.pemuda.index') }}" class="px-4 py-2.5 rounded-xl bg-slate-800 text-white hover:bg-slate-700 font-bold text-xs transition shadow-sm flex items-center gap-2">
-            <i class="bi bi-people"></i>
-            <span>Data Pemuda</span>
+
+        <!-- Data Pemuda Lokal -->
+        <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-people-fill text-slate-500 text-sm"></i>
+            <span>Data Pemuda Lokal</span>
+        </a>
+
+        <!-- Dashboard -->
+        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-speedometer2 text-slate-500 text-sm"></i>
+            <span>Dashboard</span>
         </a>
     </div>
 </div>

@@ -1316,6 +1316,42 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-09-30 — Standarisasi Pemisahan Tombol Navigasi Cepat dari Banner di Seluruh Halaman Admin
+
+- **Standarisasi Tata Letak Global (Universal Layout Decoupling):**
+  - Menerapkan pola pemisahan standar pada seluruh halaman modul admin:
+    1. **Header / Hero Banner Mandiri:** Berfokus murni pada identitas halaman, lencana modul/status sistem, judul besar, dan deskripsi tujuan halaman dengan tipografi yang leluasa.
+    2. **Dedicated Card "Tombol Menu & Navigasi Cepat":** Tombol-tombol aksi utama, ekspor/impor data, dan tautan pintasan operasional dipisahkan ke dalam kartu putih tersendiri (`bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs`) di bawah banner.
+  - **Halaman yang Distandarisasi:**
+    - **Persebaran Data (`/admin/persebaran`):** Banner analitik bersih dari tombol; tombol *Dashboard*, *Kelola Data*, *Dashboard Presensi*, dan *Export Excel* dipisahkan ke kartu navigasi cepat.
+    - **Data Pemuda (`/admin/pemuda`):** Header judul bersih; tombol *Tambah Pemuda*, *Export Excel*, *Import Excel*, *Sinkron MTA*, *Backup Data*, dan *Persebaran Data* ditata rapi pada kartu menu cepat.
+    - **Master Cabang (`/admin/cabang`):** Header judul bersih; tombol *Tambah Cabang Baru*, *Import Excel*, *Export Excel*, *Master Wilayah*, dan *Data Pemuda* ditata pada kartu menu cepat.
+    - **Master Wilayah (`/admin/wilayah`):** Header judul bersih; tombol *Tambah Wilayah*, *Master Cabang*, dan *Data Pemuda* ditata pada kartu menu cepat.
+    - **Pengguna & Admin (`/admin/users`):** Header judul bersih; tombol *Tambah Pengguna Baru*, *Master Cabang*, *Master Wilayah*, dan *Data Pemuda* ditata pada kartu menu cepat.
+    - **Info Kegiatan Presensi (`/admin/kegiatan-perwakilan`):** Header judul bersih; tombol *Tambah Agenda*, *Simulasi HP*, *Template Bawaan*, *Hapus Semua*, dan *Dashboard Presensi* ditata pada kartu menu cepat.
+    - **Sinkronisasi MTA (`/admin/mta-sync`):** Header judul bersih; tombol *Sinkron Data Cabang*, *Uji Koneksi API*, *Data Warga Pusat*, dan *Data Pemuda Lokal* ditata pada kartu menu cepat.
+    - **Pengaturan API Presensi (`/admin/api-settings`):** Header judul bersih; tombol *Reset Pra-Launching*, *Salin Base URL*, *Reset Bawaan*, dan *Dashboard Presensi* ditata pada kartu menu cepat.
+    - **Data Warga MTA (`/admin/warga-mta`):** Header judul bersih; tombol *Sinkronisasi API*, *Data Pemuda Lokal*, dan *Dashboard* ditata pada kartu menu cepat.
+- **Konsistensi UI/UX:** Tampilan antarmuka di seluruh sistem kini 100% seragam, rapi di layar desktop, tablet, maupun mobile tanpa tombol yang berhimpitan dengan teks judul atau teks banner.
+
+### 2026-09-30 — Penambahan Fitur Export & Import Excel pada Master Cabang
+
+- **Export Data Cabang ke Excel (`/admin/cabang/export`):**
+  - Mengimplementasikan `CabangExportService` dengan PhpSpreadsheet untuk mengekspor seluruh data master cabang (Wilayah, Kode Cabang, Nama Cabang, Pimpinan/Ketua, No. WhatsApp, Alamat Sekretariat, Link Maps, Status Gelombang, Jadwal, Ustadz Pengampu, Total Pemuda Terdaftar, dan Keterangan).
+  - Mendukung ekspor berdasarkan filter aktif (Wilayah, Status Gelombang, Kata Kunci Pencarian) atau seluruh data master cabang.
+  - Tampilan spreadsheet rapi dengan title banner, styling header (Emerald Teal), zebra-striping rows, formula total otomatis, dan auto-sized column widths.
+- **Import Data Cabang dari Excel (`/admin/cabang/import` & `/admin/cabang/template`):**
+  - Mengimplementasikan `CabangImportService` lengkap dengan generator format template Excel (`.xlsx`) resmi yang terdiri dari 2 sheet: *Format Import Cabang* (kolom wajib beraksen hijau, kolom opsional beraksen slate, beserta baris contoh) dan *Referensi Wilayah* (daftar nama & kode wilayah valid).
+  - Fitur import mendukung validasi format file (`.xlsx`, `.xls`), validasi wajib (*Nama Cabang*, *Wilayah*, *Status Gelombang*), normalisasi status gelombang, dan resolusi wilayah berdasarkan nama maupun kode.
+  - Mendukung opsi **Upsert (Perbarui data jika sudah ada)** untuk mencegah duplikasi serta memperbarui data cabang yang sudah ada secara cerdas.
+  - Menyediakan kartu rekapitulasi hasil import (`import_result`) pada halaman Master Cabang yang menampilkan metrik total data ditambahkan, diperbarui, dilewati, dan rincian kesalahan per baris jika ada.
+- **Antarmuka Pengguna & Integrasi Modal (`resources/views/admin/cabang/index.blade.php`):**
+  - Menambahkan tombol aksi *Export Excel* (emerald) dan *Import Excel* (indigo) pada header Master Cabang berdampingan dengan tombol *Tambah Cabang Baru*.
+  - Modal interaktif `#modalImportCabang` lengkap dengan panduan 2 langkah, tombol 1-klik unduh template, area upload drag-and-drop dengan deteksi nama file, opsi upsert, dan state loading saat pengiriman form.
+- **Pengujian Otomatis (Feature Test):**
+  - Membuat `tests/Feature/CabangExcelImportExportTest.php` yang menguji tampilan tombol aksi & modal, download file export, unduh template, import data cabang baru, pembaruan data via upsert, validasi tipe file, serta otorisasi hak akses (khusus superadmin).
+  - Seluruh 102 test suite sistem lulus 100% (724 assertions).
+
 ### 2026-09-30 — Penghapusan Widget Monitoring Presensi & Notulensi Kajian Cabang pada Dashboard Pemuda
 
 - **Penyelarasan & Fokus Dashboard Pemuda (`/admin/dashboard`):**

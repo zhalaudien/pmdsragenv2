@@ -36,46 +36,78 @@
     $avgAge           = $stats['avgAge'] ?? 0;
 @endphp
 
-<!-- 1. HEADER HERO BANNER -->
+<!-- 1. HEADER HERO BANNER (KHUSUS IDENTITAS & ANALITIK) -->
 <div class="mb-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-8 text-white shadow-xl border border-slate-700/50 relative overflow-hidden">
-    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-amber-200 mb-3">
-                <i class="bi bi-pie-chart-fill text-amber-400"></i>
-                @if ($userRole === 'superadmin')
-                    Persebaran Data &bull; Seluruh Kabupaten Sragen
-                @elseif ($userRole === 'admin_pemuda')
-                    Persebaran Data &bull; Khusus Laki-laki (L)
-                @elseif ($userRole === 'admin_pemudi')
-                    Persebaran Data &bull; Khusus Perempuan (P)
-                @elseif ($userRole === 'admin_wilayah' || $userRole === 'admin_wilayah_pemuda')
-                    Persebaran Data &bull; {{ $wilayahName }}
-                @else
-                    Persebaran Data &bull; {{ $cabangName }}
-                @endif
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
-                Persebaran Data Pemuda MTA Sragen 📊
-            </h2>
-            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                Visualisasi analitik &amp; demografi menyeluruh dari database: geografis wilayah &amp; cabang, element dakwah, jenjang pendidikan, potensi bakat/keahlian, minat, profesi &amp; wirausaha, serta data medis golongan darah.
-            </p>
-        </div>
+    <!-- Decorative background glow -->
+    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="flex flex-wrap gap-2.5 lg:justify-end flex-shrink-0">
-            <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition border border-slate-700">
-                <i class="bi bi-speedometer2"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md">
-                <i class="bi bi-table"></i>
-                <span>Kelola Data</span>
-            </a>
-            <a href="{{ route('admin.pemuda.export') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-md">
-                <i class="bi bi-file-earmark-excel-fill"></i>
-                <span>Export Excel</span>
-            </a>
+    <div class="relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-amber-200 mb-3">
+            <i class="bi bi-pie-chart-fill text-amber-400"></i>
+            @if ($userRole === 'superadmin')
+                Persebaran Data &bull; Seluruh Kabupaten Sragen
+            @elseif ($userRole === 'admin_pemuda')
+                Persebaran Data &bull; Khusus Laki-laki (L)
+            @elseif ($userRole === 'admin_pemudi')
+                Persebaran Data &bull; Khusus Perempuan (P)
+            @elseif ($userRole === 'admin_wilayah' || $userRole === 'admin_wilayah_pemuda')
+                Persebaran Data &bull; {{ $wilayahName }}
+            @else
+                Persebaran Data &bull; {{ $cabangName }}
+            @endif
         </div>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2 flex items-center gap-2.5">
+            <span>Persebaran Data Pemuda MTA Sragen</span>
+            <span class="text-2xl sm:text-3xl">📊</span>
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-4xl">
+            Visualisasi analitik &amp; demografi menyeluruh dari database: geografis wilayah &amp; cabang, element dakwah, jenjang pendidikan, potensi bakat/keahlian, minat, profesi &amp; wirausaha, serta data medis golongan darah.
+        </p>
+    </div>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan navigasi dashboard, manajemen pemuda, dan ekspor data</p>
+            </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Dashboard -->
+        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-speedometer2 text-slate-500 text-sm"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <!-- Kelola Data -->
+        <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-table text-sm"></i>
+            <span>Kelola Data</span>
+        </a>
+
+        <!-- Dashboard Presensi -->
+        <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-phone-vibrate-fill text-sm"></i>
+            <span>Dashboard Presensi</span>
+        </a>
+
+        <!-- Export Excel -->
+        <a href="{{ route('admin.pemuda.export') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs">
+            <i class="bi bi-file-earmark-excel-fill text-emerald-500 text-sm"></i>
+            <span>Export Excel</span>
+        </a>
     </div>
 </div>
 

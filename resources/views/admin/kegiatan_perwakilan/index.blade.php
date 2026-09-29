@@ -6,47 +6,77 @@
 <div class="space-y-6">
 
     <!-- PAGE HEADER -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Superadmin</span>
-                <span class="text-xs font-semibold text-slate-400">• Presensi PMD Mobile</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5 mt-1">
-                <span class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shadow-2xs border border-red-100 flex-shrink-0">
-                    <i class="bi bi-calendar-event"></i>
-                </span>
-                <span>Info Kegiatan Mobile Presensi</span>
-            </h1>
-            <p class="text-xs text-slate-500 mt-1">
-                Kelola agenda kegiatan resmi Pemuda MTA Perwakilan Sragen dan maklumat siaran yang tampil pada Beranda aplikasi mobile Android Presensi PMD.
-            </p>
+    <div class="mb-5">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Superadmin</span>
+            <span class="text-xs font-semibold text-slate-400">• Presensi PMD Mobile</span>
         </div>
-        <div class="flex items-center gap-2.5 flex-wrap">
-            <button type="button" onclick="openModal('modalMobilePreview')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-2">
-                <i class="bi bi-phone"></i>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5 mt-1">
+            <span class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shadow-2xs border border-red-100 flex-shrink-0">
+                <i class="bi bi-calendar-event"></i>
+            </span>
+            <span>Info Kegiatan Mobile Presensi</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">
+            Kelola agenda kegiatan resmi Pemuda MTA Perwakilan Sragen dan maklumat siaran yang tampil pada Beranda aplikasi mobile Android Presensi PMD.
+        </p>
+    </div>
+
+    <!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+    <div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                    <i class="bi bi-grid-fill"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                    <p class="text-[11px] text-slate-500">Pintasan aksi penambahan agenda, simulasi aplikasi mobile, dan pengelolaan template</p>
+                </div>
+            </div>
+            <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+                <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+            </span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Tambah Agenda Kegiatan -->
+            <button type="button" onclick="openModal('modalTambah')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm hover:shadow flex items-center gap-2 transition">
+                <i class="bi bi-plus-circle-fill text-sm"></i>
+                <span>Tambah Agenda Kegiatan</span>
+            </button>
+
+            <!-- Simulasi HP -->
+            <button type="button" onclick="openModal('modalMobilePreview')" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
+                <i class="bi bi-phone text-sm"></i>
                 <span>Simulasi HP</span>
             </button>
+
+            <!-- Template Bawaan -->
             <form action="{{ route('admin.kegiatan-perwakilan.reset-defaults') }}" method="POST" class="m-0" onsubmit="return confirm('Muat ulang 5 template agenda kegiatan resmi perwakilan?')">
                 @csrf
-                <button type="submit" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center gap-1.5" title="Muat template agenda bawaan">
-                    <i class="bi bi-arrow-counterclockwise"></i>
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200/90 shadow-2xs transition flex items-center gap-1.5" title="Muat template agenda bawaan">
+                    <i class="bi bi-arrow-counterclockwise text-slate-500"></i>
                     <span>Template Bawaan</span>
                 </button>
             </form>
+
             @if($totalKegiatan > 0)
-            <form action="{{ route('admin.kegiatan-perwakilan.hapus-semua') }}" method="POST" class="m-0" onsubmit="return confirm('Peringatan: Apakah Anda yakin ingin menghapus SELURUH agenda kegiatan? Data yang dihapus tidak dapat dikembalikan.')">
-                @csrf
-                <button type="submit" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1.5" title="Hapus semua agenda kegiatan">
-                    <i class="bi bi-trash3"></i>
-                    <span>Hapus Semua</span>
-                </button>
-            </form>
+                <!-- Hapus Semua -->
+                <form action="{{ route('admin.kegiatan-perwakilan.hapus-semua') }}" method="POST" class="m-0" onsubmit="return confirm('Peringatan: Apakah Anda yakin ingin menghapus SELURUH agenda kegiatan? Data yang dihapus tidak dapat dikembalikan.')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1.5" title="Hapus semua agenda kegiatan">
+                        <i class="bi bi-trash3"></i>
+                        <span>Hapus Semua</span>
+                    </button>
+                </form>
             @endif
-            <button type="button" onclick="openModal('modalTambah')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-md shadow-red-600/20 flex items-center gap-2 transition">
-                <i class="bi bi-plus-circle-fill"></i>
-                <span>Tambah Agenda Kegiatan</span>
-            </button>
+
+            <!-- Dashboard Presensi -->
+            <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 font-semibold text-xs transition border border-slate-200/90 hover:border-indigo-300 shadow-2xs">
+                <i class="bi bi-phone-vibrate-fill text-indigo-600 text-sm"></i>
+                <span>Dashboard Presensi</span>
+            </a>
         </div>
     </div>
 

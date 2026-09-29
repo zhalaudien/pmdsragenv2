@@ -10,35 +10,74 @@
     $currStatusData = $filters['status_data'] ?? 'active';
 @endphp
 
-<!-- HEADER & ACTIONS -->
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-    <div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Manajemen Data Pemuda</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Kelola, verifikasi, saring, dan cetak data pemuda se-Kabupaten Sragen.</p>
+<!-- HEADER JUDUL HALAMAN -->
+<div class="mb-5">
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-700 text-xs font-bold">
+            <i class="bi bi-people-fill"></i> Data Sensus Pemuda
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+            Kabupaten Sragen
+        </span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Data Pemuda</h2>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">Kelola, verifikasi, saring, dan cetak data pemuda se-Kabupaten Sragen.</p>
+</div>
+
+<!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+<div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                <p class="text-[11px] text-slate-500">Pintasan aksi utama penambahan, ekspor-impor Excel, sinkronisasi, dan pencadangan data pemuda</p>
+            </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+            <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+        </span>
     </div>
 
-    <div class="flex flex-wrap gap-2">
-        @if($userRole === 'superadmin')
-            <a href="{{ route('admin.mta-sync.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold text-xs transition border border-sky-200">
-                <i class="bi bi-arrow-repeat"></i>
-                <span>Sinkron MTA</span>
-            </a>
-            <a href="{{ route('admin.pemuda.import') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition border border-emerald-200">
-                <i class="bi bi-file-earmark-arrow-up"></i>
-                <span>Import Excel</span>
-            </a>
-            <a href="{{ route('admin.pemuda.backup') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs transition border border-amber-200">
-                <i class="bi bi-database-fill-gear"></i>
-                <span>Backup</span>
-            </a>
-        @endif
-        <a href="{{ route('admin.pemuda.export', array_filter($filters, fn($v) => $v !== null && $v !== '')) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold text-xs transition border border-slate-700">
-            <i class="bi bi-file-earmark-excel text-emerald-400"></i>
+    <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Tambah Pemuda -->
+        <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-person-plus-fill text-sm"></i>
+            <span>Tambah Pemuda</span>
+        </a>
+
+        <!-- Export Excel -->
+        <a href="{{ route('admin.pemuda.export', array_filter($filters, fn($v) => $v !== null && $v !== '')) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs">
+            <i class="bi bi-file-earmark-excel-fill text-emerald-500 text-sm"></i>
             <span>Export Excel</span>
         </a>
-        <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md">
-            <i class="bi bi-person-plus-fill"></i>
-            <span>Tambah Pemuda</span>
+
+        @if($userRole === 'superadmin')
+            <!-- Import Excel -->
+            <a href="{{ route('admin.pemuda.import') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 text-slate-700 hover:text-sky-800 font-semibold text-xs transition border border-slate-200/90 hover:border-sky-300 shadow-2xs">
+                <i class="bi bi-file-earmark-arrow-up-fill text-sky-500 text-sm"></i>
+                <span>Import Excel</span>
+            </a>
+
+            <!-- Sinkron MTA -->
+            <a href="{{ route('admin.mta-sync.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-800 font-semibold text-xs transition border border-slate-200/90 hover:border-purple-300 shadow-2xs">
+                <i class="bi bi-arrow-repeat text-purple-600 text-sm"></i>
+                <span>Sinkron MTA</span>
+            </a>
+
+            <!-- Backup & Reset -->
+            <a href="{{ route('admin.pemuda.backup') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs transition border border-slate-200/90 hover:border-amber-300 shadow-2xs">
+                <i class="bi bi-database-fill-gear text-amber-500 text-sm"></i>
+                <span>Backup Data</span>
+            </a>
+        @endif
+
+        <!-- Persebaran Data -->
+        <a href="{{ route('admin.persebaran') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
+            <i class="bi bi-pie-chart-fill text-amber-500 text-sm"></i>
+            <span>Persebaran Data</span>
         </a>
     </div>
 </div>

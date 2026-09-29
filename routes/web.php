@@ -120,6 +120,9 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     // Master Cabang (Superadmin)
     Route::prefix('cabang')->middleware('role:superadmin')->name('cabang.')->group(function () {
         Route::get('/', [CabangController::class, 'index'])->name('index');
+        Route::get('export', [CabangController::class, 'export'])->name('export');
+        Route::get('template', [CabangController::class, 'template'])->name('template');
+        Route::post('import', [CabangController::class, 'import'])->name('import');
         Route::get('detail/{id}', [CabangController::class, 'detail'])->name('detail');
         Route::post('simpan', [CabangController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [CabangController::class, 'update'])->name('update');
