@@ -302,6 +302,8 @@ class AuthController extends BaseApiController
                 'kontak_wa'         => $item->narahubung,
                 'status'            => $item->status,
                 'hari_tersisa'      => $item->hari_tersisa,
+                'flyer'             => $item->flyer,
+                'flyer_url'         => $item->flyer_url,
             ];
         });
 

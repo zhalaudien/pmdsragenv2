@@ -94,11 +94,15 @@ class KegiatanPerwakilanController extends Controller
             'kategori'          => 'nullable|string|max:50',
             'deskripsi'         => 'nullable|string',
             'status'            => 'nullable|in:Akan Datang,Segera,Berlangsung,Selesai',
+            'flyer'             => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'is_active'         => 'nullable|boolean',
         ], [
             'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
             'tanggal.required'       => 'Tanggal pelaksanaan wajib diisi.',
             'jam.required'           => 'Waktu / jam kegiatan wajib diisi.',
+            'flyer.image'            => 'File flyer harus berupa berkas gambar.',
+            'flyer.mimes'            => 'Format file flyer yang diperbolehkan adalah JPG, JPEG, PNG, atau WEBP.',
+            'flyer.max'              => 'Ukuran file flyer maksimal adalah 5MB.',
         ]);
 
         $cabang = $request->filled('cabang_id') ? \App\Models\Cabang::find($request->cabang_id) : null;
@@ -118,6 +122,18 @@ class KegiatanPerwakilanController extends Controller
             $hariTanggal = $date->locale('id')->isoFormat('dddd, D MMMM Y');
         }
 
+        $flyerFilename = null;
+        if ($request->hasFile('flyer') && $request->file('flyer')->isValid()) {
+            $flyerFile = $request->file('flyer');
+            $ext = strtolower($flyerFile->extension() ?: $flyerFile->getClientOriginalExtension());
+            $flyerFilename = 'flyer_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+            $destPath = public_path('uploads/kegiatan');
+            if (!file_exists($destPath)) {
+                mkdir($destPath, 0755, true);
+            }
+            $flyerFile->move($destPath, $flyerFilename);
+        }
+
         KegiatanPerwakilan::create([
             'cabang_id'         => $cabang?->id,
             'nama_kegiatan'     => $namaKegiatan,
@@ -134,6 +150,7 @@ class KegiatanPerwakilanController extends Controller
             'catatan_ketentuan' => trim((string)$request->input('catatan_ketentuan')) ?: null,
             'narahubung'        => $narahubung,
             'status'            => $request->input('status', 'Akan Datang'),
+            'flyer'             => $flyerFilename,
             'is_active'         => $request->has('is_active') ? (bool)$request->input('is_active') : true,
             'created_by'        => auth()->id(),
         ]);
@@ -160,7 +177,16 @@ class KegiatanPerwakilanController extends Controller
             'kategori'          => 'nullable|string|max:50',
             'deskripsi'         => 'nullable|string',
             'status'            => 'nullable|in:Akan Datang,Segera,Berlangsung,Selesai',
+            'flyer'             => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'hapus_flyer'       => 'nullable|boolean',
             'is_active'         => 'nullable|boolean',
+        ], [
+            'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
+            'tanggal.required'       => 'Tanggal pelaksanaan wajib diisi.',
+            'jam.required'           => 'Waktu / jam kegiatan wajib diisi.',
+            'flyer.image'            => 'File flyer harus berupa berkas gambar.',
+            'flyer.mimes'            => 'Format file flyer yang diperbolehkan adalah JPG, JPEG, PNG, atau WEBP.',
+            'flyer.max'              => 'Ukuran file flyer maksimal adalah 5MB.',
         ]);
 
         $cabang = $request->filled('cabang_id') ? \App\Models\Cabang::find($request->cabang_id) : ($kegiatan->cabang_id ? $kegiatan->cabang : null);
@@ -180,6 +206,31 @@ class KegiatanPerwakilanController extends Controller
             $hariTanggal = $date->locale('id')->isoFormat('dddd, D MMMM Y');
         }
 
+        $flyerFilename = $kegiatan->flyer;
+
+        // Opsi hapus flyer jika dicentang
+        if ($request->boolean('hapus_flyer')) {
+            if ($flyerFilename && file_exists(public_path('uploads/kegiatan/' . $flyerFilename))) {
+                @unlink(public_path('uploads/kegiatan/' . $flyerFilename));
+            }
+            $flyerFilename = null;
+        }
+
+        // Upload flyer baru jika ada
+        if ($request->hasFile('flyer') && $request->file('flyer')->isValid()) {
+            if ($flyerFilename && file_exists(public_path('uploads/kegiatan/' . $flyerFilename))) {
+                @unlink(public_path('uploads/kegiatan/' . $flyerFilename));
+            }
+            $flyerFile = $request->file('flyer');
+            $ext = strtolower($flyerFile->extension() ?: $flyerFile->getClientOriginalExtension());
+            $flyerFilename = 'flyer_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+            $destPath = public_path('uploads/kegiatan');
+            if (!file_exists($destPath)) {
+                mkdir($destPath, 0755, true);
+            }
+            $flyerFile->move($destPath, $flyerFilename);
+        }
+
         $kegiatan->update([
             'cabang_id'         => $request->filled('cabang_id') ? $request->input('cabang_id') : $kegiatan->cabang_id,
             'nama_kegiatan'     => $namaKegiatan,
@@ -193,6 +244,7 @@ class KegiatanPerwakilanController extends Controller
             'deskripsi'         => $deskripsi,
             'narahubung'        => $narahubung,
             'status'            => $request->input('status', $kegiatan->status),
+            'flyer'             => $flyerFilename,
             'is_active'         => $request->has('is_active') ? (bool)$request->input('is_active') : true,
         ]);
 
@@ -220,6 +272,11 @@ class KegiatanPerwakilanController extends Controller
     {
         $kegiatan = KegiatanPerwakilan::findOrFail($id);
         $nama = $kegiatan->nama_kegiatan;
+
+        if ($kegiatan->flyer && file_exists(public_path('uploads/kegiatan/' . $kegiatan->flyer))) {
+            @unlink(public_path('uploads/kegiatan/' . $kegiatan->flyer));
+        }
+
         $kegiatan->delete();
 
         return redirect()->route('admin.kegiatan-perwakilan.index')
@@ -247,6 +304,15 @@ class KegiatanPerwakilanController extends Controller
     public function hapusSemua()
     {
         $count = KegiatanPerwakilan::count();
+
+        // Hapus berkas flyer jika ada
+        $itemsWithFlyer = KegiatanPerwakilan::whereNotNull('flyer')->get();
+        foreach ($itemsWithFlyer as $item) {
+            if ($item->flyer && file_exists(public_path('uploads/kegiatan/' . $item->flyer))) {
+                @unlink(public_path('uploads/kegiatan/' . $item->flyer));
+            }
+        }
+
         KegiatanPerwakilan::query()->delete();
 
         return redirect()->route('admin.kegiatan-perwakilan.index')

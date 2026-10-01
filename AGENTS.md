@@ -1316,6 +1316,30 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-10-01 — Penambahan Fitur Upload Flyer Kegiatan pada Info Kegiatan Mobile Presensi
+
+- **Skema Database & Migration:**
+  - Menambahkan kolom `flyer` (VARCHAR 255, nullable) pada tabel `kegiatan_perwakilan` melalui migration `2026_10_01_220000_add_flyer_to_kegiatan_perwakilan_table.php`.
+- **Model `KegiatanPerwakilan`:**
+  - Mendaftarkan kolom `flyer` ke dalam properti `$fillable`.
+  - Mendaftarkan `flyer_url` ke dalam array `$appends`.
+  - Menambahkan accessor `getFlyerUrlAttribute(): ?string` yang mengembalikan URL publik aset flyer (`asset('uploads/kegiatan/' . $this->flyer)`) jika berkas fisik tersedia.
+- **Backend Controller `KegiatanPerwakilanController`:**
+  - **Validasi Unggah Flyer:** Menambahkan aturan validasi gambar (`nullable|image|mimes:jpeg,png,jpg,webp|max:5120`) pada method `simpan` dan `update`.
+  - **Penyimpanan Berkas:** Menyimpan berkas gambar yang diunggah ke direktori `public/uploads/kegiatan/` dengan nama unik teracak (`flyer_YYYYmmddHis_random.ext`).
+  - **Manajemen & Pembersihan Berkas:**
+    - Pada aksi edit: Mendukung penggantian flyer baru (berkas lama otomatis terhapus) dan opsi pencabutan flyer (`hapus_flyer`) dengan pembersihan berkas dari storage.
+    - Pada aksi delete: Berkas gambar flyer dihapus dari server saat agenda kegiatan dihapus.
+    - Pada aksi hapus semua: Menghapus seluruh berkas flyer terkait dari folder storage.
+- **API Endpoint Mobile Presensi (`AuthController::kegiatanPerwakilan`):**
+  - Menyertakan atribut `flyer` dan `flyer_url` pada respon JSON endpoint `GET /api/v1/perwakilan/kegiatan` agar aplikasi mobile Presensi PMD dapat langsung menampilkan poster/banner agenda kegiatan.
+- **Antarmuka Pengguna Admin (`resources/views/admin/kegiatan_perwakilan/index.blade.php`):**
+  - **Modal Tambah Kegiatan (`#modalTambah`):** Ditambahkan input unggah flyer dengan area dropzone yang elegan, format info yang didukung, serta pratinjau langsung gambar (*live preview*) sebelum form disubmit.
+  - **Modal Edit Kegiatan (`#modalEdit`):** Ditambahkan kotak informasi flyer terpasang dengan thumbnail, tautan lihat gambar asli, opsi centang "Hapus Flyer", dan input unggah flyer baru untuk mengganti poster lama.
+  - **Tabel Desktop & Kartu Mobile:** Menampilkan thumbnail poster yang dapat diklik serta badge *Flyer* ungu dengan animasi zoom.
+  - **Modal Pratinjau Flyer (`#modalPreviewFlyer`):** Lightbox modal untuk menampilkan gambar flyer resolusi penuh beserta tombol unduh dan buka di tab baru.
+  - **Simulasi HP (`modalMobilePreview`):** Menampilkan banner poster kegiatan di dalam kartu agenda simulasi smartphone sesuai tampilan asli mobile app.
+
 ### 2026-09-30 — Penyesuaian Kolom Database Detail & Edit Master Cabang Serta Transisi Terminologi ke "Kajian Pemuda"
 
 - **Penyesuaian Modal Edit, Tambah & Detail Cabang Sesuai Skema Database:**

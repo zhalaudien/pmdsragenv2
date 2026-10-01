@@ -257,19 +257,37 @@
                         <tr class="hover:bg-slate-50/80 transition group">
                             <td class="px-4 py-4 text-center text-slate-400 font-mono">{{ $kegiatanList->firstItem() + $index }}</td>
                             <td class="px-4 py-4">
-                                <div class="font-bold text-slate-900 text-xs group-hover:text-red-600 transition">{{ $item->nama_kegiatan }}</div>
-                                <div class="flex items-center gap-2 mt-1.5">
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md border {{ $item->kategori_badge }}">
-                                        {{ $item->kategori }}
-                                    </span>
-                                    <span class="text-[10px] text-slate-500">• {{ $item->penyelenggara }}</span>
-                                </div>
-                                @if($item->pemateri)
-                                    <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
-                                        <i class="bi bi-mic-fill text-red-500 text-[10px]"></i>
-                                        <span class="font-medium text-slate-700">{{ $item->pemateri }}</span>
+                                <div class="flex items-start gap-3">
+                                    @if($item->flyer_url)
+                                        <button type="button" onclick="previewFlyer('{{ $item->flyer_url }}', '{{ addslashes($item->nama_kegiatan) }}')" class="relative flex-shrink-0 w-11 h-14 rounded-lg overflow-hidden border border-slate-200 shadow-2xs hover:ring-2 hover:ring-red-500 transition group/flyer cursor-pointer bg-slate-100" title="Klik untuk memperbesar flyer">
+                                            <img src="{{ $item->flyer_url }}" alt="Flyer" class="w-full h-full object-cover group-hover/flyer:scale-110 transition-transform duration-200">
+                                            <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover/flyer:opacity-100 flex items-center justify-center text-white text-[11px] transition-opacity">
+                                                <i class="bi bi-zoom-in"></i>
+                                            </div>
+                                        </button>
+                                    @endif
+                                    <div class="min-w-0 flex-1">
+                                        <div class="font-bold text-slate-900 text-xs group-hover:text-red-600 transition">{{ $item->nama_kegiatan }}</div>
+                                        <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-md border {{ $item->kategori_badge }}">
+                                                {{ $item->kategori }}
+                                            </span>
+                                            @if($item->flyer_url)
+                                                <button type="button" onclick="previewFlyer('{{ $item->flyer_url }}', '{{ addslashes($item->nama_kegiatan) }}')" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold transition shadow-2xs" title="Lihat berkas flyer">
+                                                    <i class="bi bi-image text-purple-600"></i>
+                                                    <span>Flyer</span>
+                                                </button>
+                                            @endif
+                                            <span class="text-[10px] text-slate-500">• {{ $item->penyelenggara }}</span>
+                                        </div>
+                                        @if($item->pemateri)
+                                            <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+                                                <i class="bi bi-mic-fill text-red-500 text-[10px]"></i>
+                                                <span class="font-medium text-slate-700">{{ $item->pemateri }}</span>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </div>
                             </td>
                             <td class="px-4 py-4">
                                 <div class="font-bold text-slate-800">{{ $item->hari_tanggal ?: $item->tanggal->format('d/m/Y') }}</div>
@@ -375,6 +393,17 @@
                             </span>
                         </div>
                     </div>
+
+                    <!-- Flyer Banner jika ada -->
+                    @if($item->flyer_url)
+                        <div class="relative w-full h-36 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer shadow-2xs group" onclick="previewFlyer('{{ $item->flyer_url }}', '{{ addslashes($item->nama_kegiatan) }}')">
+                            <img src="{{ $item->flyer_url }}" alt="{{ $item->nama_kegiatan }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                                <i class="bi bi-zoom-in"></i>
+                                <span>Lihat Flyer</span>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Title -->
                     <div>
@@ -498,7 +527,7 @@
             </button>
         </div>
 
-        <form action="{{ route('admin.kegiatan-perwakilan.simpan') }}" method="POST" class="p-6 space-y-4 text-xs">
+        <form action="{{ route('admin.kegiatan-perwakilan.simpan') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4 text-xs">
             @csrf
 
             <!-- 1. NAMA KEGIATAN -->
@@ -539,6 +568,32 @@
                         <i class="bi bi-whatsapp"></i>
                     </span>
                     <input type="text" name="narahubung" placeholder="0812-xxxx-xxxx (Narahubung)" class="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                </div>
+            </div>
+
+            <!-- 5. UPLOAD FLYER KEGIATAN -->
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">
+                    Flyer Kegiatan <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
+                </label>
+                <div class="relative border-2 border-dashed border-slate-300 hover:border-red-400 rounded-2xl p-4 bg-slate-50/60 hover:bg-red-50/20 transition cursor-pointer text-center group" onclick="document.getElementById('tambah_flyer').click()">
+                    <input type="file" name="flyer" id="tambah_flyer" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="previewTambahFlyer(this)">
+                    <div id="tambah_flyer_placeholder" class="space-y-1.5 py-1">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700">Klik untuk unggah poster / flyer kegiatan</p>
+                        <p class="text-[10px] text-slate-400">Format: JPG, PNG, atau WEBP (Maksimal 5MB)</p>
+                    </div>
+                    <div id="tambah_flyer_preview_box" class="hidden">
+                        <div class="relative inline-block mx-auto max-h-48 overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
+                            <img id="tambah_flyer_preview_img" src="" alt="Preview Flyer" class="max-h-48 max-w-full object-contain mx-auto rounded-xl">
+                            <button type="button" onclick="event.stopPropagation(); removeTambahFlyer();" class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition" title="Hapus foto flyer">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        <p id="tambah_flyer_filename" class="text-[11px] text-slate-600 font-medium mt-1.5 truncate max-w-xs mx-auto"></p>
+                    </div>
                 </div>
             </div>
 
@@ -613,7 +668,7 @@
             </button>
         </div>
 
-        <form id="formEditKegiatan" method="POST" class="p-6 space-y-4 text-xs">
+        <form id="formEditKegiatan" method="POST" enctype="multipart/form-data" class="p-6 space-y-4 text-xs">
             @csrf
 
             <!-- 1. NAMA KEGIATAN -->
@@ -653,6 +708,54 @@
                         <i class="bi bi-whatsapp"></i>
                     </span>
                     <input type="text" id="edit_narahubung" name="narahubung" class="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition">
+                </div>
+            </div>
+
+            <!-- 5. UPLOAD / UBAH FLYER KEGIATAN -->
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">
+                    Flyer Kegiatan <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
+                </label>
+                
+                <!-- Existing Flyer Box (jika ada) -->
+                <div id="edit_current_flyer_container" class="hidden mb-3 p-3 rounded-2xl bg-amber-50/70 border border-amber-200">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-12 h-14 rounded-lg overflow-hidden border border-amber-300 bg-white flex-shrink-0 cursor-pointer shadow-2xs group/ef" onclick="previewCurrentEditFlyer()">
+                                <img id="edit_current_flyer_thumb" src="" alt="Flyer" class="w-full h-full object-cover group-hover/ef:scale-105 transition-transform">
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Flyer Terpasang</span>
+                                <a id="edit_current_flyer_link" href="#" target="_blank" class="text-xs font-bold text-slate-800 hover:text-amber-800 truncate block underline">
+                                    Lihat Gambar Asli <i class="bi bi-box-arrow-up-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center gap-1.5 text-xs text-rose-700 font-bold bg-white px-2.5 py-1.5 rounded-xl border border-rose-200 hover:bg-rose-50 cursor-pointer transition shadow-2xs">
+                            <input type="checkbox" name="hapus_flyer" id="edit_hapus_flyer" value="1" class="rounded text-rose-600 focus:ring-rose-500 border-slate-300" onchange="toggleHapusFlyer(this)">
+                            <span>Hapus Flyer</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="relative border-2 border-dashed border-slate-300 hover:border-amber-400 rounded-2xl p-4 bg-slate-50/60 hover:bg-amber-50/20 transition cursor-pointer text-center group" onclick="document.getElementById('edit_flyer').click()">
+                    <input type="file" name="flyer" id="edit_flyer" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="previewEditFlyer(this)">
+                    <div id="edit_flyer_placeholder" class="space-y-1.5 py-1">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700">Pilih berkas gambar untuk mengganti flyer</p>
+                        <p class="text-[10px] text-slate-400">Format: JPG, PNG, atau WEBP (Maksimal 5MB)</p>
+                    </div>
+                    <div id="edit_flyer_preview_box" class="hidden">
+                        <div class="relative inline-block mx-auto max-h-48 overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
+                            <img id="edit_flyer_preview_img" src="" alt="Preview Flyer Baru" class="max-h-48 max-w-full object-contain mx-auto rounded-xl">
+                            <button type="button" onclick="event.stopPropagation(); removeEditFlyer();" class="absolute top-2 right-2 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition" title="Batal ganti flyer">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        <p id="edit_flyer_filename" class="text-[11px] text-slate-600 font-medium mt-1.5 truncate max-w-xs mx-auto"></p>
+                    </div>
                 </div>
             </div>
 
@@ -786,6 +889,11 @@
             <!-- Agenda Cards inside Phone -->
             @forelse($kegiatanList->where('is_active', true)->take(4) as $previewItem)
                 <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-2xs space-y-2">
+                    @if($previewItem->flyer_url)
+                        <div class="w-full h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 -mt-1 mb-1">
+                            <img src="{{ $previewItem->flyer_url }}" class="w-full h-full object-cover" alt="Flyer">
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between">
                         <span class="px-2 py-0.5 rounded text-[9px] font-bold border {{ $previewItem->kategori_badge }}">
                             {{ $previewItem->kategori }}
@@ -818,7 +926,49 @@
     </div>
 </div>
 
+<!-- ================= MODAL PREVIEW FLYER (LIGHTBOX) ================= -->
+<div id="modalPreviewFlyer" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto" onclick="closeModal('modalPreviewFlyer')">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg my-8 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150" onclick="event.stopPropagation()">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-sm flex-shrink-0">
+                    <i class="bi bi-image-fill"></i>
+                </span>
+                <div class="min-w-0">
+                    <h3 id="previewFlyerTitle" class="text-xs font-bold text-slate-900 truncate">Flyer Kegiatan</h3>
+                    <p class="text-[10px] text-slate-500">Pratinjau poster kegiatan Presensi PMD Mobile</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <a id="previewFlyerExternalLink" href="#" target="_blank" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" title="Buka gambar di tab baru">
+                    <i class="bi bi-box-arrow-up-right text-xs"></i>
+                </a>
+                <button type="button" onclick="closeModal('modalPreviewFlyer')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-950 flex items-center justify-center min-h-[300px] max-h-[70vh] overflow-hidden select-none">
+            <img id="previewFlyerImg" src="" alt="Flyer Kegiatan" class="max-w-full max-h-[65vh] object-contain rounded-xl shadow-lg">
+        </div>
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-[11px] text-slate-500">Format gambar resolusi asli</span>
+            <div class="flex items-center gap-2">
+                <a id="previewFlyerDownloadBtn" href="#" download class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs transition flex items-center gap-1.5">
+                    <i class="bi bi-download text-[11px]"></i>
+                    <span>Unduh</span>
+                </a>
+                <button type="button" onclick="closeModal('modalPreviewFlyer')" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let currentEditFlyerUrl = null;
+
     function openModal(id) {
         const el = document.getElementById(id);
         if (el) {
@@ -832,6 +982,82 @@
         if (el) {
             el.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
+        }
+    }
+
+    // Modal Preview Flyer Lightbox
+    function previewFlyer(imageUrl, title) {
+        document.getElementById('previewFlyerImg').src = imageUrl;
+        document.getElementById('previewFlyerTitle').textContent = title || 'Flyer Kegiatan';
+        document.getElementById('previewFlyerExternalLink').href = imageUrl;
+        document.getElementById('previewFlyerDownloadBtn').href = imageUrl;
+        openModal('modalPreviewFlyer');
+    }
+
+    function previewCurrentEditFlyer() {
+        if (currentEditFlyerUrl) {
+            const title = document.getElementById('edit_nama_kegiatan').value || 'Flyer Kegiatan';
+            previewFlyer(currentEditFlyerUrl, title);
+        }
+    }
+
+    // Live preview untuk Tambah Flyer
+    function previewTambahFlyer(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('tambah_flyer_preview_img').src = e.target.result;
+                document.getElementById('tambah_flyer_filename').textContent = file.name;
+                document.getElementById('tambah_flyer_placeholder').classList.add('hidden');
+                document.getElementById('tambah_flyer_preview_box').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeTambahFlyer() {
+        const input = document.getElementById('tambah_flyer');
+        if (input) input.value = '';
+        document.getElementById('tambah_flyer_preview_img').src = '';
+        document.getElementById('tambah_flyer_filename').textContent = '';
+        document.getElementById('tambah_flyer_preview_box').classList.add('hidden');
+        document.getElementById('tambah_flyer_placeholder').classList.remove('hidden');
+    }
+
+    // Live preview untuk Edit Flyer
+    function previewEditFlyer(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('edit_flyer_preview_img').src = e.target.result;
+                document.getElementById('edit_flyer_filename').textContent = file.name;
+                document.getElementById('edit_flyer_placeholder').classList.add('hidden');
+                document.getElementById('edit_flyer_preview_box').classList.remove('hidden');
+
+                // Jika pengguna mengunggah flyer baru, otomatis uncheck opsi hapus flyer
+                const hapusCheckbox = document.getElementById('edit_hapus_flyer');
+                if (hapusCheckbox) {
+                    hapusCheckbox.checked = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeEditFlyer() {
+        const input = document.getElementById('edit_flyer');
+        if (input) input.value = '';
+        document.getElementById('edit_flyer_preview_img').src = '';
+        document.getElementById('edit_flyer_filename').textContent = '';
+        document.getElementById('edit_flyer_preview_box').classList.add('hidden');
+        document.getElementById('edit_flyer_placeholder').classList.remove('hidden');
+    }
+
+    function toggleHapusFlyer(checkbox) {
+        if (checkbox.checked) {
+            removeEditFlyer();
         }
     }
 
@@ -864,6 +1090,24 @@
         document.getElementById('edit_deskripsi').value = data.deskripsi || '';
         document.getElementById('edit_catatan_ketentuan').value = data.catatan_ketentuan || '';
         document.getElementById('edit_is_active').checked = Boolean(data.is_active);
+
+        // Reset file upload state
+        removeEditFlyer();
+        const hapusCheckbox = document.getElementById('edit_hapus_flyer');
+        if (hapusCheckbox) {
+            hapusCheckbox.checked = false;
+        }
+
+        // Tampilkan flyer saat ini jika tersedia
+        currentEditFlyerUrl = data.flyer_url || null;
+        const currentFlyerContainer = document.getElementById('edit_current_flyer_container');
+        if (currentEditFlyerUrl) {
+            document.getElementById('edit_current_flyer_thumb').src = currentEditFlyerUrl;
+            document.getElementById('edit_current_flyer_link').href = currentEditFlyerUrl;
+            currentFlyerContainer.classList.remove('hidden');
+        } else {
+            currentFlyerContainer.classList.add('hidden');
+        }
 
         openModal('modalEdit');
     }

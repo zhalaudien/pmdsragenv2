@@ -28,9 +28,17 @@ class KegiatanPerwakilan extends Model
         'catatan_ketentuan',
         'narahubung',
         'status',
+        'flyer',
         'is_active',
         'urutan',
         'created_by',
+    ];
+
+    protected $appends = [
+        'hari_tersisa',
+        'kategori_badge',
+        'status_badge',
+        'flyer_url',
     ];
 
     protected function casts(): array
@@ -96,6 +104,17 @@ class KegiatanPerwakilan extends Model
             'Selesai'      => 'bg-slate-100 text-slate-600 border-slate-200',
             default        => 'bg-slate-100 text-slate-600 border-slate-200',
         };
+    }
+
+    /**
+     * URL flyer kegiatan perwakilan
+     */
+    public function getFlyerUrlAttribute(): ?string
+    {
+        if ($this->flyer && file_exists(public_path('uploads/kegiatan/' . $this->flyer))) {
+            return asset('uploads/kegiatan/' . $this->flyer);
+        }
+        return null;
     }
 
     /**
