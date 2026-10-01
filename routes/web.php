@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ApiSettingController;
 use App\Http\Controllers\Admin\PresensiDashboardController;
 use App\Http\Controllers\Admin\KegiatanPerwakilanController;
 use App\Http\Controllers\Admin\AjaxController;
+use App\Http\Controllers\Admin\GuruDaerahMudaController;
 use App\Http\Controllers\GuruDaerahController;
 
 // ==========================================
@@ -109,6 +110,24 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         });
     });
 
+    // Manajemen Guru Daerah Muda (GDM) & Penugasan Kajian Cabang
+    Route::prefix('gdm')->name('gdm.')->group(function () {
+        Route::get('/', [GuruDaerahMudaController::class, 'index'])->name('index');
+        Route::get('detail/{id}', [GuruDaerahMudaController::class, 'detail'])->name('detail');
+        Route::post('simpan', [GuruDaerahMudaController::class, 'simpan'])->name('simpan');
+        Route::post('update/{id}', [GuruDaerahMudaController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [GuruDaerahMudaController::class, 'delete'])->name('delete');
+
+        // Riwayat Penugasan Kajian
+        Route::post('{id}/penugasan', [GuruDaerahMudaController::class, 'tambahPenugasan'])->name('penugasan.simpan');
+        Route::post('penugasan/{id}/update', [GuruDaerahMudaController::class, 'updatePenugasan'])->name('penugasan.update');
+        Route::post('penugasan/{id}/delete', [GuruDaerahMudaController::class, 'deletePenugasan'])->name('penugasan.delete');
+
+        // Search picker untuk data pemuda & data warga MTA
+        Route::get('search-pemuda', [GuruDaerahMudaController::class, 'searchPemuda'])->name('search-pemuda');
+        Route::get('search-warga', [GuruDaerahMudaController::class, 'searchWarga'])->name('search-warga');
+    });
+
     // Master Wilayah (Superadmin)
     Route::prefix('wilayah')->middleware('role:superadmin')->name('wilayah.')->group(function () {
         Route::get('/', [WilayahController::class, 'index'])->name('index');
@@ -124,6 +143,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::get('template', [CabangController::class, 'template'])->name('template');
         Route::post('import', [CabangController::class, 'import'])->name('import');
         Route::get('detail/{id}', [CabangController::class, 'detail'])->name('detail');
+        Route::get('{id}/pemuda', [CabangController::class, 'pemuda'])->name('pemuda');
         Route::post('simpan', [CabangController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [CabangController::class, 'update'])->name('update');
         Route::post('delete/{id}', [CabangController::class, 'delete'])->name('delete');

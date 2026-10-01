@@ -54,7 +54,7 @@ class CabangExportService
 
         // Title Header
         $sheet->setCellValue('A1', 'DATA MASTER CABANG PEMUDA MTA KABUPATEN SRAGEN');
-        $sheet->mergeCells('A1:N1');
+        $sheet->mergeCells('A1:R1');
         $sheet->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '1E293B']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -73,7 +73,7 @@ class CabangExportService
         }
 
         $sheet->setCellValue('A2', $filterDesc);
-        $sheet->mergeCells('A2:N2');
+        $sheet->mergeCells('A2:R2');
         $sheet->getStyle('A2')->applyFromArray([
             'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '64748B']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -97,15 +97,19 @@ class CabangExportService
             'J4' => 'Hari Kajian Pemuda',
             'K4' => 'Jam Kajian Pemuda',
             'L4' => 'Ustadz Pengampu Kajian',
-            'M4' => 'Total Pemuda',
-            'N4' => 'Keterangan',
+            'M4' => 'Ketua Pemuda',
+            'N4' => 'Sekretaris Pemuda',
+            'O4' => 'Bendahara Pemuda',
+            'P4' => 'No. WA Pemuda',
+            'Q4' => 'Total Pemuda',
+            'R4' => 'Keterangan',
         ];
 
         foreach ($headers as $cell => $text) {
             $sheet->setCellValue($cell, $text);
         }
 
-        $sheet->getStyle('A4:N4')->applyFromArray([
+        $sheet->getStyle('A4:R4')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -142,12 +146,16 @@ class CabangExportService
             $sheet->setCellValue('J' . $row, $c->gelombang_hari ?? '-');
             $sheet->setCellValue('K' . $row, $c->gelombang_jam ?? '-');
             $sheet->setCellValue('L' . $row, $c->gelombang_ustadz ?? '-');
-            $sheet->setCellValue('M' . $row, (int) ($c->pemuda_count ?? 0));
-            $sheet->setCellValue('N' . $row, $c->description ?? '-');
+            $sheet->setCellValue('M' . $row, $c->ketua_pemuda ?? '-');
+            $sheet->setCellValue('N' . $row, $c->sekretaris_pemuda ?? '-');
+            $sheet->setCellValue('O' . $row, $c->bendahara_pemuda ?? '-');
+            $sheet->setCellValue('P' . $row, $c->no_wa_pemuda ?? '-');
+            $sheet->setCellValue('Q' . $row, (int) ($c->pemuda_count ?? 0));
+            $sheet->setCellValue('R' . $row, $c->description ?? '-');
 
             // Alternating row background
             $bgRgb = ($row % 2 === 0) ? 'F8FAFC' : 'FFFFFF';
-            $sheet->getStyle("A{$row}:N{$row}")->applyFromArray([
+            $sheet->getStyle("A{$row}:R{$row}")->applyFromArray([
                 'font' => ['size' => 9],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
@@ -166,7 +174,8 @@ class CabangExportService
             $sheet->getStyle("I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("J{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("K{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("M{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("P{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("Q{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
             // Highlight gelombang status
             if ($c->has_gelombang === 'sudah') {
@@ -184,11 +193,11 @@ class CabangExportService
         // Summary row
         $lastDataRow = $row - 1;
         $sheet->setCellValue('A' . $row, 'TOTAL DATA');
-        $sheet->mergeCells("A{$row}:L{$row}");
-        $sheet->setCellValue('M' . $row, "=SUM(M5:M{$lastDataRow})");
-        $sheet->setCellValue('N' . $row, ($no - 1) . ' Cabang');
+        $sheet->mergeCells("A{$row}:P{$row}");
+        $sheet->setCellValue('Q' . $row, "=SUM(Q5:Q{$lastDataRow})");
+        $sheet->setCellValue('R' . $row, ($no - 1) . ' Cabang');
 
-        $sheet->getStyle("A{$row}:N{$row}")->applyFromArray([
+        $sheet->getStyle("A{$row}:R{$row}")->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -200,12 +209,12 @@ class CabangExportService
             ],
         ]);
         $sheet->getStyle("A{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->getStyle("M{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("N{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("Q{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("R{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getRowDimension($row)->setRowHeight(24);
 
         // Auto-fit column widths
-        foreach (range('A', 'N') as $col) {
+        foreach (range('A', 'R') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

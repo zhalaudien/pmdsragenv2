@@ -241,6 +241,97 @@ class CabangExcelImportExportTest extends TestCase
         }
     }
 
+    public function test_superadmin_can_import_cabang_with_pengurus_pemuda_columns(): void
+    {
+        $superadmin = $this->getSuperadmin();
+        $this->actingAs($superadmin);
+
+        $wilayah = Wilayah::first();
+        $this->assertNotNull($wilayah, 'Data master wilayah harus ada.');
+
+        $uniqueCode = 'KSB' . rand(1000, 9999);
+        $uniqueName = 'Cabang KSB Test ' . rand(1000, 9999);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Format Import Cabang');
+
+        $headers = [
+            'A1' => 'Nama Cabang * (WAJIB)',
+            'B1' => 'Wilayah * (WAJIB: Nama / Kode)',
+            'C1' => 'Kode Cabang (Opsional)',
+            'D1' => 'Nama Pimpinan / Ketua (Opsional)',
+            'E1' => 'No. WhatsApp (Opsional)',
+            'F1' => 'Alamat Cabang (Opsional)',
+            'G1' => 'Link Google Maps (Opsional)',
+            'H1' => 'Status Gelombang * (WAJIB: sudah / belum)',
+            'I1' => 'Hari Gelombang (Opsional)',
+            'J1' => 'Jam Gelombang (Opsional)',
+            'K1' => 'Ustadz Pengampu (Opsional)',
+            'L1' => 'Ketua Pemuda (Opsional)',
+            'M1' => 'Sekretaris Pemuda (Opsional)',
+            'N1' => 'Bendahara Pemuda (Opsional)',
+            'O1' => 'No. WhatsApp Pemuda (Opsional)',
+            'P1' => 'Deskripsi / Keterangan (Opsional)',
+        ];
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+
+        $sheet->setCellValue('A2', $uniqueName);
+        $sheet->setCellValue('B2', $wilayah->name);
+        $sheet->setCellValue('C2', $uniqueCode);
+        $sheet->setCellValue('D2', 'Ust. Pimpinan Cabang');
+        $sheet->setCellValue('E2', '081211112222');
+        $sheet->setCellValue('F2', 'Alamat Lengkap KSB');
+        $sheet->setCellValue('G2', 'https://maps.example.com/ksb');
+        $sheet->setCellValue('H2', 'sudah');
+        $sheet->setCellValue('I2', 'Ahad Pagi');
+        $sheet->setCellValue('J2', '06:00 - 07:30');
+        $sheet->setCellValue('K2', 'Ust. Pengampu KSB');
+        $sheet->setCellValue('L2', 'Rizky Ketua');
+        $sheet->setCellValue('M2', 'Adit Sekretaris');
+        $sheet->setCellValue('N2', 'Bima Bendahara');
+        $sheet->setCellValue('O2', '089876543210');
+        $sheet->setCellValue('P2', 'Catatan pengujian KSB import');
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'cabang_ksb_') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        $uploadedFile = new UploadedFile(
+            $tempFile,
+            'import_cabang_ksb_test.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->post(route('admin.cabang.import'), [
+            'file_excel'      => $uploadedFile,
+            'update_existing' => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.cabang.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('cabang', [
+            'code'              => $uniqueCode,
+            'name'              => $uniqueName,
+            'pimpinan_nama'     => 'Ust. Pimpinan Cabang',
+            'ketua_pemuda'      => 'Rizky Ketua',
+            'sekretaris_pemuda' => 'Adit Sekretaris',
+            'bendahara_pemuda'  => 'Bima Bendahara',
+            'no_wa_pemuda'      => '089876543210',
+        ]);
+
+        // Cleanup
+        Cabang::where('code', $uniqueCode)->delete();
+        if (file_exists($tempFile)) {
+            @unlink($tempFile);
+        }
+    }
+
     public function test_non_superadmin_cannot_access_cabang_export_or_import(): void
     {
         $nonSuperadmin = $this->getNonSuperadmin();

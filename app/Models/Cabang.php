@@ -21,6 +21,10 @@ class Cabang extends Model
         'gelombang_hari',
         'gelombang_jam',
         'gelombang_ustadz',
+        'ketua_pemuda',
+        'sekretaris_pemuda',
+        'bendahara_pemuda',
+        'no_wa_pemuda',
         'mta_uuid',
         'mta_last_synced_at',
     ];

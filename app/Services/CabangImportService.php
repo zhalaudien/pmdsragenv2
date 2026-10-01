@@ -39,7 +39,11 @@ class CabangImportService
             'I1' => 'Hari Kajian Pemuda (Opsional)',
             'J1' => 'Jam Kajian Pemuda (Opsional)',
             'K1' => 'Ustadz Pengampu Kajian (Opsional)',
-            'L1' => 'Deskripsi / Keterangan (Opsional)',
+            'L1' => 'Ketua Pemuda (Opsional)',
+            'M1' => 'Sekretaris Pemuda (Opsional)',
+            'N1' => 'Bendahara Pemuda (Opsional)',
+            'O1' => 'No. WA Pemuda (Opsional)',
+            'P1' => 'Deskripsi / Keterangan (Opsional)',
         ];
 
         foreach ($headers as $cell => $text) {
@@ -56,8 +60,8 @@ class CabangImportService
             ]);
         }
 
-        // Style OPSIONAL columns (C, D, E, F, G, I, J, K, L)
-        foreach (['C1', 'D1', 'E1', 'F1', 'G1', 'I1', 'J1', 'K1', 'L1'] as $cell) {
+        // Style OPSIONAL columns (C, D, E, F, G, I, J, K, L, M, N, O, P)
+        foreach (['C1', 'D1', 'E1', 'F1', 'G1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1', 'P1'] as $cell) {
             $sheet->getStyle($cell)->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '334155']], // Slate 700
@@ -81,6 +85,10 @@ class CabangImportService
                 'Ahad Pagi',
                 '06:00 - 07:30 WIB',
                 'Ust. Ahmad Fauzi',
+                'Muhammad Ridwan',
+                'Fajar Nugroho',
+                'Bayu Pratama',
+                '081298765432',
                 'Pengajian rutin pemuda setiap Ahad ba\'da Shubuh',
             ],
             [
@@ -95,6 +103,10 @@ class CabangImportService
                 '',
                 '',
                 '',
+                'Agus Setiawan',
+                'Rian Hidayat',
+                'Hendra Saputra',
+                '',
                 'Rencana perintisan kajian pemuda awal bulan depan',
             ],
         ];
@@ -107,7 +119,7 @@ class CabangImportService
                 $colIdx++;
             }
 
-            $sheet->getStyle("A{$r}:L{$r}")->applyFromArray([
+            $sheet->getStyle("A{$r}:P{$r}")->applyFromArray([
                 'font' => ['size' => 9],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
                 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
@@ -118,11 +130,12 @@ class CabangImportService
             $sheet->getStyle("H{$r}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("I{$r}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("J{$r}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("O{$r}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getRowDimension($r)->setRowHeight(22);
             $r++;
         }
 
-        foreach (range('A', 'L') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -228,6 +241,9 @@ class CabangImportService
         $processedRows = 0;
         $errors        = [];
 
+        $l1Header = strtolower(trim((string) $sheet->getCell('L1')->getValue()));
+        $hasPengurusColumns = str_contains($l1Header, 'ketua');
+
         DB::beginTransaction();
 
         try {
@@ -243,7 +259,20 @@ class CabangImportService
                 $gelombangHari   = trim((string) $sheet->getCell("I{$row}")->getValue());
                 $gelombangJam    = trim((string) $sheet->getCell("J{$row}")->getValue());
                 $gelombangUstadz = trim((string) $sheet->getCell("K{$row}")->getValue());
-                $description     = trim((string) $sheet->getCell("L{$row}")->getValue());
+
+                if ($hasPengurusColumns) {
+                    $ketuaPemuda      = trim((string) $sheet->getCell("L{$row}")->getValue());
+                    $sekretarisPemuda = trim((string) $sheet->getCell("M{$row}")->getValue());
+                    $bendaharaPemuda  = trim((string) $sheet->getCell("N{$row}")->getValue());
+                    $noWaPemuda       = trim((string) $sheet->getCell("O{$row}")->getValue());
+                    $description      = trim((string) $sheet->getCell("P{$row}")->getValue());
+                } else {
+                    $ketuaPemuda      = '';
+                    $sekretarisPemuda = '';
+                    $bendaharaPemuda  = '';
+                    $noWaPemuda       = '';
+                    $description      = trim((string) $sheet->getCell("L{$row}")->getValue());
+                }
 
                 // Skip completely empty rows
                 if ($name === '' && $wilayahInput === '' && $code === '') {
@@ -304,18 +333,22 @@ class CabangImportService
                 }
 
                 $dataPayload = [
-                    'wilayah_id'       => $wilayahId,
-                    'code'             => $cabangCode,
-                    'name'             => $name,
-                    'description'      => $description !== '' ? $description : null,
-                    'alamat'           => $alamat !== '' ? $alamat : null,
-                    'maps_url'         => $mapsUrl !== '' ? $mapsUrl : null,
-                    'pimpinan_nama'    => $pimpinanNama !== '' ? $pimpinanNama : null,
-                    'no_wa'            => $noWa !== '' ? $noWa : null,
-                    'has_gelombang'    => $hasGelombang,
-                    'gelombang_hari'   => ($hasGelombang === 'sudah' && $gelombangHari !== '') ? $gelombangHari : null,
-                    'gelombang_jam'    => ($hasGelombang === 'sudah' && $gelombangJam !== '') ? $gelombangJam : null,
-                    'gelombang_ustadz' => ($hasGelombang === 'sudah' && $gelombangUstadz !== '') ? $gelombangUstadz : null,
+                    'wilayah_id'        => $wilayahId,
+                    'code'              => $cabangCode,
+                    'name'              => $name,
+                    'description'       => $description !== '' ? $description : null,
+                    'alamat'            => $alamat !== '' ? $alamat : null,
+                    'maps_url'          => $mapsUrl !== '' ? $mapsUrl : null,
+                    'pimpinan_nama'     => $pimpinanNama !== '' ? $pimpinanNama : null,
+                    'no_wa'             => $noWa !== '' ? $noWa : null,
+                    'has_gelombang'     => $hasGelombang,
+                    'gelombang_hari'    => ($hasGelombang === 'sudah' && $gelombangHari !== '') ? $gelombangHari : null,
+                    'gelombang_jam'     => ($hasGelombang === 'sudah' && $gelombangJam !== '') ? $gelombangJam : null,
+                    'gelombang_ustadz'  => ($hasGelombang === 'sudah' && $gelombangUstadz !== '') ? $gelombangUstadz : null,
+                    'ketua_pemuda'      => $ketuaPemuda !== '' ? $ketuaPemuda : null,
+                    'sekretaris_pemuda' => $sekretarisPemuda !== '' ? $sekretarisPemuda : null,
+                    'bendahara_pemuda'  => $bendaharaPemuda !== '' ? $bendaharaPemuda : null,
+                    'no_wa_pemuda'      => $noWaPemuda !== '' ? $noWaPemuda : null,
                 ];
 
                 if ($existing) {

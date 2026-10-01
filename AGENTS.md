@@ -264,6 +264,9 @@ forms
 questions
 responses
 answers
+
+guru_daerah_muda
+gdm_penugasan
 ```
 
 ## 5.1 Relasi wilayah dan cabang
@@ -297,6 +300,10 @@ Tabel `cabang` menyimpan data struktural dan operasional setiap cabang pemuda:
 - `gelombang_hari`: VARCHAR(100) (Hari pelaksanaan pengajian/gelombang pemuda)
 - `gelombang_jam`: VARCHAR(50) (Waktu/jam masuk pelaksanaan kegiatan)
 - `gelombang_ustadz`: VARCHAR(150) (Nama ustadz yang mengampu)
+- `ketua_pemuda`: VARCHAR(100) (Nama ketua / koordinator pemuda cabang)
+- `sekretaris_pemuda`: VARCHAR(100) (Nama sekretaris pemuda cabang)
+- `bendahara_pemuda`: VARCHAR(100) (Nama bendahara pemuda cabang)
+- `no_wa_pemuda`: VARCHAR(20) (Nomor WhatsApp / kontak ketua / koordinator pemuda)
 
 ## 5.2 Relasi user
 
@@ -1315,6 +1322,100 @@ Saat mengerjakan project ini:
 # 32. Catatan Perubahan & Pembaruan Fitur (Changelog)
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
+
+### 2026-10-02 — Pembuatan Dashboard Manajemen Guru Daerah Muda (GDM) & Riwayat Penugasan Kajian Cabang
+
+- **Skema Database & Migrations (`2026_10_02_050000_create_guru_daerah_muda_tables.php`):**
+  - **Tabel `guru_daerah_muda`:**
+    - `id`: INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+    - `nama`: VARCHAR(150)
+    - `tempat_lahir`: VARCHAR(100), nullable
+    - `tanggal_lahir`: DATE, nullable
+    - `cabang_id`: INT UNSIGNED FK ke `cabang.id` (Asal cabang GDM), nullable on delete set null
+    - `alamat`: TEXT, nullable
+    - `no_wa`: VARCHAR(25), nullable (Nomor kontak WhatsApp/HP)
+    - `status`: ENUM('aktif', 'nonaktif') default 'aktif'
+    - `sumber_data`: ENUM('pemuda', 'warga', 'manual') default 'manual'
+    - `pemuda_id`: INT UNSIGNED FK ke `pemuda.id`, nullable on delete set null
+    - `mta_warga_uuid`: VARCHAR(36), nullable
+    - `catatan`: TEXT, nullable
+    - Timestamps
+  - **Tabel `gdm_penugasan`:**
+    - `id`: INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+    - `gdm_id`: INT UNSIGNED FK ke `guru_daerah_muda.id` on delete cascade
+    - `tahun`: SMALLINT (Tahun penugasan, misal: 2024, 2025, 2026)
+    - `cabang_id`: INT UNSIGNED FK ke `cabang.id` on delete cascade (Cabang tempat kajian yang ditugaskan)
+    - `hari_kajian`: VARCHAR(50), nullable
+    - `jam_kajian`: VARCHAR(50), nullable
+    - `status`: ENUM('aktif', 'selesai', 'ditarik') default 'aktif'
+    - `keterangan`: TEXT, nullable
+    - Timestamps
+- **Model Eloquent (`GuruDaerahMuda` & `GdmPenugasan`):**
+  - Relasi `GuruDaerahMuda::cabang()`, `pemuda()`, `penugasan()`, dan `penugasanAktif()`.
+  - Relasi `GdmPenugasan::gdm()` dan `cabang()`.
+  - Accessor `usia` (kalkulasi umur otomatis dari `tanggal_lahir`), `ttl` (format tanggal lahir Indonesia), dan `wa_link` (`https://wa.me/...`).
+- **Controller Backend (`Admin\GuruDaerahMudaController`):**
+  - **Dashboard & Filter (`index`):** KPI cards (Total GDM, GDM Aktif, Penugasan Aktif, Cabang Sasaran Kajian), filter pencarian multi-kriteria (nama, tempat lahir, alamat, WA), filter cabang asal, cabang tempat penugasan, tahun penugasan, status, dan sumber data.
+  - **Detail JSON (`detail`):** Mengembalikan profil lengkap GDM beserta seluruh riwayat penugasan kajian cabang.
+  - **CRUD GDM (`simpan`, `update`, `delete`):** Mendukung penyimpanan data GDM mandiri dan input penugasan awal secara bersamaan dalam transaksi database.
+  - **CRUD Riwayat Penugasan (`tambahPenugasan`, `updatePenugasan`, `deletePenugasan`):** Manajemen penugasan kajian cabang per tahun dengan respon AJAX dan redirect.
+  - **Pencari Data Pemuda (`searchPemuda`):** Endpoint pencarian instan pemuda aktif Sragen untuk mengisi formulir GDM secara otomatis.
+  - **Pencari Data Warga MTA (`searchWarga`):** Endpoint pencarian warga MTA Pusat via API `api.mta.or.id` untuk mengisi formulir GDM secara otomatis.
+- **Rute Web (`routes/web.php`):**
+  - Grup rute `admin.gdm.*` dengan 10 endpoint lengkap (index, detail, simpan, update, delete, penugasan CRUD, search-pemuda, search-warga).
+- **Antarmuka Pengguna Admin (`resources/views/admin/gdm/index.blade.php`):**
+  - Dashboard modern dengan KPI cards, filter canggih, dan tabel data interaktif.
+  - Modal tambah GDM terintegrasi dengan 3 tab sumber data: "Dari Data Pemuda", "Dari Warga MTA", dan "Input Manual".
+  - Modal detail profil komprehensif dilengkapi timeline riwayat penugasan kajian dan form penugasan cepat.
+  - Modal tambah penugasan cepat langsung dari baris tabel.
+  - Integrasi navigasi menu "Guru Daerah Muda (GDM)" pada sidebar admin.
+- **Pengujian Otomatis (`tests/Feature/GuruDaerahMudaDashboardTest.php`):**
+  - 8 test cases komprehensif mencakup dashboard access, CRUD manual, pembuatan dari data pemuda, CRUD penugasan, pencarian pemuda, detail modal, dan pembatasan otorisasi.
+
+### 2026-10-02 — Integrasi Pemilihan Pengurus Pemuda Cabang (Ketua, Sekretaris, Bendahara) dari Data Pemuda Cabang
+
+- **Endpoint API Internal (`CabangController::pemuda`):**
+  - Menambahkan endpoint `GET /admin/cabang/{id}/pemuda` (name: `admin.cabang.pemuda`) yang mengembalikan daftar pemuda aktif terdaftar pada cabang tersebut (nama, gender, nomor WhatsApp, nomor registrasi).
+  - Memfilter hanya pemuda aktif (`status_data != 'archived'`) dan diurutkan secara alfabetis.
+- **Antarmuka Pengguna Admin (`resources/views/admin/cabang/index.blade.php`):**
+  - **Pemilihan Dinamis dari Data Pemuda:**
+    - Saat modal edit dibuka (`editCabang(c)`), sistem otomatis memuat data pemuda yang terdaftar di cabang yang sedang diedit via AJAX.
+    - Menampilkan indikator status jumlah pemuda terdaftar (misal: "X Pemuda Cabang" atau "Belum ada pemuda terdaftar").
+    - Input Ketua, Sekretaris, dan Bendahara Pemuda bertransformasi menjadi dropdown `<select>` yang berisi seluruh pemuda di cabang tersebut lengkap dengan informasi gender (Ikhwan/Akhwat) dan nomor telepon.
+    - Menjaga data tersimpan saat ini (*Current Value*) tetap terpilih meskipun nama belum tercatat di data pemuda cabang (*backward compatibility*).
+  - **Pengisian Otomatis Nomor WhatsApp:**
+    - Memilih Ketua Pemuda dari dropdown pemuda cabang akan secara otomatis menyalin nomor WhatsApp pemuda tersebut ke field `no_wa_pemuda` tanpa perlu mengetik ulang.
+  - **Fleksibilitas Input Manual:**
+    - Menyediakan tombol *toggle* "Ketik Manual" / "Pilih dari Daftar" di setiap jabatan pengurus (Ketua, Sekretaris, Bendahara).
+    - Jika cabang belum memiliki data pemuda, form secara otomatis beralih ke mode ketik manual dengan pesan informatif.
+- **Pengujian Otomatis (`tests/Feature/CabangDetailAndEditSyncTest.php`):**
+  - Menambahkan pengujian untuk endpoint `GET /admin/cabang/{id}/pemuda`:
+    - Menguji respons data pemuda sesuai cabang dan pemfilteran arsip.
+    - Menguji respons 404 jika cabang tidak ditemukan.
+    - Menguji pembatasan otorisasi 403 untuk non-superadmin.
+  - Memverifikasi keberadaan seluruh komponen UI pemilih pemuda cabang di modal edit.
+
+### 2026-10-01 — Penambahan Data Pengurus / Koordinator Pemuda Cabang (Ketua, Sekretaris, Bendahara, No. WA)
+
+- **Skema Database & Migration:**
+  - Menambahkan kolom `ketua_pemuda` (VARCHAR 100, nullable), `sekretaris_pemuda` (VARCHAR 100, nullable), `bendahara_pemuda` (VARCHAR 100, nullable), dan `no_wa_pemuda` (VARCHAR 20, nullable) pada tabel `cabang` melalui migration `2026_10_01_223000_add_pengurus_pemuda_to_cabang_table.php`.
+- **Model `Cabang`:**
+  - Mendaftarkan kolom `ketua_pemuda`, `sekretaris_pemuda`, `bendahara_pemuda`, dan `no_wa_pemuda` ke dalam properti `$fillable`.
+- **Backend Controller `CabangController`:**
+  - **Pencarian Data (`index`):** Memperluas query pencarian kata kunci agar mencakup nama `ketua_pemuda`, `sekretaris_pemuda`, dan `bendahara_pemuda`.
+  - **Validasi & Penyimpanan (`simpan` & `update`):** Menambahkan validasi `nullable|max:100` untuk ketua, sekretaris, bendahara, serta `nullable|max:20` untuk `no_wa_pemuda`.
+  - **API Detail (`detail`):** Mengembalikan data pengurus pemuda secara lengkap dalam respons JSON untuk modal detail.
+- **Export & Import Excel (`CabangExportService` & `CabangImportService`):**
+  - **Export Excel:** Menambahkan 4 kolom baru pada spreadsheet (Ketua Pemuda, No. WA Pemuda, Sekretaris Pemuda, Bendahara Pemuda) sehingga total menjadi 18 kolom (A s/d R).
+  - **Template Import Excel:** Memperbarui format template resmi 16 kolom dengan petunjuk pengisian struktur pengurus KSB pemuda cabang.
+  - **Importer & Backward Compatibility:** Parser import otomatis mendeteksi apakah berkas Excel menggunakan template 16 kolom baru atau 12 kolom lama, sehingga file warisan tetap dapat diimpor tanpa kesalahan.
+- **Antarmuka Pengguna Admin (`resources/views/admin/cabang/index.blade.php`):**
+  - **Tabel Master Cabang:** Menampilkan nama Ketua Pemuda dengan badge ikon orang ungu di kolom Pimpinan & Kontak jika terisi.
+  - **Modal Tambah Cabang (`#modalAddCabang`):** Menambahkan section form "Pengurus / Koordinator Pemuda (Kajian Gelombang)" dengan input Ketua, No. WhatsApp Pemuda, Sekretaris, dan Bendahara.
+  - **Modal Edit Cabang (`#modalEditCabang`):** Menambahkan field pengurus pemuda yang diisi otomatis via JavaScript `editCabang(c)`.
+  - **Modal Detail Cabang (`#modalDetailCabang`):** Menampilkan kartu terdedikasi "Pengurus / Koordinator Pemuda Cabang" lengkap dengan tautan langsung WhatsApp (`https://wa.me/...`) jika nomor WA pemuda terisi.
+- **Pengujian Otomatis:**
+  - Mengembangkan test cases di `CabangDetailAndEditSyncTest` dan `CabangExcelImportExportTest` yang memastikan kelancaran CRUD, detail modal, export, dan import Excel dengan field pengurus pemuda.
 
 ### 2026-10-01 — Penambahan Fitur Upload Flyer Kegiatan pada Info Kegiatan Mobile Presensi
 

@@ -279,6 +279,12 @@
                                     Belum Ada Kajian
                                 </span>
                             @endif
+                            @if($c->ketua_pemuda)
+                                <div class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md px-2 py-0.5 mt-1 font-semibold flex items-center gap-1 max-w-[200px] truncate" title="Ketua Pemuda: {{ $c->ketua_pemuda }}">
+                                    <i class="bi bi-person-badge-fill text-indigo-500 flex-shrink-0"></i>
+                                    <span class="truncate">Ketua: {{ $c->ketua_pemuda }}</span>
+                                </div>
+                            @endif
                         </td>
                         <td class="py-3 px-4 text-center">
                             <a href="{{ route('admin.pemuda.index', ['cabang_id' => $c->id]) }}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] transition">
@@ -408,6 +414,34 @@
                     <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
                     <input type="text" name="gelombang_ustadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
+
+                <!-- Bagian Pengurus / Koordinator Pemuda Cabang -->
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100">
+                    <h4 class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <i class="bi bi-people-fill"></i> Pengurus / Koordinator Pemuda (Kajian Gelombang)
+                    </h4>
+                    <p class="text-[10px] text-slate-400">Susunan pengurus pemuda cabang: Ketua, Sekretaris, dan Bendahara (KSB)</p>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Ketua / Koordinator Pemuda</label>
+                    <input type="text" name="ketua_pemuda" placeholder="Nama Ketua Pemuda" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp Pemuda</label>
+                    <input type="tel" name="no_wa_pemuda" placeholder="08xxxxxxxxxx" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Sekretaris Pemuda</label>
+                    <input type="text" name="sekretaris_pemuda" placeholder="Nama Sekretaris Pemuda" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Bendahara Pemuda</label>
+                    <input type="text" name="bendahara_pemuda" placeholder="Nama Bendahara Pemuda" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
             </div>
 
             <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
@@ -507,6 +541,81 @@
                 <div>
                     <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
                     <input type="text" name="gelombang_ustadz" id="editGelombangUstadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <!-- Bagian Pengurus / Koordinator Pemuda Cabang -->
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5 mb-0.5">
+                            <i class="bi bi-people-fill"></i> Pengurus / Koordinator Pemuda (Kajian Gelombang)
+                        </h4>
+                        <p class="text-[10px] text-slate-400">Pilih dari data pemuda cabang atau ketik nama secara manual</p>
+                    </div>
+                    <div id="editPemudaLoadingBadge" class="text-[10px] px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold flex items-center gap-1">
+                        <i class="bi bi-arrow-repeat animate-spin"></i> Memuat data pemuda...
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Ketua / Koordinator</label>
+                        <button type="button" id="btnToggleManualKetua" onclick="toggleManualPengurus('Ketua')" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                            <i class="bi bi-pencil"></i> Ketik Manual
+                        </button>
+                    </div>
+                    <div id="wrapperSelectKetua">
+                        <select id="editSelectKetuaPemuda" onchange="onSelectPengurusChange('Ketua')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                            <option value="">-- Pilih dari Pemuda Cabang --</option>
+                        </select>
+                    </div>
+                    <div id="wrapperInputKetua" class="hidden">
+                        <input type="text" id="editInputKetuaPemuda" placeholder="Nama Ketua Pemuda" oninput="onInputPengurusChange('Ketua')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    </div>
+                    <input type="hidden" name="ketua_pemuda" id="editKetuaPemuda">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp Pemuda</label>
+                    <input type="tel" name="no_wa_pemuda" id="editNoWaPemuda" placeholder="08xxxxxxxxxx" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    <p id="hintNoWaPemudaAuto" class="text-[10px] text-emerald-600 mt-1 hidden flex items-center gap-1 font-medium">
+                        <i class="bi bi-check-circle-fill"></i> Kontak otomatis terisi dari profil pemuda terpilih
+                    </p>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Sekretaris Pemuda</label>
+                        <button type="button" id="btnToggleManualSekretaris" onclick="toggleManualPengurus('Sekretaris')" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                            <i class="bi bi-pencil"></i> Ketik Manual
+                        </button>
+                    </div>
+                    <div id="wrapperSelectSekretaris">
+                        <select id="editSelectSekretarisPemuda" onchange="onSelectPengurusChange('Sekretaris')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                            <option value="">-- Pilih dari Pemuda Cabang --</option>
+                        </select>
+                    </div>
+                    <div id="wrapperInputSekretaris" class="hidden">
+                        <input type="text" id="editInputSekretarisPemuda" placeholder="Nama Sekretaris Pemuda" oninput="onInputPengurusChange('Sekretaris')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    </div>
+                    <input type="hidden" name="sekretaris_pemuda" id="editSekretarisPemuda">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Bendahara Pemuda</label>
+                        <button type="button" id="btnToggleManualBendahara" onclick="toggleManualPengurus('Bendahara')" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                            <i class="bi bi-pencil"></i> Ketik Manual
+                        </button>
+                    </div>
+                    <div id="wrapperSelectBendahara">
+                        <select id="editSelectBendaharaPemuda" onchange="onSelectPengurusChange('Bendahara')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                            <option value="">-- Pilih dari Pemuda Cabang --</option>
+                        </select>
+                    </div>
+                    <div id="wrapperInputBendahara" class="hidden">
+                        <input type="text" id="editInputBendaharaPemuda" placeholder="Nama Bendahara Pemuda" oninput="onInputPengurusChange('Bendahara')" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    </div>
+                    <input type="hidden" name="bendahara_pemuda" id="editBendaharaPemuda">
                 </div>
             </div>
 
@@ -669,7 +778,212 @@
         document.getElementById('editGelombangHari').value = c.gelombang_hari || '';
         document.getElementById('editGelombangJam').value = c.gelombang_jam || '';
         document.getElementById('editGelombangUstadz').value = c.gelombang_ustadz || '';
+        document.getElementById('editKetuaPemuda').value = c.ketua_pemuda || '';
+        document.getElementById('editNoWaPemuda').value = c.no_wa_pemuda || '';
+        document.getElementById('editSekretarisPemuda').value = c.sekretaris_pemuda || '';
+        document.getElementById('editBendaharaPemuda').value = c.bendahara_pemuda || '';
+        document.getElementById('editInputKetuaPemuda').value = c.ketua_pemuda || '';
+        document.getElementById('editInputSekretarisPemuda').value = c.sekretaris_pemuda || '';
+        document.getElementById('editInputBendaharaPemuda').value = c.bendahara_pemuda || '';
+
+        loadCabangPemudaOptions(c);
         openModal('modalEditCabang');
+    }
+
+    let activeCabangPemudaRequestId = 0;
+
+    function loadCabangPemudaOptions(c) {
+        const requestId = ++activeCabangPemudaRequestId;
+        const badge = document.getElementById('editPemudaLoadingBadge');
+        const hintWa = document.getElementById('hintNoWaPemudaAuto');
+        if (hintWa) hintWa.classList.add('hidden');
+
+        if (badge) {
+            badge.className = 'text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-semibold flex items-center gap-1';
+            badge.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Memuat data pemuda...';
+        }
+
+        // Reset selects to loading
+        ['Ketua', 'Sekretaris', 'Bendahara'].forEach(role => {
+            const sel = document.getElementById(`editSelect${role}Pemuda`);
+            if (sel) {
+                sel.innerHTML = '<option value="">Memuat data pemuda...</option>';
+                sel.disabled = true;
+            }
+        });
+
+        fetch(`{{ url('admin/cabang') }}/${c.id}/pemuda`)
+            .then(res => res.json())
+            .then(res => {
+                if (requestId !== activeCabangPemudaRequestId) return;
+
+                if (res.status === 'success') {
+                    const list = res.data || [];
+
+                    if (badge) {
+                        if (list.length > 0) {
+                            badge.className = 'text-[10px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 font-semibold flex items-center gap-1';
+                            badge.innerHTML = `<i class="bi bi-people-fill"></i> ${list.length} Pemuda Cabang`;
+                        } else {
+                            badge.className = 'text-[10px] px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/70 font-semibold flex items-center gap-1';
+                            badge.innerHTML = '<i class="bi bi-info-circle"></i> Belum ada pemuda terdaftar';
+                        }
+                    }
+
+                    setupPengurusRole('Ketua', list, c.ketua_pemuda || '');
+                    setupPengurusRole('Sekretaris', list, c.sekretaris_pemuda || '');
+                    setupPengurusRole('Bendahara', list, c.bendahara_pemuda || '');
+
+                    // Check if current Ketua has phone match
+                    if (c.ketua_pemuda && list.length > 0) {
+                        const matched = list.find(p => p.name === c.ketua_pemuda);
+                        if (matched && matched.phone && matched.phone === c.no_wa_pemuda) {
+                            if (hintWa) hintWa.classList.remove('hidden');
+                        }
+                    }
+                } else {
+                    if (badge) {
+                        badge.className = 'text-[10px] px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/70 font-semibold flex items-center gap-1';
+                        badge.innerHTML = '<i class="bi bi-exclamation-circle"></i> Gagal memuat';
+                    }
+                    ['Ketua', 'Sekretaris', 'Bendahara'].forEach(role => setManualMode(role, true));
+                }
+            })
+            .catch(() => {
+                if (requestId !== activeCabangPemudaRequestId) return;
+                if (badge) {
+                    badge.className = 'text-[10px] px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/70 font-semibold flex items-center gap-1';
+                    badge.innerHTML = '<i class="bi bi-exclamation-circle"></i> Gangguan koneksi';
+                }
+                ['Ketua', 'Sekretaris', 'Bendahara'].forEach(role => setManualMode(role, true));
+            });
+    }
+
+    function setupPengurusRole(role, list, currentValue) {
+        const select = document.getElementById(`editSelect${role}Pemuda`);
+        const input = document.getElementById(`editInput${role}Pemuda`);
+        const hidden = document.getElementById(`edit${role}Pemuda`);
+
+        if (!select || !input || !hidden) return;
+
+        select.innerHTML = '';
+        select.disabled = false;
+
+        if (list.length === 0) {
+            setManualMode(role, true, 'Cabang ini belum memiliki data pemuda terdaftar');
+            return;
+        }
+
+        const defOpt = document.createElement('option');
+        defOpt.value = '';
+        defOpt.textContent = '-- Pilih dari Data Pemuda Cabang --';
+        select.appendChild(defOpt);
+
+        let isCurrentMatched = false;
+
+        if (currentValue && !list.some(p => p.name === currentValue)) {
+            const curOpt = document.createElement('option');
+            curOpt.value = currentValue;
+            curOpt.textContent = `${currentValue} (Tersimpan Saat Ini)`;
+            curOpt.selected = true;
+            select.appendChild(curOpt);
+            isCurrentMatched = true;
+        }
+
+        list.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.dataset.phone = p.phone || '';
+            const genderLabel = p.gender === 'L' ? 'Ikhwan' : 'Akhwat';
+            const phoneLabel = p.phone ? ` • ${p.phone}` : '';
+            opt.textContent = `${p.name} (${genderLabel}${phoneLabel})`;
+            if (!isCurrentMatched && p.name === currentValue) {
+                opt.selected = true;
+                isCurrentMatched = true;
+            }
+            select.appendChild(opt);
+        });
+
+        const manualOpt = document.createElement('option');
+        manualOpt.value = '__manual__';
+        manualOpt.textContent = '-- [Ketik Nama Manual / Lainnya] --';
+        select.appendChild(manualOpt);
+
+        setManualMode(role, false);
+    }
+
+    function onSelectPengurusChange(role) {
+        const select = document.getElementById(`editSelect${role}Pemuda`);
+        const input = document.getElementById(`editInput${role}Pemuda`);
+        const hidden = document.getElementById(`edit${role}Pemuda`);
+
+        if (!select || !input || !hidden) return;
+
+        if (select.value === '__manual__') {
+            setManualMode(role, true);
+            input.focus();
+            return;
+        }
+
+        hidden.value = select.value;
+        input.value = select.value;
+
+        if (role === 'Ketua') {
+            const selectedOpt = select.options[select.selectedIndex];
+            const phone = selectedOpt?.dataset?.phone || '';
+            const noWaInput = document.getElementById('editNoWaPemuda');
+            const hint = document.getElementById('hintNoWaPemudaAuto');
+
+            if (phone && noWaInput) {
+                noWaInput.value = phone;
+                if (hint) hint.classList.remove('hidden');
+            } else if (hint) {
+                hint.classList.add('hidden');
+            }
+        }
+    }
+
+    function onInputPengurusChange(role) {
+        const input = document.getElementById(`editInput${role}Pemuda`);
+        const hidden = document.getElementById(`edit${role}Pemuda`);
+        if (input && hidden) {
+            hidden.value = input.value;
+        }
+    }
+
+    function toggleManualPengurus(role) {
+        const wrapperInput = document.getElementById(`wrapperInput${role}`);
+        const isCurrentlyManual = wrapperInput && !wrapperInput.classList.contains('hidden');
+        setManualMode(role, !isCurrentlyManual);
+    }
+
+    function setManualMode(role, isManual, placeholderMsg = '') {
+        const wrapperSelect = document.getElementById(`wrapperSelect${role}`);
+        const wrapperInput = document.getElementById(`wrapperInput${role}`);
+        const btn = document.getElementById(`btnToggleManual${role}`);
+        const input = document.getElementById(`editInput${role}Pemuda`);
+        const select = document.getElementById(`editSelect${role}Pemuda`);
+        const hidden = document.getElementById(`edit${role}Pemuda`);
+
+        if (!wrapperSelect || !wrapperInput) return;
+
+        if (isManual) {
+            wrapperSelect.classList.add('hidden');
+            wrapperInput.classList.remove('hidden');
+            if (btn) btn.innerHTML = '<i class="bi bi-list-ul"></i> Pilih dari Daftar';
+            if (placeholderMsg && input) input.placeholder = placeholderMsg;
+            if (input && hidden) hidden.value = input.value;
+        } else {
+            wrapperInput.classList.add('hidden');
+            wrapperSelect.classList.remove('hidden');
+            if (btn) btn.innerHTML = '<i class="bi bi-pencil"></i> Ketik Manual';
+            if (select && hidden) {
+                if (select.value === '__manual__') {
+                    select.value = '';
+                }
+                hidden.value = select.value;
+            }
+        }
     }
 
     function viewDetailCabang(id) {
@@ -690,6 +1004,10 @@
                     const safeHari = escapeHtmlCabang(c.gelombang_hari || '-');
                     const safeJam = escapeHtmlCabang(c.gelombang_jam || '-');
                     const safeUstadz = escapeHtmlCabang(c.gelombang_ustadz || '-');
+                    const safeKetuaPemuda = escapeHtmlCabang(c.ketua_pemuda || '-');
+                    const safeSekretarisPemuda = escapeHtmlCabang(c.sekretaris_pemuda || '-');
+                    const safeBendaharaPemuda = escapeHtmlCabang(c.bendahara_pemuda || '-');
+                    const safeNoWaPemuda = escapeHtmlCabang(c.no_wa_pemuda || '-');
                     const isSudah = c.has_gelombang === 'sudah';
                     const pemudaCount = c.total_pemuda || 0;
                     const mtaUuid = escapeHtmlCabang(c.mta_uuid || '');
@@ -699,6 +1017,12 @@
                     if (c.no_wa) {
                         const cleanPhone = c.no_wa.replace(/\D/g, '').replace(/^0/, '62');
                         waLink = `https://wa.me/${cleanPhone}`;
+                    }
+
+                    let waPemudaLink = '';
+                    if (c.no_wa_pemuda) {
+                        const cleanPhonePemuda = c.no_wa_pemuda.replace(/\D/g, '').replace(/^0/, '62');
+                        waPemudaLink = `https://wa.me/${cleanPhonePemuda}`;
                     }
 
                     document.getElementById('detailCabangTitle').textContent = c.name;
@@ -728,7 +1052,7 @@
                                 </div>
                             </div>
 
-                            <!-- Kepemimpinan & Kontak -->
+                            <!-- Kepemimpinan & Kontak Cabang -->
                             <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
                                 <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                     <i class="bi bi-person-badge text-indigo-600"></i> Pimpinan &amp; Kontak Cabang
@@ -747,6 +1071,37 @@
                                         ` : `
                                             <span class="text-slate-600">${safeNoWa}</span>
                                         `}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pengurus / Koordinator Pemuda Cabang -->
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                                <h4 class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="bi bi-people-fill"></i> Pengurus / Koordinator Pemuda (Kajian Gelombang)
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Ketua / Koordinator:</span>
+                                        <strong class="text-slate-800">${safeKetuaPemuda}</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Nomor WhatsApp Pemuda:</span>
+                                        ${waPemudaLink ? `
+                                            <a href="${waPemudaLink}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-semibold">
+                                                <i class="bi bi-whatsapp"></i> ${safeNoWaPemuda}
+                                            </a>
+                                        ` : `
+                                            <span class="text-slate-600">${safeNoWaPemuda}</span>
+                                        `}
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Sekretaris Pemuda:</span>
+                                        <span class="font-semibold text-slate-800">${safeSekretarisPemuda}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Bendahara Pemuda:</span>
+                                        <span class="font-semibold text-slate-800">${safeBendaharaPemuda}</span>
                                     </div>
                                 </div>
                             </div>

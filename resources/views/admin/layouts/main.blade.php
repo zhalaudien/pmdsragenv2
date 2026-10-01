@@ -152,6 +152,11 @@
                 <span>Export Data Excel</span>
             </a>
 
+            <a href="{{ route('admin.gdm.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.gdm*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-mortarboard-fill text-base"></i>
+                <span>Guru Daerah Muda (GDM)</span>
+            </a>
+
             @if($currRole === 'superadmin')
                 <a href="{{ route('admin.pemuda.import') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.pemuda.import*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <i class="bi bi-file-earmark-arrow-up-fill text-base"></i>
