@@ -1323,6 +1323,26 @@ Saat mengerjakan project ini:
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 
+### 2026-10-04 — Perapian & Pengelompokan Menu Navigasi (Navbar & Sidebar Admin)
+
+- **Perapian Navbar Publik (`resources/views/layouts/app.blade.php`, `public/css/main.css`):**
+  - Mengelompokkan tautan seksi halaman beranda (*Alur Pendataan*, *4 Wilayah & 61 Cabang*, dan *Pusat Bantuan & FAQ*) ke dalam satu dropdown menu Bootstrap 5 **"Informasi & Wilayah"** yang elegan.
+  - Navbar desktop dan mobile menjadi jauh lebih ringkas, proporsional, dan tidak memenuhi lebar layar (*wrapping*).
+  - Ditambahkan styling dropdown khusus pada `.navbar-pmd` dengan bayangan halus, transisi animasi, ikon tematik, dan dukungan tema kontras di menu mobile.
+- **Pengelompokan & Reorganisasi Menu Admin (`resources/views/admin/layouts/main.blade.php`):**
+  - Mengubah daftar 19 link menu datar yang panjang menjadi hierarki kelompok berbasis akordeon / *collapsible submenu*:
+    1. **Dashboard:** Dashboard Pemuda & Dashboard Presensi (akses cepat 1-klik).
+    2. **Data & Kaderisasi (Kelola Pemuda):** Dropdown menu berisi *Daftar Pemuda*, *Tambah Pemuda*, *Persebaran Data*, *Export Data Excel*, *Import Excel*, dan *Backup & Reset*.
+    3. **Guru Daerah Muda (GDM):** Tautan langsung ke modul penugasan kajian GDM.
+    4. **Agenda & Presensi:** Dropdown menu berisi *Agenda Perwakilan* dan *Seting API Presensi*.
+    5. **Pengaturan Sistem (Superadmin):**
+       - **Master Organisasi:** Dropdown *Master Wilayah*, *Master Cabang*, dan *Pengguna & Hak Akses*.
+       - **Integrasi & Web:** Dropdown *Data Warga MTA*, *Sinkronisasi API MTA*, dan *Konten Beranda*.
+    6. **Tautan Luar / Akses Cepat:** Tata letak grid ringkas berdampingan (*Form Publik* & *Landing Page*).
+  - Dilengkapi fitur *auto-expand* saat rute anak aktif dan fungsi toggle interaktif `toggleNavGroup()` dengan animasi rotasi chevron halus.
+- **Pengujian & Verifikasi:**
+  - Menjalankan PHPUnit suite otomatis: 123 tests lulus 100% (932 assertions) tanpa regresi.
+
 ### 2026-10-02 — Pembuatan Dashboard Manajemen Guru Daerah Muda (GDM) & Riwayat Penugasan Kajian Cabang
 
 - **Skema Database & Migrations (`2026_10_02_050000_create_guru_daerah_muda_tables.php`):**

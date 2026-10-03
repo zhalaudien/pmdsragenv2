@@ -81,20 +81,47 @@
                             <i class="bi bi-house-door me-1"></i> Beranda
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/#alur') }}">
-                            <i class="bi bi-ui-checks-grid me-1"></i> Alur Pendataan
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" id="navbarInfoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <span>Informasi &amp; Wilayah</span>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/#wilayah') }}">
-                            <i class="bi bi-diagram-3 me-1"></i> 4 Wilayah &amp; Cabang
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/#bantuan') }}">
-                            <i class="bi bi-headset me-1"></i> Bantuan
-                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" aria-labelledby="navbarInfoDropdown">
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-3" href="{{ url('/#alur') }}">
+                                    <div class="rounded-circle p-1.5 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-ui-checks-grid fs-6"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">Alur Pendataan</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Tahapan sensus pemuda</div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-3" href="{{ url('/#wilayah') }}">
+                                    <div class="rounded-circle p-1.5 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-diagram-3 fs-6"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">4 Wilayah &amp; 61 Cabang</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Persebaran struktur cabang</div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-3" href="{{ url('/#bantuan') }}">
+                                    <div class="rounded-circle p-1.5 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-headset fs-6"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">Pusat Bantuan &amp; FAQ</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Helpdesk &amp; tanya jawab</div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('pantau-pemuda*') ? 'active fw-semibold text-warning' : '' }}" href="{{ route('guru-daerah.index') }}">
