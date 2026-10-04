@@ -42,11 +42,13 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2.5">
+        @if($userRole !== 'koordinator_gdm')
         <!-- Tambah Pemuda -->
         <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
             <i class="bi bi-person-plus-fill text-sm"></i>
             <span>Tambah Pemuda</span>
         </a>
+        @endif
 
         <!-- Export Excel -->
         <a href="{{ route('admin.pemuda.export', array_filter($filters, fn($v) => $v !== null && $v !== '')) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs">
@@ -143,7 +145,7 @@
         <!-- Wilayah -->
         <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Wilayah</label>
-            @if(in_array($userRole, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true))
+            @if(in_array($userRole, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true))
                 <select name="wilayah_id" id="filterWilayah" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                     <option value="">-- Semua Wilayah --</option>
                     @foreach($wilayahList as $w)
@@ -315,12 +317,18 @@
                                     <i class="bi bi-check-circle-fill"></i> Terverifikasi
                                 </span>
                             @else
+                                @if($userRole !== 'koordinator_gdm')
                                 <form action="{{ route('admin.pemuda.verifikasi', $p->id) }}" method="POST" class="inline" onsubmit="return confirm('Verifikasi data pemuda ini sekarang?')">
                                     @csrf
                                     <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-bold transition">
                                         <i class="bi bi-clock"></i> Verifikasi Sekarang
                                     </button>
                                 </form>
+                                @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold">
+                                    <i class="bi bi-clock"></i> Belum Terverifikasi
+                                </span>
+                                @endif
                             @endif
                         </td>
                         <td class="py-3 px-4 text-center">
@@ -328,18 +336,22 @@
                                 <a href="{{ route('admin.pemuda.detail', $p->id) }}" class="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 transition" title="Detail Data">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                @if($userRole !== 'koordinator_gdm')
                                 <a href="{{ route('admin.pemuda.edit', $p->id) }}" class="p-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-600 text-slate-600 transition" title="Edit Data">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
+                                @endif
                                 <a href="{{ route('admin.pemuda.cetak', $p->id) }}" target="_blank" class="p-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 transition" title="Cetak Biodata">
                                     <i class="bi bi-printer"></i>
                                 </a>
+                                @if($userRole !== 'koordinator_gdm')
                                 <form action="{{ route('admin.pemuda.delete', $p->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus data pemuda ini?')">
                                     @csrf
                                     <button type="submit" class="p-1.5 rounded-lg bg-slate-100 hover:bg-red-100 hover:text-red-700 text-slate-400 transition" title="Hapus Data">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

@@ -74,9 +74,16 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
 
     // Dashboard & Monitoring Mobile Presensi PMD
     Route::prefix('presensi')->name('presensi.')->group(function () {
-        Route::get('dashboard', [PresensiDashboardController::class, 'index'])->name('dashboard');
-        Route::get('kegiatan/{id}/rekap', [PresensiDashboardController::class, 'rekapDetail'])->name('kegiatan.rekap');
-        Route::post('kegiatan/{id}/notulensi', [PresensiDashboardController::class, 'updateNotulensi'])->name('kegiatan.notulensi');
+        // Hak Baca: Dashboard Presensi & Rekap Notulensi (Termasuk Koordinator GDM)
+        Route::middleware('role:superadmin,koordinator_gdm,admin_pemuda,admin_pemudi,admin_wilayah,admin_wilayah_pemuda,admin_cabang')->group(function () {
+            Route::get('dashboard', [PresensiDashboardController::class, 'index'])->name('dashboard');
+            Route::get('kegiatan/{id}/rekap', [PresensiDashboardController::class, 'rekapDetail'])->name('kegiatan.rekap');
+        });
+
+        // Hak Modifikasi Notulensi: Hanya Administrator & Pengurus (Koordinator GDM dilarang)
+        Route::middleware('role:superadmin,admin_pemuda,admin_pemudi,admin_wilayah,admin_wilayah_pemuda,admin_cabang')->group(function () {
+            Route::post('kegiatan/{id}/notulensi', [PresensiDashboardController::class, 'updateNotulensi'])->name('kegiatan.notulensi');
+        });
     });
     Route::get('presensi-dashboard', fn () => redirect()->route('admin.presensi.dashboard'));
 
@@ -84,17 +91,21 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     Route::prefix('pemuda')->name('pemuda.')->group(function () {
         Route::get('/', [PemudaController::class, 'index'])->name('index');
         Route::get('detail/{id}', [PemudaController::class, 'detail'])->name('detail');
-        Route::get('tambah', [PemudaController::class, 'tambah'])->name('tambah');
-        Route::post('simpan', [PemudaController::class, 'simpan'])->name('simpan');
-        Route::get('edit/{id}', [PemudaController::class, 'edit'])->name('edit');
-        Route::post('update/{id}', [PemudaController::class, 'update'])->name('update');
-        Route::post('verifikasi/{id}', [PemudaController::class, 'verifikasi'])->name('verifikasi');
-        Route::post('archive/{id}', [PemudaController::class, 'archive'])->name('archive');
-        Route::post('delete/{id}', [PemudaController::class, 'delete'])->name('delete');
         Route::get('export', [PemudaController::class, 'export'])->name('export');
         Route::post('export', [PemudaController::class, 'exportDownload'])->name('export.download');
         Route::get('export/count', [PemudaController::class, 'exportCount'])->name('export.count');
         Route::get('cetak/{id}', [PemudaController::class, 'cetak'])->name('cetak');
+
+        // Modifikasi Data Pemuda (Dibatasi: koordinator_gdm hanya memiliki hak baca)
+        Route::middleware('role:superadmin,admin_pemuda,admin_pemudi,admin_wilayah,admin_wilayah_pemuda,admin_cabang')->group(function () {
+            Route::get('tambah', [PemudaController::class, 'tambah'])->name('tambah');
+            Route::post('simpan', [PemudaController::class, 'simpan'])->name('simpan');
+            Route::get('edit/{id}', [PemudaController::class, 'edit'])->name('edit');
+            Route::post('update/{id}', [PemudaController::class, 'update'])->name('update');
+            Route::post('verifikasi/{id}', [PemudaController::class, 'verifikasi'])->name('verifikasi');
+            Route::post('archive/{id}', [PemudaController::class, 'archive'])->name('archive');
+            Route::post('delete/{id}', [PemudaController::class, 'delete'])->name('delete');
+        });
 
         // Khusus Superadmin: Import, Backup & Clear Data
         Route::middleware('role:superadmin')->group(function () {
@@ -110,8 +121,8 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         });
     });
 
-    // Manajemen Guru Daerah Muda (GDM) & Penugasan Kajian Cabang
-    Route::prefix('gdm')->name('gdm.')->group(function () {
+    // Manajemen Guru Daerah Muda (GDM) & Penugasan Kajian Cabang (Superadmin & Koordinator GDM)
+    Route::prefix('gdm')->middleware('role:superadmin,koordinator_gdm')->name('gdm.')->group(function () {
         Route::get('/', [GuruDaerahMudaController::class, 'index'])->name('index');
         Route::get('detail/{id}', [GuruDaerahMudaController::class, 'detail'])->name('detail');
         Route::post('simpan', [GuruDaerahMudaController::class, 'simpan'])->name('simpan');
@@ -139,18 +150,24 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('delete/{id}', [WilayahController::class, 'delete'])->name('delete');
     });
 
-    // Master Cabang (Superadmin)
-    Route::prefix('cabang')->middleware('role:superadmin')->name('cabang.')->group(function () {
-        Route::get('/', [CabangController::class, 'index'])->name('index');
-        Route::get('export', [CabangController::class, 'export'])->name('export');
-        Route::get('template', [CabangController::class, 'template'])->name('template');
-        Route::post('import', [CabangController::class, 'import'])->name('import');
-        Route::post('sync-gdm', [CabangController::class, 'syncGdm'])->name('sync-gdm');
-        Route::get('detail/{id}', [CabangController::class, 'detail'])->name('detail');
-        Route::get('{id}/pemuda', [CabangController::class, 'pemuda'])->name('pemuda');
-        Route::post('simpan', [CabangController::class, 'simpan'])->name('simpan');
-        Route::post('update/{id}', [CabangController::class, 'update'])->name('update');
-        Route::post('delete/{id}', [CabangController::class, 'delete'])->name('delete');
+    // Master Cabang (Superadmin & Koordinator GDM untuk penugasan/monitoring)
+    Route::prefix('cabang')->name('cabang.')->group(function () {
+        Route::middleware('role:superadmin,koordinator_gdm')->group(function () {
+            Route::get('/', [CabangController::class, 'index'])->name('index');
+            Route::get('export', [CabangController::class, 'export'])->name('export');
+            Route::post('sync-gdm', [CabangController::class, 'syncGdm'])->name('sync-gdm');
+            Route::get('detail/{id}', [CabangController::class, 'detail'])->name('detail');
+            Route::get('{id}/pemuda', [CabangController::class, 'pemuda'])->name('pemuda');
+        });
+
+        // Khusus Superadmin: Tambah, Edit, Hapus, dan Import Cabang
+        Route::middleware('role:superadmin')->group(function () {
+            Route::get('template', [CabangController::class, 'template'])->name('template');
+            Route::post('import', [CabangController::class, 'import'])->name('import');
+            Route::post('simpan', [CabangController::class, 'simpan'])->name('simpan');
+            Route::post('update/{id}', [CabangController::class, 'update'])->name('update');
+            Route::post('delete/{id}', [CabangController::class, 'delete'])->name('delete');
+        });
     });
 
     // Master Users & Roles (Superadmin)
@@ -203,7 +220,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     });
 
     // Kelola Info Kegiatan Pemuda Perwakilan untuk Mobile Presensi
-    Route::prefix('kegiatan-perwakilan')->name('kegiatan-perwakilan.')->group(function () {
+    Route::prefix('kegiatan-perwakilan')->middleware('role:superadmin,admin_pemuda,admin_pemudi,admin_wilayah,admin_wilayah_pemuda,admin_cabang')->name('kegiatan-perwakilan.')->group(function () {
         Route::get('/', [KegiatanPerwakilanController::class, 'index'])->name('index');
         Route::post('simpan', [KegiatanPerwakilanController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [KegiatanPerwakilanController::class, 'update'])->name('update');

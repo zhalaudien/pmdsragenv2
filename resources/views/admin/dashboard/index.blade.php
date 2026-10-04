@@ -30,6 +30,8 @@
                     Dashboard Admin Wilayah &bull; {{ $wilayahName }}
                 @elseif ($userRole === 'admin_wilayah_pemuda')
                     Dashboard Admin Wilayah Pemuda (L) &bull; {{ $wilayahName }}
+                @elseif ($userRole === 'koordinator_gdm')
+                    Dashboard Koordinator GDM &bull; Seluruh Sragen
                 @else
                     Dashboard Admin Cabang &bull; {{ $cabangName }}
                 @endif
@@ -54,6 +56,8 @@
                 Kelola, analisis, dan verifikasi seluruh data pemudi berjenis kelamin <strong>Perempuan</strong> di seluruh wilayah &amp; cabang Kabupaten Sragen.
             @elseif ($userRole === 'admin_wilayah' || $userRole === 'admin_wilayah_pemuda')
                 Pantau dan analisis sebaran data pemuda pada seluruh cabang dalam lingkup <strong>{{ $wilayahName }}</strong>.
+            @elseif ($userRole === 'koordinator_gdm')
+                Pantau statistik pemuda &amp; pemudi, sebaran 61 cabang binaan, dan jadwal pengajian untuk mendukung koordinasi penugasan Guru Daerah Muda (GDM).
             @else
                 Kelola, input, dan verifikasi data pemuda khusus pada lingkup <strong>{{ $cabangName }}</strong>.
             @endif
@@ -79,11 +83,27 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2.5">
+        @if($userRole !== 'koordinator_gdm')
         <!-- Tombol Tambah Pemuda -->
         <a href="{{ route('admin.pemuda.tambah') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
             <i class="bi bi-person-plus-fill text-sm"></i>
             <span>Tambah Pemuda</span>
         </a>
+        @endif
+
+        @if($userRole === 'koordinator_gdm')
+        <!-- Tombol Guru Daerah Muda (GDM) -->
+        <a href="{{ route('admin.gdm.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-mortarboard-fill text-sm"></i>
+            <span>Manajemen GDM</span>
+        </a>
+
+        <!-- Tombol Data Cabang Binaan -->
+        <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 text-slate-700 hover:text-sky-800 font-semibold text-xs transition border border-slate-200/90 hover:border-sky-300 shadow-2xs">
+            <i class="bi bi-diagram-3-fill text-sky-500 text-sm"></i>
+            <span>Data Cabang</span>
+        </a>
+        @endif
 
         <!-- Tombol Kelola Data -->
         <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">

@@ -64,6 +64,11 @@ class User extends Authenticatable
         return $this->role_name === 'superadmin' || $this->role_id === 1;
     }
 
+    public function isKoordinatorGdm(): bool
+    {
+        return $this->role_name === 'koordinator_gdm' || $this->role_id === 7;
+    }
+
     public function kegiatanPresensi()
     {
         return $this->hasMany(KegiatanPresensi::class, 'created_by');

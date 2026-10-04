@@ -245,7 +245,7 @@ class Pemuda extends Model
         }
 
         $role = $scope['role'] ?? 'superadmin';
-        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true) && !empty($filters['wilayah_id'])) {
+        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true) && !empty($filters['wilayah_id'])) {
             $query->whereHas('cabang', function ($cq) use ($filters) {
                 $cq->where('wilayah_id', (int) $filters['wilayah_id']);
             });
@@ -408,7 +408,7 @@ class Pemuda extends Model
         $wilayahId = !empty($scope['wilayah_id']) ? (int) $scope['wilayah_id'] : null;
         $cabangId  = !empty($scope['cabang_id']) ? (int) $scope['cabang_id'] : null;
 
-        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true)) {
+        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true)) {
             $totalWilayah = Wilayah::count();
             $totalCabang  = Cabang::count();
             $totalUsers   = User::where('status', 1)->count();
@@ -623,7 +623,7 @@ class Pemuda extends Model
 
         $role = $scope['role'] ?? 'superadmin';
 
-        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true) && !empty($filters['wilayah_id'])) {
+        if (in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true) && !empty($filters['wilayah_id'])) {
             $builder->where('cabang.wilayah_id', (int) $filters['wilayah_id']);
         }
 

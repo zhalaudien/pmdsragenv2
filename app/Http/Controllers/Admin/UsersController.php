@@ -63,7 +63,7 @@ class UsersController extends Controller
         $targetRole = UserRole::find($roleId);
         $roleName   = $targetRole->name ?? '';
 
-        if ($roleName === 'superadmin' || in_array($roleName, ['admin_pemuda', 'admin_pemudi'], true)) {
+        if ($roleName === 'superadmin' || in_array($roleName, ['admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true)) {
             $wilayahId = null;
             $cabangId  = null;
         } elseif (in_array($roleName, ['admin_wilayah', 'admin_wilayah_pemuda'], true)) {
@@ -112,7 +112,7 @@ class UsersController extends Controller
         $targetRole = UserRole::find($roleId);
         $roleName   = $targetRole->name ?? '';
 
-        if ($roleName === 'superadmin' || in_array($roleName, ['admin_pemuda', 'admin_pemudi'], true)) {
+        if ($roleName === 'superadmin' || in_array($roleName, ['admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true)) {
             $wilayahId = null;
             $cabangId  = null;
         } elseif (in_array($roleName, ['admin_wilayah', 'admin_wilayah_pemuda'], true)) {

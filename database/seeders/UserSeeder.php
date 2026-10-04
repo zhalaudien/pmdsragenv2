@@ -79,12 +79,25 @@ class UserSeeder extends Seeder
                 'cabang_id'  => null,
                 'status'     => 1,
             ],
+            [
+                'id'         => 7,
+                'name'       => 'Koordinator GDM Sragen',
+                'email'      => 'koordinator.gdm@pmdsragen.org',
+                'username'   => 'koordinator_gdm',
+                'password'   => $defaultPassword,
+                'role_id'    => 7,
+                'wilayah_id' => null,
+                'cabang_id'  => null,
+                'status'     => 1,
+            ],
         ];
 
         foreach ($users as $user) {
-            $existing = DB::table('users')->where('id', $user['id'])->orWhere('username', $user['username'])->first();
+            $existing = DB::table('users')->where('username', $user['username'])->first();
             if (!$existing) {
-                DB::table('users')->insert(array_merge($user, [
+                $userData = $user;
+                unset($userData['id']);
+                DB::table('users')->insert(array_merge($userData, [
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]));

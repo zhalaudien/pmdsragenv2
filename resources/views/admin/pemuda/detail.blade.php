@@ -5,6 +5,7 @@
 @section('content')
 
 @php
+    $userRole = session('role') ?? auth()->user()?->role?->name;
     $isMale = ($pemuda->gender ?? 'L') === 'L';
     $photoUrl = null;
     if (!empty($pemuda->foto) && file_exists(public_path('uploads/pemuda/' . $pemuda->foto))) {
@@ -73,15 +74,17 @@
 
         <!-- ACTIONS -->
         <div class="flex flex-wrap md:flex-col gap-2 flex-shrink-0">
+            @if($userRole !== 'koordinator_gdm')
             <a href="{{ route('admin.pemuda.edit', $pemuda->id) }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-sm">
                 <i class="bi bi-pencil-square"></i>
                 <span>Edit Data</span>
             </a>
+            @endif
             <a href="{{ route('admin.pemuda.cetak', $pemuda->id) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition">
                 <i class="bi bi-printer"></i>
                 <span>Cetak Dokumen</span>
             </a>
-            @if($pemuda->status_verifikasi !== 'verified')
+            @if($userRole !== 'koordinator_gdm' && $pemuda->status_verifikasi !== 'verified')
                 <form action="{{ route('admin.pemuda.verifikasi', $pemuda->id) }}" method="POST" onsubmit="return confirm('Verifikasi data pemuda ini sekarang?')">
                     @csrf
                     <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm">

@@ -41,6 +41,12 @@
                 </button>
             </form>
 
+            <!-- Presensi & Notulensi Kajian -->
+            <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs" title="Lihat Rekap Presensi & Notulensi Kajian Cabang">
+                <i class="bi bi-journal-check text-indigo-600 text-sm"></i>
+                <span>Presensi &amp; Notulensi</span>
+            </a>
+
             <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs" title="Buka Master Cabang">
                 <i class="bi bi-diagram-3-fill text-slate-500 text-sm"></i>
                 <span>Master Cabang</span>

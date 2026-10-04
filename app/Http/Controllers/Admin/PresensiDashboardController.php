@@ -49,13 +49,13 @@ class PresensiDashboardController extends Controller
         $filterStatus  = $request->input('status');
         $filterSearch  = $request->input('q');
 
-        if ($filterWilayah && $role === 'superadmin') {
+        if ($filterWilayah && in_array($role, ['superadmin', 'koordinator_gdm'], true)) {
             $kegiatanQuery->whereHas('cabang', function ($q) use ($filterWilayah) {
                 $q->where('wilayah_id', $filterWilayah);
             });
         }
 
-        if ($filterCabang && in_array($role, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'admin_wilayah'], true)) {
+        if ($filterCabang && in_array($role, ['superadmin', 'koordinator_gdm', 'admin_pemuda', 'admin_pemudi', 'admin_wilayah'], true)) {
             $kegiatanQuery->where('cabang_id', $filterCabang);
         }
 
@@ -244,6 +244,9 @@ class PresensiDashboardController extends Controller
         $kegiatan = KegiatanPresensi::with(['cabang.wilayah'])->findOrFail($id);
 
         // Validasi Scope Akses
+        if ($role === 'koordinator_gdm') {
+            return response()->json(['success' => false, 'message' => 'Role Koordinator GDM hanya memiliki hak baca (view-only) dan tidak diizinkan mengubah notulensi kajian.'], 403);
+        }
         if (in_array($role, ['admin_cabang'], true) && $kegiatan->cabang_id != $cabangId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak ke cabang lain.'], 403);
         }

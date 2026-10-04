@@ -4,6 +4,10 @@
 
 @section('content')
 
+@php
+    $userRole = session('role') ?? auth()->user()?->role?->name;
+@endphp
+
 <!-- HEADER JUDUL HALAMAN -->
 <div class="mb-5">
     <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -36,6 +40,7 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2.5">
+        @if($userRole === 'superadmin')
         <!-- Tambah Cabang Baru -->
         <button type="button" onclick="openModal('modalAddCabang')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2">
             <i class="bi bi-plus-lg text-sm"></i>
@@ -47,6 +52,7 @@
             <i class="bi bi-file-earmark-arrow-up-fill text-sm"></i>
             <span>Import Excel</span>
         </button>
+        @endif
 
         <!-- Export Excel -->
         <a href="{{ route('admin.cabang.export', request()->query()) }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs flex items-center gap-2" title="Export data cabang ke file Excel (.xlsx)">
@@ -69,11 +75,13 @@
             <span>Guru Daerah Muda</span>
         </a>
 
+        @if($userRole === 'superadmin')
         <!-- Master Wilayah -->
         <a href="{{ route('admin.wilayah.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
             <i class="bi bi-geo-alt-fill text-slate-500 text-sm"></i>
             <span>Master Wilayah</span>
         </a>
+        @endif
 
         <!-- Kelola Data Pemuda -->
         <a href="{{ route('admin.pemuda.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
@@ -322,6 +330,7 @@
                                 <button type="button" onclick="viewDetailCabang({{ $c->id }})" class="p-1.5 rounded-lg bg-slate-100 hover:bg-sky-50 hover:text-sky-600 text-slate-600 transition" title="Detail Cabang">
                                     <i class="bi bi-eye"></i>
                                 </button>
+                                @if($userRole === 'superadmin')
                                 <button type="button" onclick="editCabang({{ json_encode($c) }})" class="p-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-600 text-slate-600 transition" title="Edit Cabang">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
@@ -331,6 +340,7 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

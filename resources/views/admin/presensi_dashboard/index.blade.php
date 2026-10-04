@@ -41,6 +41,8 @@
                 <i class="bi bi-shield-check"></i>
                 @if($userRole === 'superadmin')
                     Superadmin &bull; Seluruh Sragen
+                @elseif($userRole === 'koordinator_gdm')
+                    Koordinator GDM &bull; Seluruh Sragen
                 @elseif($cabangName)
                     {{ $cabangName }}
                 @elseif($wilayahName)
@@ -85,6 +87,20 @@
             <span>Dashboard Pemuda</span>
         </a>
 
+        @if($userRole === 'koordinator_gdm')
+            <!-- Tombol Manajemen GDM -->
+            <a href="{{ route('admin.gdm.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs transition border border-amber-200/90 shadow-2xs">
+                <i class="bi bi-mortarboard-fill text-amber-600 text-sm"></i>
+                <span>Manajemen GDM</span>
+            </a>
+
+            <!-- Tombol Data Cabang Binaan -->
+            <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 font-semibold text-xs transition border border-sky-200/90 shadow-2xs">
+                <i class="bi bi-diagram-3-fill text-sky-600 text-sm"></i>
+                <span>Data Cabang Binaan</span>
+            </a>
+        @endif
+
         @if($userRole === 'superadmin')
             <!-- Tombol Reset Pra-Launching -->
             <a href="{{ route('admin.api-settings.index') }}#launchResetCard" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
@@ -99,11 +115,13 @@
             </a>
         @endif
 
+        @if($userRole !== 'koordinator_gdm')
         <!-- Tombol Agenda Perwakilan -->
         <a href="{{ route('admin.kegiatan-perwakilan.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs transition border border-slate-200/90 hover:border-amber-300 shadow-2xs">
             <i class="bi bi-calendar-event-fill text-amber-500 text-sm"></i>
             <span>Agenda Perwakilan</span>
         </a>
+        @endif
 
         @if(!empty($settings['api_apk_download_url']))
             <!-- Tombol Unduh APK -->
@@ -419,7 +437,7 @@
 
         <!-- Filter Form -->
         <form method="GET" action="{{ route('admin.presensi.dashboard') }}" class="flex flex-wrap items-center gap-2">
-            @if($userRole === 'superadmin')
+            @if(in_array($userRole, ['superadmin', 'koordinator_gdm'], true))
                 <select name="wilayah_id" onchange="this.form.submit()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">Semua Wilayah</option>
                     @foreach($wilayahList as $w)
@@ -428,7 +446,7 @@
                 </select>
             @endif
 
-            @if(in_array($userRole, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'admin_wilayah'], true))
+            @if(in_array($userRole, ['superadmin', 'koordinator_gdm', 'admin_pemuda', 'admin_pemudi', 'admin_wilayah'], true))
                 <select name="cabang_id" onchange="this.form.submit()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[160px]">
                     <option value="">Semua Cabang</option>
                     @foreach($cabangList as $c)
@@ -520,9 +538,15 @@
                                     <i class="bi bi-journal-check text-emerald-600"></i> Ada Notulensi
                                 </button>
                             @else
-                                <button type="button" onclick="showRekapModal({{ $keg->id }})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] transition" title="Isi notulensi kajian">
-                                    <i class="bi bi-journal-plus text-slate-400"></i> + Isi
-                                </button>
+                                @if($userRole === 'koordinator_gdm')
+                                    <button type="button" onclick="showRekapModal({{ $keg->id }})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 text-[10px] transition" title="Lihat detail sesi">
+                                        <i class="bi bi-journal text-slate-400"></i> Belum Ada
+                                    </button>
+                                @else
+                                    <button type="button" onclick="showRekapModal({{ $keg->id }})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] transition" title="Isi notulensi kajian">
+                                        <i class="bi bi-journal-plus text-slate-400"></i> + Isi
+                                    </button>
+                                @endif
                             @endif
                         </td>
                         <td class="py-3 px-4 text-center">
@@ -709,10 +733,12 @@
                             <i class="bi bi-clipboard-check"></i>
                             <span>Salin Notulensi</span>
                         </button>
+                        @if($userRole !== 'koordinator_gdm')
                         <button type="button" id="btnToggleEditRekapNotulensi" onclick="toggleRekapNotulensiEdit()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold transition">
                             <i class="bi bi-pencil-square"></i>
                             <span id="btnToggleEditRekapText">Edit / Isi</span>
                         </button>
+                        @endif
                     </div>
                 </div>
 
@@ -721,6 +747,7 @@
                     <span class="text-slate-400 italic">Belum ada notulensi yang dicatat untuk sesi kajian ini.</span>
                 </div>
 
+                @if($userRole !== 'koordinator_gdm')
                 <!-- Edit Mode Notulensi -->
                 <div id="rekapNotulensiEditBox" class="hidden mt-3 space-y-3">
                     <div>
@@ -741,6 +768,7 @@
                         </button>
                     </div>
                 </div>
+                @endif
             </div>
 
             <!-- Format Teks WhatsApp -->
@@ -860,6 +888,8 @@
 
     // Modal Rekap Handlers
     let currentRekapKegiatanId = null;
+    let currentRekapNotulensi = '';
+    let currentRekapNotulis = '';
 
     function showRekapModal(id) {
         currentRekapKegiatanId = id;
@@ -942,12 +972,15 @@
         const inputNotulis = document.getElementById('inputRekapNotulis');
         const textarea = document.getElementById('textareaRekapNotulensi');
 
+        currentRekapNotulensi = notulensi || '';
+        currentRekapNotulis = notulis || '';
+
         const hasText = notulensi && notulensi.trim() !== '';
 
         if (hasText) {
             viewBox.innerHTML = escapeHtml(notulensi);
         } else {
-            viewBox.innerHTML = '<span class="text-slate-400 italic">Belum ada notulensi yang dicatat untuk sesi kajian ini. Klik tombol "Edit / Isi" untuk menambahkan notulensi.</span>';
+            viewBox.innerHTML = '<span class="text-slate-400 italic">Belum ada notulensi yang dicatat untuk sesi kajian ini.</span>';
         }
 
         if (notulis && notulis.trim() !== '') {
@@ -956,8 +989,8 @@
             notulisInfo.textContent = 'Notulis: Belum dicatat';
         }
 
-        inputNotulis.value = notulis || '';
-        textarea.value = notulensi || '';
+        if (inputNotulis) inputNotulis.value = notulis || '';
+        if (textarea) textarea.value = notulensi || '';
     }
 
     function toggleRekapNotulensiEdit(forceState) {
@@ -1035,8 +1068,9 @@
 
     function copyRekapNotulensiText() {
         const textarea = document.getElementById('textareaRekapNotulensi');
-        const notulisVal = document.getElementById('inputRekapNotulis').value;
-        const notulensiVal = textarea ? textarea.value.trim() : '';
+        const inputNotulis = document.getElementById('inputRekapNotulis');
+        const notulisVal = inputNotulis ? inputNotulis.value.trim() : (currentRekapNotulis || '').trim();
+        const notulensiVal = textarea ? textarea.value.trim() : (currentRekapNotulensi || '').trim();
 
         if (!notulensiVal) {
             alert('Belum ada notulensi untuk disalin.');

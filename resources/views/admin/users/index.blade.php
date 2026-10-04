@@ -133,6 +133,8 @@
                                 <span class="px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-700 font-bold text-[10px]">Admin Pemudi (P)</span>
                             @elseif($roleName === 'admin_wilayah' || $roleName === 'admin_wilayah_pemuda')
                                 <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-bold text-[10px]">{{ $u->role->description ?? 'Admin Wilayah' }}</span>
+                            @elseif($roleName === 'koordinator_gdm')
+                                <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold text-[10px]">Koordinator GDM</span>
                             @else
                                 <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px]">Admin Cabang</span>
                             @endif

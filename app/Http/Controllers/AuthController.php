@@ -71,7 +71,7 @@ class AuthController extends Controller
         $cabangId    = $user->cabang_id;
         $cabangName  = $user->cabang->name ?? null;
 
-        if (in_array($roleName, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true)) {
+        if (in_array($roleName, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true)) {
             $wilayahId   = null;
             $wilayahName = null;
             $cabangId    = null;
@@ -101,7 +101,8 @@ class AuthController extends Controller
 
         $user->update(['last_login' => now()]);
 
-        $redirectUrl = session()->pull('redirect_url', route('admin.dashboard'));
+        $defaultRoute = $roleName === 'koordinator_gdm' ? route('admin.gdm.index') : route('admin.dashboard');
+        $redirectUrl  = session()->pull('redirect_url', $defaultRoute);
 
         return redirect()->to($redirectUrl)
             ->with('success', 'Selamat datang kembali, ' . $user->name . '!');

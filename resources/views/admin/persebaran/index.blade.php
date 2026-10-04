@@ -47,6 +47,8 @@
             <i class="bi bi-pie-chart-fill text-amber-400"></i>
             @if ($userRole === 'superadmin')
                 Persebaran Data &bull; Seluruh Kabupaten Sragen
+            @elseif ($userRole === 'koordinator_gdm')
+                Persebaran Data &bull; Seluruh Kabupaten Sragen (Penugasan GDM)
             @elseif ($userRole === 'admin_pemuda')
                 Persebaran Data &bull; Khusus Laki-laki (L)
             @elseif ($userRole === 'admin_pemudi')
@@ -97,11 +99,27 @@
             <span>Kelola Data</span>
         </a>
 
+        @if($userRole === 'koordinator_gdm')
+        <!-- Guru Daerah Muda (GDM) -->
+        <a href="{{ route('admin.gdm.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition shadow-sm hover:shadow">
+            <i class="bi bi-mortarboard-fill text-sm"></i>
+            <span>Manajemen GDM</span>
+        </a>
+
+        <!-- Data Cabang Binaan -->
+        <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 text-slate-700 hover:text-sky-800 font-semibold text-xs transition border border-slate-200/90 hover:border-sky-300 shadow-2xs">
+            <i class="bi bi-diagram-3-fill text-sky-500 text-sm"></i>
+            <span>Data Cabang</span>
+        </a>
+        @endif
+
+        @if($userRole !== 'koordinator_gdm')
         <!-- Dashboard Presensi -->
         <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-sm hover:shadow">
             <i class="bi bi-phone-vibrate-fill text-sm"></i>
             <span>Dashboard Presensi</span>
         </a>
+        @endif
 
         <!-- Export Excel -->
         <a href="{{ route('admin.pemuda.export') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs">
@@ -129,7 +147,7 @@
         <!-- Wilayah -->
         <div>
             <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Wilayah</label>
-            @if(in_array($userRole, ['superadmin', 'admin_pemuda', 'admin_pemudi'], true))
+            @if(in_array($userRole, ['superadmin', 'admin_pemuda', 'admin_pemudi', 'koordinator_gdm'], true))
                 <select name="wilayah_id" id="filterWilayah" class="w-full text-xs rounded-xl border-slate-300 bg-slate-50 py-2 px-3 focus:ring-red-500 focus:border-red-500">
                     <option value="">-- Semua Wilayah --</option>
                     @foreach($wilayahList as $w)

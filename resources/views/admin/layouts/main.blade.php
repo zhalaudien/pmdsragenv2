@@ -62,6 +62,7 @@
             'admin_wilayah'        => 'Admin Wilayah',
             'admin_wilayah_pemuda' => 'Admin Wilayah Pemuda (L)',
             'admin_cabang'         => 'Admin Cabang',
+            'koordinator_gdm'      => 'Koordinator GDM',
         ];
 
         $roleBadges = [
@@ -71,6 +72,7 @@
             'admin_wilayah'        => 'bg-sky-500/20 text-sky-400 border-sky-500/30',
             'admin_wilayah_pemuda' => 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
             'admin_cabang'         => 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+            'koordinator_gdm'      => 'bg-amber-500/20 text-amber-400 border-amber-500/30',
         ];
 
         $displayRoleTitle = $roleLabels[$currRole] ?? ucfirst((string)$currRole);
@@ -139,8 +141,8 @@
                 <span>Dashboard Pemuda</span>
             </a>
 
-            <a href="{{ route('admin.presensi.dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.presensi.dashboard*') ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                <i class="bi bi-phone-vibrate-fill text-base {{ request()->routeIs('admin.presensi.dashboard*') ? 'text-white' : 'text-emerald-400' }}"></i>
+            <a href="{{ route('admin.presensi.dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.presensi*') ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-phone-vibrate-fill text-base {{ request()->routeIs('admin.presensi*') ? 'text-white' : 'text-emerald-400' }}"></i>
                 <span>Dashboard Presensi</span>
             </a>
 
@@ -164,10 +166,12 @@
                         <i class="bi bi-person-lines-fill text-xs"></i>
                         <span>Daftar Pemuda</span>
                     </a>
+                    @if($currRole !== 'koordinator_gdm')
                     <a href="{{ route('admin.pemuda.tambah') }}" class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition {{ request()->routeIs('admin.pemuda.tambah') ? 'bg-red-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' }}">
                         <i class="bi bi-person-plus-fill text-xs"></i>
                         <span>Tambah Pemuda</span>
                     </a>
+                    @endif
                     <a href="{{ route('admin.persebaran') }}" class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition {{ request()->routeIs('admin.persebaran*') ? 'bg-red-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' }}">
                         <i class="bi bi-pie-chart-fill text-xs"></i>
                         <span>Persebaran Data</span>
@@ -195,6 +199,15 @@
                 <span>Guru Daerah Muda (GDM)</span>
             </a>
 
+            <!-- Direct: Data Cabang Binaan (Koordinator GDM) -->
+            @if($currRole === 'koordinator_gdm')
+            <a href="{{ route('admin.cabang.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.cabang*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-diagram-3-fill text-base text-sky-400"></i>
+                <span>Data Cabang Binaan</span>
+            </a>
+            @endif
+
+            @if($currRole !== 'koordinator_gdm')
             <!-- 3. AGENDA & PRESENSI -->
             <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <span>Agenda &amp; Presensi</span>
@@ -223,6 +236,7 @@
                     @endif
                 </div>
             </div>
+            @endif
 
             @if($currRole === 'superadmin')
                 <!-- 4. PENGATURAN MASTER & SISTEM (SUPERADMIN) -->
@@ -379,6 +393,16 @@
                                 <i class="bi bi-phone-vibrate text-indigo-500"></i>
                                 <span>Dashboard Presensi</span>
                             </a>
+                            @if($currRole === 'koordinator_gdm')
+                            <a href="{{ route('admin.gdm.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
+                                <i class="bi bi-mortarboard text-amber-500"></i>
+                                <span>Manajemen GDM</span>
+                            </a>
+                            <a href="{{ route('admin.cabang.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
+                                <i class="bi bi-diagram-3 text-sky-500"></i>
+                                <span>Data Cabang Binaan</span>
+                            </a>
+                            @endif
                             <a href="{{ route('admin.pemuda.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
                                 <i class="bi bi-person-lines-fill text-slate-400"></i>
                                 <span>Data Pemuda</span>

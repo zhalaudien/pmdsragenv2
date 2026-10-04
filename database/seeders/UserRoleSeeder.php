@@ -40,6 +40,11 @@ class UserRoleSeeder extends Seeder
                 'name'        => 'admin_wilayah_pemuda',
                 'description' => 'Administrator tingkat Wilayah yang mengelola data pemuda (Laki-laki)',
             ],
+            [
+                'id'          => 7,
+                'name'        => 'koordinator_gdm',
+                'description' => 'Koordinator Guru Daerah Muda (GDM) untuk manajemen GDM dan penugasan kajian cabang',
+            ],
         ];
 
         foreach ($roles as $role) {

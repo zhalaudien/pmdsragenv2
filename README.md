@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white" alt="Laravel Version">
   <img src="https://img.shields.io/badge/MySQL-8.0+-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/Tests-18%20Passed-brightgreen?style=flat-square&logo=github-actions&logoColor=white" alt="Test Status">
+  <img src="https://img.shields.io/badge/Tests-146%20Passed-brightgreen?style=flat-square&logo=github-actions&logoColor=white" alt="Test Status">
   <img src="https://img.shields.io/badge/Timezone-Asia%2FJakarta-blue?style=flat-square" alt="Timezone">
 </p>
 
@@ -55,6 +55,7 @@ Aplikasi ini mencakup formulir registrasi publik mandiri, dashboard analitik 7 d
 
 4. **Sistem Peran & Hak Akses (RBAC Bertingkat)**
    - `superadmin`: Akses penuh seluruh sistem, user management, backup, dan konfigurasi.
+   - `koordinator_gdm`: Manajemen penuh Guru Daerah Muda (GDM), penugasan kajian cabang, monitoring presensi & notulensi kajian cabang, serta hak baca (read-only) data cabang binaan, pemuda/pemudi (L & P), dan persebaran potensi se-Kabupaten Sragen.
    - `admin_wilayah`: Mengelola pemuda di wilayah wewenangnya.
    - `admin_cabang`: Mengelola pemuda di cabangnya.
    - `admin_pemuda`: Mengelola pemuda putra (`gender = 'L'`) seluruh Sragen.
@@ -130,6 +131,7 @@ Aplikasi dapat diakses melalui peramban web di `http://127.0.0.1:8000`.
 | Username | Password Default | Peran (Role) | Cakupan (Scope) |
 | :--- | :--- | :--- | :--- |
 | `superadmin` | `password` | Superadmin | Seluruh Kabupaten (70 Cabang) |
+| `koordinator_gdm` | `password` | Koordinator GDM | Seluruh Sragen (Manajemen GDM, Cabang Binaan, Presensi & Pemuda) |
 | `admin_pemuda` | `password` | Admin Pemuda | Seluruh Sragen (Putra / L) |
 | `admin_pemudi` | `password` | Admin Pemudi | Seluruh Sragen (Putri / P) |
 | `admin_w1` | `password` | Admin Wilayah | Wilayah 1 |
@@ -143,11 +145,14 @@ Aplikasi dapat diakses melalui peramban web di `http://127.0.0.1:8000`.
 
 ## 🧪 Menjalankan Pengujian Otomatis (Testing)
 
-Proyek ini telah dilengkapi dengan 29 pengujian unit dan fitur otomatis (100% Passed, 134 assertions):
+Proyek ini telah dilengkapi dengan 146 pengujian unit dan fitur otomatis (100% Passed, 1.058 assertions):
 
 ```bash
 # Menjalankan seluruh pengujian
 php artisan test
+
+# Menjalankan pengujian otorisasi & hak akses Koordinator GDM
+php artisan test --filter=KoordinatorGdmRoleAccessTest
 
 # Menjalankan pengujian alur pendataan & autocomplete
 php artisan test --filter=PendataanFlowTest

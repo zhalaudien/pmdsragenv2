@@ -112,6 +112,7 @@ Role utama:
 | Role                   | Scope               | Gender Filter                 |
 | ---------------------- | ------------------- | ----------------------------- |
 | `superadmin`           | Seluruh sistem      | Semua (Laki-laki & Perempuan) |
+| `koordinator_gdm`      | Seluruh Sragen      | Semua (Laki-laki & Perempuan) |
 | `admin_pemuda`         | Seluruh Sragen      | Khusus Laki-laki (`L`)        |
 | `admin_pemudi`         | Seluruh Sragen      | Khusus Perempuan (`P`)        |
 | `admin_wilayah`        | Satu wilayah        | Semua (Laki-laki & Perempuan) |
@@ -206,7 +207,47 @@ users.cabang_id
     +-- pemuda (seluruh pemuda & pemudi pada cabang tersebut)
 ```
 
-## 4.4 Authorization wajib dilakukan di server
+## 4.5 Koordinator GDM (Guru Daerah Muda)
+
+- **`koordinator_gdm`**: Koordinator Guru Daerah Muda (GDM) tingkat perwakilan/kabupaten yang bertugas mengelola kader GDM, memetakan penugasan kajian di cabang-cabang binaan, memantau presensi dan notulensi pengajian cabang, serta memantau data pemuda/pemudi dan persebaran potensi se-Kabupaten Sragen.
+
+Pada tabel `users`:
+
+```text
+role_id    -> koordinator_gdm (7)
+wilayah_id -> NULL
+cabang_id  -> NULL
+```
+
+Scope data dan otorisasi:
+
+```text
+users (koordinator_gdm)
+    |
+    +-- Modul GDM (/admin/gdm/*) -> Full Access (CRUD GDM, penugasan, riwayat, sync cabang, search picker kader & warga)
+    |
+    +-- Modul Presensi & Notulensi Kajian (/admin/presensi/*) -> Read-Only (melihat dashboard presensi cabang, rekap kehadiran, catatan materi/notulensi kajian, format laporan WA, filter wilayah & cabang)
+    |     [DILARANG: edit / simpan notulensi kajian cabang]
+    |
+    +-- Modul Cabang (/admin/cabang/*) -> Read-Only (melihat daftar cabang, detail cabang, jadwal kajian/gelombang, kontak pengurus, pemuda per cabang, export Excel, sinkronkan GDM)
+    |     [DILARANG: tambah cabang, edit cabang, hapus cabang, template import, import cabang]
+    |
+    +-- Modul Pemuda & Pemudi (/admin/pemuda/*) -> Read-Only (melihat seluruh pemuda & pemudi se-Sragen, detail, cetak dokumen, export Excel)
+    |     [DILARANG: tambah pemuda, edit pemuda, update pemuda, hapus pemuda, verifikasi pemuda, arsipkan pemuda]
+    |
+    +-- Modul Persebaran Potensi (/admin/persebaran) -> Full View (analisis 7 dimensi pemuda se-Kabupaten Sragen)
+    |
+    +-- Modul Terlarang (Blocked / 403 Forbidden):
+          - Master Wilayah (/admin/wilayah/*)
+          - Manajemen Pengguna (/admin/users/*)
+          - Data Warga MTA (/admin/warga-mta/*)
+          - Sinkronisasi API MTA (/admin/mta-sync/*)
+          - Pengaturan Beranda (/admin/homepage/*)
+          - Pengaturan API Presensi (/admin/api-settings/*)
+          - Agenda Kegiatan Perwakilan (/admin/kegiatan-perwakilan/*)
+```
+
+## 4.6 Authorization wajib dilakukan di server
 
 Jangan hanya menyembunyikan menu berdasarkan role.
 
@@ -1322,6 +1363,33 @@ Saat mengerjakan project ini:
 # 32. Catatan Perubahan & Pembaruan Fitur (Changelog)
 
 Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
+
+### 2026-10-05 — Penambahan Role Koordinator GDM (Guru Daerah Muda) & Pembatasan Otorisasi Akses
+
+- **Database Migration & Seeder (`database/migrations/2026_10_05_060000_add_koordinator_gdm_role.php`, `UserRoleSeeder.php`, `UserSeeder.php`):**
+  - Mendaftarkan peran baru `koordinator_gdm` dengan ID 7 pada tabel `user_roles`.
+  - Menambahkan akun default seeder `koordinator_gdm` (password: `password`) dengan cakupan global tingkat kabupaten (`wilayah_id = null`, `cabang_id = null`).
+- **Model & Scope Otorisasi Data (`app/Models/User.php`, `app/Models/Pemuda.php`):**
+  - Menambahkan method helper `User::isKoordinatorGdm(): bool`.
+  - Mengonfigurasi `Pemuda::scopeForUserScope`, `Pemuda::filtered`, `Pemuda::getDashboardStats`, dan query raw builder agar `koordinator_gdm` memiliki akses memantau seluruh pemuda & pemudi (Laki-laki & Perempuan) di seluruh wilayah & cabang se-Kabupaten Sragen.
+- **Routing & Server-Side Security Middleware (`routes/web.php`):**
+  - Memisahkan rute `/admin/cabang` menjadi rute baca/ekspor/sinkronisasi (dapat diakses `superadmin` dan `koordinator_gdm`) serta rute mutasi simpan/update/hapus/import (hanya untuk `superadmin`).
+  - Membatasi rute mutasi `/admin/pemuda` (tambah, simpan, edit, update, verifikasi, arsipkan, hapus) hanya untuk role non-GDM, sehingga `koordinator_gdm` berstatus *read-only* murni untuk data pemuda.
+  - Membatasi modul `/admin/gdm/*` hanya untuk `superadmin` dan `koordinator_gdm` (role cabang/wilayah ditolak dengan 403 Forbidden).
+  - Memberikan hak akses monitoring baca (read-only) ke `/admin/presensi/dashboard` dan `/admin/presensi/kegiatan/{id}/rekap`, serta memblokir endpoint mutasi `/admin/presensi/kegiatan/{id}/notulensi` bagi `koordinator_gdm` (403 Forbidden).
+- **Controller & Redirect Login (`app/Http/Controllers/AuthController.php`, `UsersController.php`, `PresensiDashboardController.php`):**
+  - Menetapkan rute default pasca-login bagi `koordinator_gdm` langsung menuju dashboard Manajemen GDM (`route('admin.gdm.index')`).
+  - Menjaga integritas data saat superadmin mengelola akun koordinator GDM agar nilai `wilayah_id` dan `cabang_id` selalu diset `null`.
+  - Mengonfigurasi `PresensiDashboardController` agar `koordinator_gdm` dapat memfilter presensi & notulensi berdasarkan wilayah dan cabang se-Kabupaten Sragen, namun menolak request pembaruan notulensi dengan error 403.
+- **Penyesuaian Antarmuka Admin (`resources/views/admin/layouts/main.blade.php`, `cabang/index.blade.php`, `pemuda/index.blade.php`, `pemuda/detail.blade.php`, `dashboard/index.blade.php`, `presensi_dashboard/index.blade.php`, `gdm/index.blade.php`):**
+  - Menambahkan badge profil berwarna oranye cerah (*amber*) untuk label Koordinator GDM.
+  - Sidebar admin Koordinator GDM dilengkapi menu langsung: *Manajemen GDM*, *Data Cabang Binaan*, *Presensi & Notulensi Kajian*, *Daftar Pemuda/Pemudi*, *Persebaran Data*, dan *Export Excel*.
+  - Menambahkan tautan aksi cepat ke Presensi & Notulensi Kajian pada header modul GDM dan Dashboard Pemuda.
+  - Menampilkan filter wilayah & cabang serta identitas Koordinator GDM pada Dashboard Presensi Mobile.
+  - Menyembunyikan tombol `Edit / Isi` dan formulir pengisian notulensi pada modal rekap kegiatan khusus Koordinator GDM (hanya tombol `Salin Notulensi` yang aktif).
+- **Pengujian Otomatis Komprehensif (`tests/Feature/KoordinatorGdmRoleAccessTest.php`):**
+  - Menambahkan test case spesifik yang memverifikasi akses baca Koordinator GDM ke Dashboard Presensi, rekap detail JSON kegiatan, notulensi materi kajian, filter wilayah/cabang, serta memastikan larangan mutasi notulensi via rute POST menghasilkan 403 Forbidden dan elemen formulir edit tidak di-render di antarmuka.
+  - Seluruh test suite (146 tests, 1.058 assertions) lulus 100% tanpa error.
 
 ### 2026-10-04 — Perapian & Pengelompokan Menu Navigasi (Navbar & Sidebar Admin)
 
