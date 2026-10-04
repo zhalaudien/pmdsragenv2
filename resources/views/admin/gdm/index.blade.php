@@ -23,6 +23,29 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <!-- Sinkronkan Master Cabang -->
+            <form action="{{ route('admin.gdm.sync-cabang') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan seluruh data penugasan Guru Daerah Muda (GDM) aktif dengan data Master Cabang?')">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs" title="Sinkronkan jadwal dan ustadz pengampu di Master Cabang">
+                    <i class="bi bi-arrow-repeat text-indigo-600 text-sm"></i>
+                    <span>Sinkronkan Master Cabang</span>
+                </button>
+            </form>
+
+            <!-- Sinkronkan Alamat Domisili GDM -->
+            <form action="{{ route('admin.gdm.sync-alamat') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan alamat domisili seluruh Guru Daerah Muda (GDM) dari data Pemuda MTA atau Warga MTA?')">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs transition border border-teal-200 shadow-2xs" title="Sinkronkan alamat domisili GDM dari data Pemuda MTA / Warga MTA">
+                    <i class="bi bi-geo-alt-fill text-teal-600 text-sm"></i>
+                    <span>Sinkronkan Alamat</span>
+                </button>
+            </form>
+
+            <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs" title="Buka Master Cabang">
+                <i class="bi bi-diagram-3-fill text-slate-500 text-sm"></i>
+                <span>Master Cabang</span>
+            </a>
+
             <button type="button" onclick="openModalTambahGdm()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md hover:shadow-lg flex-shrink-0">
                 <i class="bi bi-person-plus-fill"></i>
                 <span>Tambah GDM Baru</span>
@@ -263,8 +286,29 @@
                                     <span class="text-slate-400 italic">-</span>
                                 @endif
                             </td>
-                            <td class="py-3.5 px-4 text-[11px] text-slate-600 max-w-xs truncate" title="{{ $gdm->alamat }}">
-                                {{ $gdm->alamat ?: '-' }}
+                            <td class="py-3.5 px-4 text-[11px] text-slate-600 max-w-xs">
+                                <div class="line-clamp-2 font-medium text-slate-800" title="{{ $gdm->alamat }}">
+                                    {{ $gdm->alamat ?: '-' }}
+                                </div>
+                                @if($gdm->pemuda_id || !empty($gdm->mta_warga_uuid))
+                                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+                                        @if($gdm->pemuda_id)
+                                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Tersinkron data Pemuda">
+                                                <i class="bi bi-link-45deg"></i> Pemuda
+                                            </span>
+                                        @elseif(!empty($gdm->mta_warga_uuid))
+                                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-sky-50 text-sky-700 border border-sky-200" title="Tersinkron data Warga MTA">
+                                                <i class="bi bi-cloud-check text-[8px]"></i> Warga MTA
+                                            </span>
+                                        @endif
+                                        <form action="{{ route('admin.gdm.sync-alamat-single', $gdm->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-[9px] text-teal-600 hover:text-teal-800 font-bold inline-flex items-center gap-0.5" title="Sinkronkan ulang alamat GDM ini">
+                                                <i class="bi bi-arrow-repeat"></i> Sinkron
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endif
                             </td>
                             <td class="py-3.5 px-4">
                                 @php
@@ -476,12 +520,15 @@
 
                         <div>
                             <label class="block font-bold text-indigo-950 uppercase mb-1 text-[10px]">Cabang Tempat Penugasan</label>
-                            <select name="penugasan_cabang_id" class="w-full py-2 px-3 rounded-xl border border-indigo-200 bg-white text-xs">
+                            <select name="penugasan_cabang_id" onchange="onPenugasanCabangChange(this)" class="w-full py-2 px-3 rounded-xl border border-indigo-200 bg-white text-xs">
                                 <option value="">-- Pilih Cabang Kajian Tujuan --</option>
                                 @foreach($cabangList as $c)
-                                    <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
+                                    <option value="{{ $c->id }}" data-hari="{{ $c->gelombang_hari ?? '' }}" data-jam="{{ $c->gelombang_jam ?? '' }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
                                 @endforeach
                             </select>
+                            <p class="text-[10px] text-indigo-600 mt-1">
+                                <i class="bi bi-info-circle text-indigo-500"></i> Ustadz pengampu dan status kajian cabang otomatis disinkronkan.
+                            </p>
                         </div>
 
                         <div>
@@ -558,7 +605,12 @@
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Alamat Lengkap</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Alamat Lengkap</label>
+                        <button type="button" onclick="syncAlamatFromSourceInEditModal()" id="btnSyncAlamatEdit" class="text-[11px] text-teal-600 hover:text-teal-800 font-bold inline-flex items-center gap-1 transition">
+                            <i class="bi bi-arrow-repeat"></i> Sinkron dari Pemuda / Warga
+                        </button>
+                    </div>
                     <textarea name="alamat" id="editAlamat" rows="2" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500"></textarea>
                 </div>
 
@@ -637,12 +689,15 @@
 
             <div>
                 <label class="block font-bold text-slate-700 uppercase mb-1">Cabang Kajian Tujuan <span class="text-red-500">*</span></label>
-                <select name="cabang_id" id="quickPenugasanCabangId" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 text-xs">
+                <select name="cabang_id" id="quickPenugasanCabangId" onchange="onQuickPenugasanCabangChange(this)" required class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 text-xs">
                     <option value="">-- Pilih Cabang Kajian --</option>
                     @foreach($cabangList as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
+                        <option value="{{ $c->id }}" data-hari="{{ $c->gelombang_hari ?? '' }}" data-jam="{{ $c->gelombang_jam ?? '' }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
                     @endforeach
                 </select>
+                <p class="text-[10px] text-slate-400 mt-1">
+                    <i class="bi bi-info-circle text-indigo-500"></i> Ustadz pengampu dan status kajian cabang otomatis disinkronkan.
+                </p>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
@@ -847,6 +902,7 @@
 
     function editGdm(g) {
         document.getElementById('formEditGdm').action = `{{ url('admin/gdm/update') }}/${g.id}`;
+        document.getElementById('formEditGdm').dataset.gdmId = g.id;
         document.getElementById('editNama').value = g.nama || '';
         document.getElementById('editTempatLahir').value = g.tempat_lahir || '';
         document.getElementById('editTanggalLahir').value = g.tanggal_lahir ? g.tanggal_lahir.substring(0, 10) : '';
@@ -859,7 +915,50 @@
         document.getElementById('editPemudaId').value = g.pemuda_id || '';
         document.getElementById('editMtaUuid').value = g.mta_warga_uuid || '';
 
+        const syncBtn = document.getElementById('btnSyncAlamatEdit');
+        if (syncBtn) {
+            if (g.pemuda_id || g.mta_warga_uuid) {
+                syncBtn.classList.remove('hidden');
+            } else {
+                syncBtn.classList.add('hidden');
+            }
+        }
+
         openModal('modalEditGdm');
+    }
+
+    function syncAlamatFromSourceInEditModal() {
+        const form = document.getElementById('formEditGdm');
+        const gdmId = form ? form.dataset.gdmId : null;
+        const btn = document.getElementById('btnSyncAlamatEdit');
+
+        if (!gdmId) {
+            showToastNotification('Data GDM belum tersimpan.', true);
+            return;
+        }
+
+        if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
+
+        fetch(`{{ url('admin/gdm') }}/${gdmId}/sync-alamat`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+            showToastNotification(res.message);
+            if (res.status === 'success' && res.data && res.data.alamat) {
+                document.getElementById('editAlamat').value = res.data.alamat;
+            }
+        })
+        .catch(() => {
+            if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+            showToastNotification('Gagal menyinkronkan alamat.', true);
+        });
     }
 
     function openQuickPenugasanModal(id, nama) {
@@ -889,6 +988,15 @@
                     sumberBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><i class="bi bi-people-fill"></i> Terdaftar di Pemuda</span>';
                 } else if (g.sumber_data === 'warga') {
                     sumberBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="bi bi-cloud-check-fill"></i> Sinkron Warga MTA</span>';
+                }
+
+                let sumberAlamatBadge = '';
+                if (g.sumber_alamat_label === 'Tersinkron Pemuda') {
+                    sumberAlamatBadge = '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="bi bi-link-45deg"></i> Pemuda</span>';
+                } else if (g.sumber_alamat_label === 'Tersinkron Warga MTA') {
+                    sumberAlamatBadge = '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><i class="bi bi-cloud-check-fill"></i> Warga MTA</span>';
+                } else {
+                    sumberAlamatBadge = '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-500">Manual</span>';
                 }
 
                 const penugasanList = g.penugasan || [];
@@ -972,8 +1080,18 @@
                                     <span class="font-bold text-slate-800">${escapeHtml(g.no_wa || '-')}</span>
                                 </div>
                                 <div class="sm:col-span-3">
-                                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Alamat Domisili</span>
-                                    <span class="font-medium text-slate-700">${escapeHtml(g.alamat || '-')}</span>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Alamat Domisili</span>
+                                        ${g.pemuda_id || g.mta_warga_uuid ? `
+                                            <button type="button" onclick="syncAlamatSingleDetail(${g.id})" class="inline-flex items-center gap-1 text-[11px] text-teal-600 hover:text-teal-800 font-bold transition" title="Sinkronkan alamat dari data Pemuda / Warga">
+                                                <i class="bi bi-arrow-repeat"></i> Sinkronkan Alamat
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div class="mt-1 flex items-start gap-2">
+                                        <span class="font-medium text-slate-800 flex-1" id="detailGdmAlamatText">${escapeHtml(g.alamat || '-')}</span>
+                                        <div id="detailGdmAlamatBadge">${sumberAlamatBadge}</div>
+                                    </div>
                                 </div>
                                 ${g.catatan ? `
                                 <div class="sm:col-span-3">
@@ -1006,10 +1124,10 @@
                                         </div>
                                         <div>
                                             <label class="block font-bold text-indigo-950 uppercase text-[10px] mb-0.5">Cabang Kajian Tujuan</label>
-                                            <select name="cabang_id" required class="w-full py-1.5 px-2.5 rounded-lg border border-indigo-200 bg-white">
+                                            <select name="cabang_id" onchange="onDetailPenugasanCabangChange(this)" required class="w-full py-1.5 px-2.5 rounded-lg border border-indigo-200 bg-white">
                                                 <option value="">-- Pilih Cabang --</option>
                                                 @foreach($cabangList as $c)
-                                                    <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
+                                                    <option value="{{ $c->id }}" data-hari="{{ $c->gelombang_hari ?? '' }}" data-jam="{{ $c->gelombang_jam ?? '' }}">{{ $c->name }} ({{ $c->wilayah?->name ?? '-' }})</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -1048,6 +1166,41 @@
             .catch(() => {
                 body.innerHTML = '<div class="p-4 text-center text-rose-500 font-semibold">Terjadi kesalahan koneksi saat memuat data GDM.</div>';
             });
+    }
+
+    function syncAlamatSingleDetail(id) {
+        const btn = event?.currentTarget;
+        if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
+
+        fetch(`{{ url('admin/gdm') }}/${id}/sync-alamat`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+            showToastNotification(res.message);
+            if (res.status === 'success' && res.data) {
+                const el = document.getElementById('detailGdmAlamatText');
+                if (el) el.textContent = res.data.alamat || '-';
+                const badge = document.getElementById('detailGdmAlamatBadge');
+                if (badge && res.data.sumber_alamat_label) {
+                    if (res.data.sumber_alamat_label === 'Tersinkron Pemuda') {
+                        badge.innerHTML = '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="bi bi-link-45deg"></i> Pemuda</span>';
+                    } else if (res.data.sumber_alamat_label === 'Tersinkron Warga MTA') {
+                        badge.innerHTML = '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><i class="bi bi-cloud-check-fill"></i> Warga MTA</span>';
+                    }
+                }
+            }
+        })
+        .catch(() => {
+            if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+            showToastNotification('Gagal menyinkronkan alamat.', true);
+        });
     }
 
     function toggleFormTambahPenugasanDetail() {
@@ -1117,6 +1270,42 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function onPenugasanCabangChange(select) {
+        const selectedOpt = select.options[select.selectedIndex];
+        if (!selectedOpt) return;
+        const hari = selectedOpt.getAttribute('data-hari');
+        const jam = selectedOpt.getAttribute('data-jam');
+        const inputHari = document.querySelector('#modalTambahGdm input[name="penugasan_hari"]');
+        const inputJam = document.querySelector('#modalTambahGdm input[name="penugasan_jam"]');
+        if (inputHari && hari && !inputHari.value) inputHari.value = hari;
+        if (inputJam && jam && !inputJam.value) inputJam.value = jam;
+    }
+
+    function onQuickPenugasanCabangChange(select) {
+        const selectedOpt = select.options[select.selectedIndex];
+        if (!selectedOpt) return;
+        const hari = selectedOpt.getAttribute('data-hari');
+        const jam = selectedOpt.getAttribute('data-jam');
+        const inputHari = document.getElementById('quickPenugasanHari');
+        const inputJam = document.getElementById('quickPenugasanJam');
+        if (inputHari && hari && !inputHari.value) inputHari.value = hari;
+        if (inputJam && jam && !inputJam.value) inputJam.value = jam;
+    }
+
+    function onDetailPenugasanCabangChange(select) {
+        const selectedOpt = select.options[select.selectedIndex];
+        if (!selectedOpt) return;
+        const hari = selectedOpt.getAttribute('data-hari');
+        const jam = selectedOpt.getAttribute('data-jam');
+        const form = select.closest('form');
+        if (form) {
+            const inputHari = form.querySelector('input[name="hari_kajian"]');
+            const inputJam = form.querySelector('input[name="jam_kajian"]');
+            if (inputHari && hari && !inputHari.value) inputHari.value = hari;
+            if (inputJam && jam && !inputJam.value) inputJam.value = jam;
+        }
     }
 
     function showToastNotification(msg) {

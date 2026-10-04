@@ -7,8 +7,11 @@ use App\Models\Cabang;
 use App\Models\Wilayah;
 use App\Models\Pemuda;
 use App\Models\User;
+use App\Models\GuruDaerahMuda;
+use App\Models\GdmPenugasan;
 use App\Services\CabangExportService;
 use App\Services\CabangImportService;
+use App\Services\GdmCabangSyncService;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Http\Request;
 
@@ -20,7 +23,7 @@ class CabangController extends Controller
         $hasGelombang = $request->input('has_gelombang');
         $search       = $request->input('search');
 
-        $query = Cabang::with('wilayah')->withCount('pemuda');
+        $query = Cabang::with(['wilayah', 'penugasanGdmAktif.gdm'])->withCount('pemuda');
 
         if (!empty($wilayahId)) {
             $query->where('wilayah_id', (int) $wilayahId);
@@ -62,10 +65,14 @@ class CabangController extends Controller
         $totalSudahGelombang = Cabang::where('has_gelombang', 'sudah')->count();
         $totalBelumGelombang = Cabang::where('has_gelombang', 'belum')->count();
 
+        // Referensi kader GDM aktif untuk pilihan ustadz pengampu di modal tambah/edit
+        $gdmList = GuruDaerahMuda::where('status', 'aktif')->orderBy('nama', 'ASC')->get();
+
         return view('admin.cabang.index', [
             'title'               => 'Manajemen Cabang',
             'cabangList'          => $cabangList,
             'wilayahList'         => Wilayah::orderBy('id', 'ASC')->get(),
+            'gdmList'             => $gdmList,
             'selectedW'           => $wilayahId,
             'selectedGelombang'   => $hasGelombang,
             'search'              => $search,
@@ -78,7 +85,7 @@ class CabangController extends Controller
 
     public function detail(int $id)
     {
-        $cabang = Cabang::with('wilayah')->find($id);
+        $cabang = Cabang::with(['wilayah', 'penugasanGdm.gdm.cabang'])->find($id);
 
         if (!$cabang) {
             return response()->json([
@@ -88,6 +95,23 @@ class CabangController extends Controller
         }
 
         $cabang->total_pemuda = Pemuda::where('cabang_id', $id)->count();
+
+        // Format data penugasan Guru Daerah Muda (GDM)
+        $cabang->gdm_bertugas = $cabang->penugasanGdm->map(function ($p) {
+            return [
+                'id'          => $p->id,
+                'gdm_id'      => $p->gdm_id,
+                'nama'        => $p->gdm?->nama ?? '-',
+                'no_wa'       => $p->gdm?->no_wa,
+                'wa_link'     => $p->gdm?->wa_link,
+                'asal_cabang' => $p->gdm?->cabang?->name ?? '-',
+                'tahun'       => $p->tahun,
+                'hari_kajian' => $p->hari_kajian ?: ($p->cabang?->gelombang_hari ?: '-'),
+                'jam_kajian'  => $p->jam_kajian ?: ($p->cabang?->gelombang_jam ?: '-'),
+                'status'      => $p->status,
+                'keterangan'  => $p->keterangan,
+            ];
+        })->values();
 
         return response()->json([
             'status' => 'success',
@@ -138,6 +162,7 @@ class CabangController extends Controller
             'gelombang_hari'    => 'nullable|max:100',
             'gelombang_jam'     => 'nullable|max:50',
             'gelombang_ustadz'  => 'nullable|max:150',
+            'gdm_id'            => 'nullable|integer|exists:guru_daerah_muda,id',
             'ketua_pemuda'      => 'nullable|max:100',
             'sekretaris_pemuda' => 'nullable|max:100',
             'bendahara_pemuda'  => 'nullable|max:100',
@@ -146,8 +171,18 @@ class CabangController extends Controller
         ]);
 
         $hasGelombang = $request->input('has_gelombang') === 'sudah' ? 'sudah' : 'belum';
+        $gdmId = $request->input('gdm_id') ? (int) $request->input('gdm_id') : null;
+        $gelombangUstadz = $request->input('gelombang_ustadz');
 
-        Cabang::create([
+        if ($gdmId) {
+            $gdm = GuruDaerahMuda::find($gdmId);
+            if ($gdm) {
+                $gelombangUstadz = $gdm->nama;
+                $hasGelombang = 'sudah';
+            }
+        }
+
+        $cabang = Cabang::create([
             'wilayah_id'        => (int) $request->input('wilayah_id'),
             'code'              => $request->input('code') ? strtoupper(trim((string) $request->input('code'))) : null,
             'name'              => trim((string) $request->input('name')),
@@ -159,12 +194,15 @@ class CabangController extends Controller
             'has_gelombang'     => $hasGelombang,
             'gelombang_hari'    => $hasGelombang === 'sudah' ? $request->input('gelombang_hari') : null,
             'gelombang_jam'     => $hasGelombang === 'sudah' ? $request->input('gelombang_jam') : null,
-            'gelombang_ustadz'  => $hasGelombang === 'sudah' ? $request->input('gelombang_ustadz') : null,
+            'gelombang_ustadz'  => $hasGelombang === 'sudah' ? $gelombangUstadz : null,
             'ketua_pemuda'      => $request->input('ketua_pemuda'),
             'sekretaris_pemuda' => $request->input('sekretaris_pemuda'),
             'bendahara_pemuda'  => $request->input('bendahara_pemuda'),
             'no_wa_pemuda'      => $request->input('no_wa_pemuda'),
         ]);
+
+        // Sinkronkan ke penugasan GDM jika GDM dipilih atau jadwal diperbarui
+        app(GdmCabangSyncService::class)->syncCabangToPenugasan($cabang, $gdmId);
 
         return redirect()->route('admin.cabang.index')->with('success', 'Cabang baru berhasil ditambahkan.');
     }
@@ -185,6 +223,7 @@ class CabangController extends Controller
             'gelombang_hari'    => 'nullable|max:100',
             'gelombang_jam'     => 'nullable|max:50',
             'gelombang_ustadz'  => 'nullable|max:150',
+            'gdm_id'            => 'nullable|integer|exists:guru_daerah_muda,id',
             'ketua_pemuda'      => 'nullable|max:100',
             'sekretaris_pemuda' => 'nullable|max:100',
             'bendahara_pemuda'  => 'nullable|max:100',
@@ -193,6 +232,16 @@ class CabangController extends Controller
         ]);
 
         $hasGelombang = $request->input('has_gelombang') === 'sudah' ? 'sudah' : 'belum';
+        $gdmId = $request->input('gdm_id') ? (int) $request->input('gdm_id') : null;
+        $gelombangUstadz = $request->input('gelombang_ustadz');
+
+        if ($gdmId) {
+            $gdm = GuruDaerahMuda::find($gdmId);
+            if ($gdm) {
+                $gelombangUstadz = $gdm->nama;
+                $hasGelombang = 'sudah';
+            }
+        }
 
         $cabang->update([
             'wilayah_id'        => (int) $request->input('wilayah_id'),
@@ -206,14 +255,31 @@ class CabangController extends Controller
             'has_gelombang'     => $hasGelombang,
             'gelombang_hari'    => $hasGelombang === 'sudah' ? $request->input('gelombang_hari') : null,
             'gelombang_jam'     => $hasGelombang === 'sudah' ? $request->input('gelombang_jam') : null,
-            'gelombang_ustadz'  => $hasGelombang === 'sudah' ? $request->input('gelombang_ustadz') : null,
+            'gelombang_ustadz'  => $hasGelombang === 'sudah' ? $gelombangUstadz : null,
             'ketua_pemuda'      => $request->input('ketua_pemuda'),
             'sekretaris_pemuda' => $request->input('sekretaris_pemuda'),
             'bendahara_pemuda'  => $request->input('bendahara_pemuda'),
             'no_wa_pemuda'      => $request->input('no_wa_pemuda'),
         ]);
 
+        // Sinkronkan ke penugasan GDM jika GDM dipilih atau jadwal diperbarui
+        app(GdmCabangSyncService::class)->syncCabangToPenugasan($cabang, $gdmId);
+
         return redirect()->route('admin.cabang.index')->with('success', 'Data cabang berhasil diperbarui.');
+    }
+
+    /**
+     * Sinkronkan data penugasan GDM dengan seluruh data Master Cabang
+     */
+    public function syncGdm(Request $request, GdmCabangSyncService $syncService)
+    {
+        $result = $syncService->syncAll();
+
+        if ($result['status'] === 'error') {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        return redirect()->route('admin.cabang.index')->with('success', $result['message']);
     }
 
     public function delete(int $id)

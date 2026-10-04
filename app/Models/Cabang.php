@@ -57,6 +57,30 @@ class Cabang extends Model
     }
 
     /**
+     * Seluruh riwayat penugasan Guru Daerah Muda (GDM) di cabang ini
+     */
+    public function penugasanGdm()
+    {
+        return $this->hasMany(GdmPenugasan::class, 'cabang_id')->orderBy('tahun', 'desc')->orderBy('id', 'desc');
+    }
+
+    /**
+     * Penugasan Guru Daerah Muda (GDM) yang saat ini aktif di cabang ini
+     */
+    public function penugasanGdmAktif()
+    {
+        return $this->hasMany(GdmPenugasan::class, 'cabang_id')->where('status', 'aktif')->orderBy('tahun', 'desc');
+    }
+
+    /**
+     * Kader Guru Daerah Muda (GDM) yang berasal dari cabang ini
+     */
+    public function gdmAsal()
+    {
+        return $this->hasMany(GuruDaerahMuda::class, 'cabang_id');
+    }
+
+    /**
      * Ambil cabang dengan join data wilayah
      */
     public static function getWithWilayah()

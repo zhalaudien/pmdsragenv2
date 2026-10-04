@@ -1343,6 +1343,70 @@ Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
 - **Pengujian & Verifikasi:**
   - Menjalankan PHPUnit suite otomatis: 123 tests lulus 100% (932 assertions) tanpa regresi.
 
+### 2026-10-04 — Sinkronisasi Data Penugasan Guru Daerah Muda (GDM) dengan Master Cabang
+
+- **Layanan Sinkronisasi Dua Arah (`app/Services/GdmCabangSyncService.php`):**
+  - Mengimplementasikan sinkronisasi otomatis dan menyeluruh antara data penugasan `gdm_penugasan` dan `cabang`:
+    1. *Dari Penugasan GDM ke Master Cabang:*
+       - Menandai `has_gelombang = 'sudah'` pada Cabang tempat penugasan.
+       - Memperbarui `gelombang_ustadz` pada Cabang sesuai nama GDM bertugas aktif.
+       - Menyelaraskan `gelombang_hari` & `gelombang_jam` (mengisi jika kosong atau saling memperbarui).
+    2. *Dari Master Cabang ke Penugasan GDM:*
+       - Otomatis mencocokkan `gelombang_ustadz` di Master Cabang ke kader GDM terdaftar (dengan pembersihan titel seperti `Ust.`, `Ustadz`).
+       - Otomatis membuat record penugasan baru jika cabang memiliki ustadz pengampu yang cocok dengan GDM aktif namun belum tercatat di riwayat penugasan.
+  - Penanganan transisi dinamis: saat status penugasan selesai/ditarik atau dihapus, field `gelombang_ustadz` di cabang di-refresh secara otomatis ke GDM aktif yang tersisa.
+- **Command Artisan CLI (`app/Console/Commands/SyncGdmCabangCommand.php`):**
+  - Perintah `php artisan gdm:sync-cabang {--tahun=}` untuk menjalankan sinkronisasi menyeluruh melalui terminal/scheduler dan menampilkan tabel metrik serta rincian log.
+- **Relasi Model Eloquent (`app/Models/Cabang.php`):**
+  - Menambahkan relasi `penugasanGdm()`, `penugasanGdmAktif()`, dan `gdmAsal()`.
+- **Integrasi Controller (`CabangController` & `GuruDaerahMudaController`):**
+  - Menambahkan endpoint POST `/admin/cabang/sync-gdm` dan POST `/admin/gdm/sync-cabang`.
+  - Pada `CabangController::index`: eager loading `penugasanGdmAktif.gdm` dan passing `$gdmList`.
+  - Pada `CabangController::detail`: response JSON memuat array `gdm_bertugas` (nama, WA link, asal cabang, tahun, hari/jam kajian, status).
+  - Pada `CabangController::simpan` & `update`: mendukung pemilihan kader GDM dari dropdown atau input manual ustadz non-GDM dengan sinkronisasi langsung ke `GdmPenugasan`.
+  - Pada `GuruDaerahMudaController::simpan`, `tambahPenugasan`, `updatePenugasan`, dan `deletePenugasan`: sinkronisasi instan ke Master Cabang.
+- **Antarmuka Pengguna Admin:**
+  - **Master Cabang (`resources/views/admin/cabang/index.blade.php`):**
+    - Tombol aksi cepat *"Sinkronkan GDM"* dan tautan ke modul GDM di header.
+    - Kolom *"Kajian Pemuda"* pada tabel cabang menampilkan badge GDM bertugas lengkap dengan nama kader.
+    - Modal *Detail Cabang* menampilkan panel khusus *"Guru Daerah Muda (GDM) Bertugas"* lengkap dengan identitas kader, kontak WhatsApp instan, asal cabang, dan riwayat tugas.
+    - Modal *Tambah & Edit Cabang* menyediakan dropdown pemilihan kader GDM aktif dengan opsi beralih ke input manual non-GDM.
+  - **Dashboard GDM (`resources/views/admin/gdm/index.blade.php`):**
+    - Tombol aksi cepat *"Sinkronkan Master Cabang"* dan tautan ke Master Cabang di header.
+    - Modal penugasan otomatis mengisi jadwal kajian (`hari_kajian` & `jam_kajian`) sesuai data gelombang cabang yang dipilih.
+- **Pengujian Fitur (`tests/Feature/GdmCabangSyncTest.php`):**
+  - 9 test cases baru mencakup artisan command CLI, endpoint sync cabang & GDM, auto-sync penugasan, pembaruan & perpindahan cabang, penghapusan penugasan, API detail, dan form cabang.
+  - Seluruh test suite (132 tests, 970 assertions) lulus 100%.
+
+### 2026-10-04 — Sinkronisasi Alamat Domisili Guru Daerah Muda (GDM) dengan Data Pemuda & Warga MTA
+
+- **Model Alamat & Pemformatan Lengkap (`app/Models/Alamat.php`):**
+  - Menambahkan accessor `getAlamatLengkapAttribute()` yang menggabungkan secara cerdas dan rapi: `address_detail`, `dusun` (format *Dk. ...*), RT/RW (format *RT .../RW ...*), Desa/Kelurahan (format *Desa ...*), Kecamatan (format *Kec. ...*), dan Kabupaten/Kota dari relasi wilayah.
+- **Model Guru Daerah Muda (`app/Models/GuruDaerahMuda.php`):**
+  - Mengimplementasikan `syncAlamatFromSource(?MtaApiService $mtaApiService = null): bool`:
+    1. *Sumber Data Pemuda:* Menyinkronkan `alamat` dari `pemuda->alamat->alamat_lengkap`, serta melengkapi otomatis `tempat_lahir`, `tanggal_lahir`, `no_wa`, `cabang_id`, dan `mta_warga_uuid` jika kosong.
+    2. *Sumber Data Warga MTA:* Jika kader memiliki `mta_warga_uuid` namun belum tercatat di data Pemuda, sistem mengambil detail warga secara langsung melalui API MTA Pusat (`api.mta.or.id`) dan memperbarui alamat serta biodata kader.
+  - Menambahkan accessor `sumber_alamat_label` (`Tersinkron Pemuda`, `Tersinkron Warga MTA`, atau `Manual`).
+- **Layanan Sinkronisasi Terpadu (`app/Services/GdmCabangSyncService.php`):**
+  - Menginjeksi `MtaApiService` ke dalam layanan.
+  - Menambahkan method `syncAllAlamat(): array` untuk menyinkronkan alamat domisili seluruh kader GDM secara massal.
+  - Mengintegrasikan sinkronisasi alamat sebagai *Tahap 3* dalam `syncAll(?int $tahun = null, bool $syncAlamat = true)`.
+  - Memperbarui Artisan Command `php artisan gdm:sync-cabang` dengan metrik `Alamat Domisili Disinkronkan` dan opsi `--no-alamat`.
+- **Controller & Endpoint (`GuruDaerahMudaController.php`, `routes/web.php`):**
+  - Menambahkan route POST `/admin/gdm/sync-alamat` (`admin.gdm.sync-alamat`) untuk sinkronisasi massal seluruh alamat kader GDM.
+  - Menambahkan route POST `/admin/gdm/{id}/sync-alamat` (`admin.gdm.sync-alamat-single`) untuk sinkronisasi instan per kader GDM via AJAX/form.
+  - Pada `searchPemuda`: memperbaiki query dengan eager loading `alamat.village`, `alamat.district`, `alamat.regency` dan mengembalikan alamat lengkap terformat (`$p->alamat?->alamat_lengkap`).
+  - Pada `simpan` dan `update`: menambahkan mekanisme auto-sync alamat domisili saat menyimpan kader baru atau memperbarui data jika alamat belum terisi dan memiliki tautan ke Pemuda atau Warga MTA.
+  - Pada `detail`: menyertakan `sumber_alamat_label` dan `pemuda_name`.
+- **Pembaruan Antarmuka Pengguna Admin (`resources/views/admin/gdm/index.blade.php`):**
+  - **Header Halaman:** Menambahkan tombol aksi *"Sinkronkan Alamat"* dengan konfirmasi interaktif.
+  - **Tabel Daftar GDM:** Kolom *Alamat Domisili* kini menampilkan teks alamat rapi, badge sumber (*Pemuda* / *Warga MTA*), serta tombol aksi cepat *Sinkron* per baris.
+  - **Modal Detail GDM:** Menampilkan alamat domisili lengkap beserta badge sumber data dan tombol *"Sinkronkan Alamat"* yang dapat diklik untuk memperbarui alamat secara realtime tanpa refresh halaman.
+  - **Modal Edit GDM:** Menambahkan tombol *"Sinkron dari Pemuda / Warga"* di samping label *Alamat Lengkap* untuk menarik alamat terkini dari sumber data.
+- **Pengujian & Verifikasi Fitur (`tests/Feature/GdmCabangSyncTest.php`):**
+  - Menambahkan test cases: `test_gdm_address_syncs_from_pemuda_source`, `test_gdm_sync_alamat_batch_endpoint`, `test_gdm_sync_alamat_single_endpoint`, `test_search_pemuda_returns_formatted_address`, dan verifikasi tombol sinkronisasi alamat di index view.
+  - Seluruh test suite (136 tests, 988 assertions) berhasil lulus 100% tanpa error.
+
 ### 2026-10-02 — Pembuatan Dashboard Manajemen Guru Daerah Muda (GDM) & Riwayat Penugasan Kajian Cabang
 
 - **Skema Database & Migrations (`2026_10_02_050000_create_guru_daerah_muda_tables.php`):**

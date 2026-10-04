@@ -117,6 +117,9 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('simpan', [GuruDaerahMudaController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [GuruDaerahMudaController::class, 'update'])->name('update');
         Route::post('delete/{id}', [GuruDaerahMudaController::class, 'delete'])->name('delete');
+        Route::post('sync-cabang', [GuruDaerahMudaController::class, 'syncCabang'])->name('sync-cabang');
+        Route::post('sync-alamat', [GuruDaerahMudaController::class, 'syncAlamat'])->name('sync-alamat');
+        Route::post('{id}/sync-alamat', [GuruDaerahMudaController::class, 'syncAlamatSingle'])->name('sync-alamat-single');
 
         // Riwayat Penugasan Kajian
         Route::post('{id}/penugasan', [GuruDaerahMudaController::class, 'tambahPenugasan'])->name('penugasan.simpan');
@@ -142,6 +145,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::get('export', [CabangController::class, 'export'])->name('export');
         Route::get('template', [CabangController::class, 'template'])->name('template');
         Route::post('import', [CabangController::class, 'import'])->name('import');
+        Route::post('sync-gdm', [CabangController::class, 'syncGdm'])->name('sync-gdm');
         Route::get('detail/{id}', [CabangController::class, 'detail'])->name('detail');
         Route::get('{id}/pemuda', [CabangController::class, 'pemuda'])->name('pemuda');
         Route::post('simpan', [CabangController::class, 'simpan'])->name('simpan');

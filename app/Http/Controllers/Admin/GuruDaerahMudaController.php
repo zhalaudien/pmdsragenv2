@@ -8,6 +8,7 @@ use App\Models\GdmPenugasan;
 use App\Models\GuruDaerahMuda;
 use App\Models\Pemuda;
 use App\Models\Wilayah;
+use App\Services\GdmCabangSyncService;
 use App\Services\MtaApiService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -151,14 +152,16 @@ class GuruDaerahMudaController extends Controller
                 'cabang_id'      => $gdm->cabang_id,
                 'cabang_name'    => $gdm->cabang?->name,
                 'wilayah_name'   => $gdm->cabang?->wilayah?->name,
-                'alamat'         => $gdm->alamat,
-                'no_wa'          => $gdm->no_wa,
-                'wa_link'        => $gdm->wa_link,
-                'status'         => $gdm->status,
-                'sumber_data'    => $gdm->sumber_data,
-                'pemuda_id'      => $gdm->pemuda_id,
-                'mta_warga_uuid' => $gdm->mta_warga_uuid,
-                'catatan'        => $gdm->catatan,
+                'alamat'              => $gdm->alamat,
+                'sumber_alamat_label' => $gdm->sumber_alamat_label,
+                'pemuda_name'         => $gdm->pemuda?->name,
+                'no_wa'               => $gdm->no_wa,
+                'wa_link'             => $gdm->wa_link,
+                'status'              => $gdm->status,
+                'sumber_data'         => $gdm->sumber_data,
+                'pemuda_id'           => $gdm->pemuda_id,
+                'mta_warga_uuid'      => $gdm->mta_warga_uuid,
+                'catatan'             => $gdm->catatan,
                 'created_at'     => $gdm->created_at?->translatedFormat('d M Y H:i'),
                 'penugasan'      => $gdm->penugasan->map(fn($p) => [
                     'id'           => $p->id,
@@ -220,7 +223,7 @@ class GuruDaerahMudaController extends Controller
 
             // Jika ada penugasan awal
             if ($request->filled('penugasan_cabang_id') && $request->filled('penugasan_tahun')) {
-                GdmPenugasan::create([
+                $penugasan = GdmPenugasan::create([
                     'gdm_id'      => $gdm->id,
                     'tahun'       => (int) $request->input('penugasan_tahun'),
                     'cabang_id'   => (int) $request->input('penugasan_cabang_id'),
@@ -229,6 +232,13 @@ class GuruDaerahMudaController extends Controller
                     'status'      => $request->input('penugasan_status', 'aktif'),
                     'keterangan'  => $request->input('penugasan_keterangan'),
                 ]);
+
+                app(GdmCabangSyncService::class)->syncPenugasanToCabang($penugasan);
+            }
+
+            // Sinkronkan alamat domisili jika alamat masih kosong dan terhubung ke Pemuda / Warga MTA
+            if (empty($gdm->alamat) && ($gdm->pemuda_id || !empty($gdm->mta_warga_uuid))) {
+                $gdm->syncAlamatFromSource($this->apiService);
             }
 
             DB::commit();
@@ -277,6 +287,11 @@ class GuruDaerahMudaController extends Controller
             'catatan'        => $request->input('catatan'),
         ]);
 
+        // Sinkronkan alamat domisili jika alamat masih kosong dan terhubung ke Pemuda / Warga MTA
+        if (empty($gdm->alamat) && ($gdm->pemuda_id || !empty($gdm->mta_warga_uuid))) {
+            $gdm->syncAlamatFromSource($this->apiService);
+        }
+
         return redirect()->route('admin.gdm.index')
             ->with('success', "Data GDM {$gdm->nama} berhasil diperbarui.");
     }
@@ -310,26 +325,33 @@ class GuruDaerahMudaController extends Controller
             'keterangan'  => 'nullable',
         ]);
 
+        $cabang = Cabang::find((int) $request->input('cabang_id'));
+        $hariKajian = $request->input('hari_kajian') ?: ($cabang?->gelombang_hari ?: null);
+        $jamKajian  = $request->input('jam_kajian') ?: ($cabang?->gelombang_jam ?: null);
+
         $penugasan = GdmPenugasan::create([
             'gdm_id'      => $gdm->id,
             'tahun'       => (int) $request->input('tahun'),
             'cabang_id'   => (int) $request->input('cabang_id'),
-            'hari_kajian' => $request->input('hari_kajian'),
-            'jam_kajian'  => $request->input('jam_kajian'),
+            'hari_kajian' => $hariKajian,
+            'jam_kajian'  => $jamKajian,
             'status'      => $request->input('status', 'aktif'),
             'keterangan'  => $request->input('keterangan'),
         ]);
 
+        // Sinkronkan ke master cabang
+        app(GdmCabangSyncService::class)->syncPenugasanToCabang($penugasan);
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Penugasan kajian cabang berhasil ditambahkan.',
+                'message' => 'Penugasan kajian cabang berhasil ditambahkan dan disinkronkan dengan Master Cabang.',
                 'data'    => $penugasan->load('cabang.wilayah'),
             ]);
         }
 
         return redirect()->back()
-            ->with('success', "Penugasan kajian cabang untuk {$gdm->nama} tahun {$penugasan->tahun} berhasil ditambahkan.");
+            ->with('success', "Penugasan kajian cabang untuk {$gdm->nama} tahun {$penugasan->tahun} berhasil ditambahkan dan disinkronkan ke Master Cabang.");
     }
 
     /**
@@ -338,6 +360,7 @@ class GuruDaerahMudaController extends Controller
     public function updatePenugasan(Request $request, int $penugasanId)
     {
         $penugasan = GdmPenugasan::findOrFail($penugasanId);
+        $oldCabangId = $penugasan->cabang_id;
 
         $request->validate([
             'tahun'       => 'required|integer|min:2000|max:2100',
@@ -357,10 +380,20 @@ class GuruDaerahMudaController extends Controller
             'keterangan'  => $request->input('keterangan'),
         ]);
 
+        $syncService = app(GdmCabangSyncService::class);
+        $syncService->syncPenugasanToCabang($penugasan);
+
+        if ($oldCabangId !== $penugasan->cabang_id) {
+            $oldCabang = Cabang::find($oldCabangId);
+            if ($oldCabang) {
+                $syncService->refreshCabangUstadz($oldCabang);
+            }
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Penugasan kajian berhasil diperbarui.',
+                'message' => 'Penugasan kajian berhasil diperbarui dan disinkronkan.',
                 'data'    => $penugasan->load('cabang.wilayah'),
             ]);
         }
@@ -375,16 +408,80 @@ class GuruDaerahMudaController extends Controller
     public function deletePenugasan(int $penugasanId)
     {
         $penugasan = GdmPenugasan::findOrFail($penugasanId);
+        $cabang = $penugasan->cabang;
         $penugasan->delete();
+
+        if ($cabang) {
+            app(GdmCabangSyncService::class)->refreshCabangUstadz($cabang);
+        }
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Riwayat penugasan berhasil dihapus.',
+                'message' => 'Riwayat penugasan berhasil dihapus dan jadwal ustadz cabang diperbarui.',
             ]);
         }
 
         return redirect()->back()->with('success', 'Riwayat penugasan kajian berhasil dihapus.');
+    }
+
+    /**
+     * Sinkronkan data penugasan GDM dengan seluruh data Master Cabang
+     */
+    public function syncCabang(Request $request, GdmCabangSyncService $syncService)
+    {
+        $result = $syncService->syncAll();
+
+        if ($result['status'] === 'error') {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        return redirect()->route('admin.gdm.index')->with('success', $result['message']);
+    }
+
+    /**
+     * Sinkronkan seluruh alamat domisili GDM dari data Pemuda / Warga MTA
+     */
+    public function syncAlamat(Request $request, GdmCabangSyncService $syncService)
+    {
+        $result = $syncService->syncAllAlamat();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        if ($result['status'] === 'success') {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message'] ?? 'Gagal menyinkronkan alamat domisili GDM.');
+    }
+
+    /**
+     * Sinkronkan alamat domisili satu kader GDM dari data Pemuda atau Warga MTA
+     */
+    public function syncAlamatSingle(Request $request, int $id)
+    {
+        $gdm = GuruDaerahMuda::findOrFail($id);
+        $changed = $gdm->syncAlamatFromSource($this->apiService);
+
+        $msg = $changed
+            ? "Alamat domisili GDM {$gdm->nama} berhasil disinkronkan: {$gdm->alamat}"
+            : "Alamat domisili GDM {$gdm->nama} sudah mutakhir sesuai data sumber ({$gdm->sumber_alamat_label}).";
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => $msg,
+                'data'    => [
+                    'id'                  => $gdm->id,
+                    'alamat'              => $gdm->alamat,
+                    'sumber_alamat_label' => $gdm->sumber_alamat_label,
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
     /**
@@ -401,7 +498,7 @@ class GuruDaerahMudaController extends Controller
             ]);
         }
 
-        $query = Pemuda::with(['cabang', 'alamat'])
+        $query = Pemuda::with(['cabang', 'alamat.village', 'alamat.district', 'alamat.regency'])
             ->where('status_data', '!=', 'archived');
 
         $s = '%' . $q . '%';
@@ -419,14 +516,6 @@ class GuruDaerahMudaController extends Controller
 
             // Alamat lengkap
             $alamat = $p->alamat?->alamat_lengkap ?: '';
-            if (empty($alamat) && $p->alamat) {
-                $parts = array_filter([
-                    $p->alamat->desa,
-                    $p->alamat->kecamatan,
-                    $p->alamat->kabupaten,
-                ]);
-                $alamat = implode(', ', $parts);
-            }
 
             return [
                 'id'            => $p->id,

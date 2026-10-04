@@ -54,6 +54,21 @@
             <span>Export Excel</span>
         </a>
 
+        <!-- Sinkronkan GDM -->
+        <form action="{{ route('admin.cabang.sync-gdm') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan seluruh data penugasan Guru Daerah Muda (GDM) aktif dengan jadwal kajian dan ustadz pengampu di Master Cabang?')">
+            @csrf
+            <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs flex items-center gap-2" title="Sinkronkan penugasan Guru Daerah Muda (GDM) dengan Master Cabang">
+                <i class="bi bi-arrow-repeat text-indigo-600 text-sm"></i>
+                <span>Sinkronkan GDM</span>
+            </button>
+        </form>
+
+        <!-- Guru Daerah Muda -->
+        <a href="{{ route('admin.gdm.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs" title="Buka modul manajemen Guru Daerah Muda (GDM)">
+            <i class="bi bi-mortarboard-fill text-indigo-500 text-sm"></i>
+            <span>Guru Daerah Muda</span>
+        </a>
+
         <!-- Master Wilayah -->
         <a href="{{ route('admin.wilayah.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs">
             <i class="bi bi-geo-alt-fill text-slate-500 text-sm"></i>
@@ -272,16 +287,27 @@
                                     <div class="text-[11px] text-slate-600 mt-0.5 font-medium">{{ $c->gelombang_hari ?: '-' }} &bull; {{ $c->gelombang_jam ?: '-' }}</div>
                                 @endif
                                 @if($c->gelombang_ustadz)
-                                    <div class="text-[10px] text-slate-400 mt-0.5"><i class="bi bi-person-fill"></i> {{ $c->gelombang_ustadz }}</div>
+                                    <div class="text-[10px] text-slate-600 mt-0.5 font-semibold flex items-center gap-1"><i class="bi bi-person-fill text-slate-400"></i> {{ $c->gelombang_ustadz }}</div>
                                 @endif
                             @else
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold text-[10px]">
                                     Belum Ada Kajian
                                 </span>
                             @endif
+
+                            @php
+                                $gdmAktif = $c->penugasanGdmAktif->first();
+                            @endphp
+                            @if($gdmAktif && $gdmAktif->gdm)
+                                <div class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded-md px-2 py-0.5 mt-1 font-semibold flex items-center gap-1 max-w-[210px] truncate" title="GDM Bertugas: {{ $gdmAktif->gdm->nama }} (Tahun {{ $gdmAktif->tahun }})">
+                                    <i class="bi bi-mortarboard-fill text-indigo-600 flex-shrink-0"></i>
+                                    <span class="truncate">GDM: {{ $gdmAktif->gdm->nama }}</span>
+                                </div>
+                            @endif
+
                             @if($c->ketua_pemuda)
-                                <div class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md px-2 py-0.5 mt-1 font-semibold flex items-center gap-1 max-w-[200px] truncate" title="Ketua Pemuda: {{ $c->ketua_pemuda }}">
-                                    <i class="bi bi-person-badge-fill text-indigo-500 flex-shrink-0"></i>
+                                <div class="text-[10px] text-slate-700 bg-slate-50 border border-slate-200/80 rounded-md px-2 py-0.5 mt-1 font-medium flex items-center gap-1 max-w-[200px] truncate" title="Ketua Pemuda: {{ $c->ketua_pemuda }}">
+                                    <i class="bi bi-person-badge-fill text-slate-400 flex-shrink-0"></i>
                                     <span class="truncate">Ketua: {{ $c->ketua_pemuda }}</span>
                                 </div>
                             @endif
@@ -410,9 +436,27 @@
                     <input type="text" name="gelombang_jam" placeholder="Contoh: 06:00 - 07:30 WIB" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
-                    <input type="text" name="gelombang_ustadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                <div class="sm:col-span-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Ustadz Pengampu Kajian / GDM</label>
+                        <button type="button" onclick="toggleAddManualUstadz()" id="btnToggleAddManualUstadz" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                            <i class="bi bi-pencil"></i> Ketik Manual Non-GDM
+                        </button>
+                    </div>
+                    <div id="wrapperSelectAddGdm">
+                        <select name="gdm_id" id="addSelectGdmUstadz" onchange="onSelectAddGdmChange(this)" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                            <option value="">-- Pilih dari Kader GDM Aktif (Otomatis Sinkron) --</option>
+                            @foreach($gdmList as $gdm)
+                                <option value="{{ $gdm->id }}" data-nama="{{ $gdm->nama }}">
+                                    {{ $gdm->nama }} (Asal: {{ $gdm->cabang->name ?? 'Sragen' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <input type="text" name="gelombang_ustadz" id="addInputGelombangUstadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="hidden mt-1.5 w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    <p class="text-[10px] text-slate-400 mt-1" id="hintAddGdmSync">
+                        <i class="bi bi-info-circle text-indigo-500"></i> Memilih kader GDM akan otomatis menugaskan dan menyinkronkan data kajian pemuda.
+                    </p>
                 </div>
 
                 <!-- Bagian Pengurus / Koordinator Pemuda Cabang -->
@@ -538,9 +582,27 @@
                     <input type="text" name="gelombang_jam" id="editGelombangJam" placeholder="Contoh: 06:00 - 07:30 WIB" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Ustadz Pengampu Kajian</label>
-                    <input type="text" name="gelombang_ustadz" id="editGelombangUstadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500">
+                <div class="sm:col-span-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700 uppercase">Ustadz Pengampu Kajian / GDM</label>
+                        <button type="button" onclick="toggleEditManualUstadz()" id="btnToggleEditManualUstadz" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                            <i class="bi bi-pencil"></i> Ketik Manual Non-GDM
+                        </button>
+                    </div>
+                    <div id="wrapperSelectEditGdm">
+                        <select name="gdm_id" id="editSelectGdmUstadz" onchange="onSelectEditGdmChange(this)" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                            <option value="">-- Pilih dari Kader GDM Aktif (Otomatis Sinkron) --</option>
+                            @foreach($gdmList as $gdm)
+                                <option value="{{ $gdm->id }}" data-nama="{{ $gdm->nama }}">
+                                    {{ $gdm->nama }} (Asal: {{ $gdm->cabang->name ?? 'Sragen' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <input type="text" name="gelombang_ustadz" id="editGelombangUstadz" placeholder="Contoh: Ust. Ahmad Fauzi" class="hidden mt-1.5 w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 focus:ring-red-500 focus:border-red-500 text-xs">
+                    <p class="text-[10px] text-slate-400 mt-1" id="hintEditGdmSync">
+                        <i class="bi bi-info-circle text-indigo-500"></i> Memilih kader GDM akan otomatis menugaskan dan menyinkronkan data kajian pemuda.
+                    </p>
                 </div>
 
                 <!-- Bagian Pengurus / Koordinator Pemuda Cabang -->
@@ -764,6 +826,68 @@
         }
     }
 
+    function toggleAddManualUstadz() {
+        const wrapper = document.getElementById('wrapperSelectAddGdm');
+        const input = document.getElementById('addInputGelombangUstadz');
+        const select = document.getElementById('addSelectGdmUstadz');
+        const btn = document.getElementById('btnToggleAddManualUstadz');
+
+        if (input.classList.contains('hidden')) {
+            wrapper.classList.add('hidden');
+            input.classList.remove('hidden');
+            select.value = '';
+            btn.innerHTML = '<i class="bi bi-person-check"></i> Pilih dari GDM';
+            input.focus();
+        } else {
+            wrapper.classList.remove('hidden');
+            input.classList.add('hidden');
+            btn.innerHTML = '<i class="bi bi-pencil"></i> Ketik Manual Non-GDM';
+        }
+    }
+
+    function onSelectAddGdmChange(select) {
+        const input = document.getElementById('addInputGelombangUstadz');
+        const hasGelombangSelect = document.querySelector('#modalAddCabang select[name="has_gelombang"]');
+        if (select.value) {
+            const selectedOpt = select.options[select.selectedIndex];
+            input.value = selectedOpt.getAttribute('data-nama') || '';
+            if (hasGelombangSelect) hasGelombangSelect.value = 'sudah';
+        } else {
+            input.value = '';
+        }
+    }
+
+    function toggleEditManualUstadz() {
+        const wrapper = document.getElementById('wrapperSelectEditGdm');
+        const input = document.getElementById('editGelombangUstadz');
+        const select = document.getElementById('editSelectGdmUstadz');
+        const btn = document.getElementById('btnToggleEditManualUstadz');
+
+        if (input.classList.contains('hidden')) {
+            wrapper.classList.add('hidden');
+            input.classList.remove('hidden');
+            select.value = '';
+            btn.innerHTML = '<i class="bi bi-person-check"></i> Pilih dari GDM';
+            input.focus();
+        } else {
+            wrapper.classList.remove('hidden');
+            input.classList.add('hidden');
+            btn.innerHTML = '<i class="bi bi-pencil"></i> Ketik Manual Non-GDM';
+        }
+    }
+
+    function onSelectEditGdmChange(select) {
+        const input = document.getElementById('editGelombangUstadz');
+        const hasGelombangSelect = document.getElementById('editHasGelombang');
+        if (select.value) {
+            const selectedOpt = select.options[select.selectedIndex];
+            input.value = selectedOpt.getAttribute('data-nama') || '';
+            if (hasGelombangSelect) hasGelombangSelect.value = 'sudah';
+        } else {
+            input.value = '';
+        }
+    }
+
     function editCabang(c) {
         document.getElementById('formEditCabang').action = `{{ url('admin/cabang/update') }}/${c.id}`;
         document.getElementById('editWilayahId').value = c.wilayah_id;
@@ -785,6 +909,45 @@
         document.getElementById('editInputKetuaPemuda').value = c.ketua_pemuda || '';
         document.getElementById('editInputSekretarisPemuda').value = c.sekretaris_pemuda || '';
         document.getElementById('editInputBendaharaPemuda').value = c.bendahara_pemuda || '';
+
+        // Setup Ustadz / GDM selection
+        const editSelectGdm = document.getElementById('editSelectGdmUstadz');
+        const editInputUstadz = document.getElementById('editGelombangUstadz');
+        const wrapperSelectEditGdm = document.getElementById('wrapperSelectEditGdm');
+        const btnToggleEditManual = document.getElementById('btnToggleEditManualUstadz');
+
+        let matchedGdmId = '';
+        if (c.penugasan_gdm_aktif && c.penugasan_gdm_aktif.length > 0) {
+            matchedGdmId = String(c.penugasan_gdm_aktif[0].gdm_id);
+        } else if (c.gelombang_ustadz && editSelectGdm) {
+            const options = Array.from(editSelectGdm.options);
+            const found = options.find(opt => {
+                const nama = opt.getAttribute('data-nama');
+                return nama && (nama.toLowerCase() === c.gelombang_ustadz.toLowerCase() || c.gelombang_ustadz.toLowerCase().includes(nama.toLowerCase()));
+            });
+            if (found) {
+                matchedGdmId = found.value;
+            }
+        }
+
+        if (editSelectGdm && wrapperSelectEditGdm && editInputUstadz && btnToggleEditManual) {
+            if (matchedGdmId) {
+                editSelectGdm.value = matchedGdmId;
+                wrapperSelectEditGdm.classList.remove('hidden');
+                editInputUstadz.classList.add('hidden');
+                btnToggleEditManual.innerHTML = '<i class="bi bi-pencil"></i> Ketik Manual Non-GDM';
+            } else if (c.gelombang_ustadz) {
+                editSelectGdm.value = '';
+                wrapperSelectEditGdm.classList.add('hidden');
+                editInputUstadz.classList.remove('hidden');
+                btnToggleEditManual.innerHTML = '<i class="bi bi-person-check"></i> Pilih dari GDM';
+            } else {
+                editSelectGdm.value = '';
+                wrapperSelectEditGdm.classList.remove('hidden');
+                editInputUstadz.classList.add('hidden');
+                btnToggleEditManual.innerHTML = '<i class="bi bi-pencil"></i> Ketik Manual Non-GDM';
+            }
+        }
 
         loadCabangPemudaOptions(c);
         openModal('modalEditCabang');
@@ -1157,6 +1320,58 @@
                                         <span class="font-bold text-slate-800">${safeUstadz}</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Guru Daerah Muda (GDM) Bertugas -->
+                            <div class="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 shadow-2xs">
+                                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-indigo-100/80">
+                                    <h4 class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="bi bi-mortarboard-fill text-indigo-600"></i> Guru Daerah Muda (GDM) Bertugas
+                                    </h4>
+                                    <a href="{{ route('admin.gdm.index') }}?cabang_penugasan_id=${c.id}" class="text-[10px] text-indigo-700 hover:text-indigo-900 font-bold inline-flex items-center gap-1 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                                        <span>Buka Modul GDM</span>
+                                        <i class="bi bi-box-arrow-up-right text-[9px]"></i>
+                                    </a>
+                                </div>
+
+                                ${c.gdm_bertugas && c.gdm_bertugas.length > 0 ? `
+                                    <div class="space-y-2">
+                                        ${c.gdm_bertugas.map(g => `
+                                            <div class="p-2.5 rounded-xl bg-white border border-indigo-100 flex items-start justify-between gap-3 text-xs">
+                                                <div>
+                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                        <span class="font-bold text-slate-900 text-sm">${escapeHtmlCabang(g.nama)}</span>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold ${g.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                                                            ${g.status === 'aktif' ? 'Aktif' : escapeHtmlCabang(g.status)}
+                                                        </span>
+                                                        <span class="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">Tahun ${g.tahun}</span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-600 mt-1">
+                                                        <span>Asal Cabang: <strong>${escapeHtmlCabang(g.asal_cabang)}</strong></span>
+                                                        <span class="mx-1.5">&bull;</span>
+                                                        <span>Jadwal: <strong>${escapeHtmlCabang(g.hari_kajian)}</strong> (${escapeHtmlCabang(g.jam_kajian)})</span>
+                                                    </div>
+                                                    ${g.keterangan ? `<div class="text-[10px] text-slate-400 italic mt-0.5">${escapeHtmlCabang(g.keterangan)}</div>` : ''}
+                                                </div>
+                                                ${g.wa_link ? `
+                                                    <a href="${g.wa_link}" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-bold text-[10px] flex items-center gap-1 flex-shrink-0 transition">
+                                                        <i class="bi bi-whatsapp"></i> Hubungi WA
+                                                    </a>
+                                                ` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div class="p-2.5 rounded-xl bg-white/70 border border-indigo-100/60 flex items-center justify-between text-xs">
+                                        <div class="flex items-center gap-2 text-slate-500 text-[11px]">
+                                            <i class="bi bi-info-circle text-indigo-400 text-sm"></i>
+                                            <span>Belum ada kader GDM yang ditugaskan di cabang ini.</span>
+                                        </div>
+                                        <a href="{{ route('admin.gdm.index') }}" class="text-[10px] text-indigo-600 hover:underline font-bold">
+                                            Tugaskan GDM &rarr;
+                                        </a>
+                                    </div>
+                                `}
                             </div>
 
                             <!-- Deskripsi / Catatan Tambahan -->
