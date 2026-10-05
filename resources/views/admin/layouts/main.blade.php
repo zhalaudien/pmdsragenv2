@@ -119,6 +119,13 @@
                     <span class="truncate">{{ $currCabang ?? $currWilayah }}</span>
                 </div>
             @endif
+            <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between">
+                <a href="{{ route('admin.profile.index') }}" class="text-[11px] font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                    <i class="bi bi-person-gear text-red-400"></i>
+                    <span>Pengaturan Akun</span>
+                </a>
+                <span class="text-[10px] text-slate-400 font-mono">{{ '@' . (session('username') ?? auth()->user()?->username) }}</span>
+            </div>
         </div>
 
         @php
@@ -296,6 +303,16 @@
                 </div>
             @endif
 
+            <!-- PENGATURAN AKUN SAYA -->
+            <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Akun Saya</span>
+                <i class="bi bi-person-gear text-slate-400 text-xs"></i>
+            </div>
+            <a href="{{ route('admin.profile.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.profile*') ? 'bg-red-600 text-white shadow-md font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="bi bi-person-gear text-base {{ request()->routeIs('admin.profile*') ? 'text-white' : 'text-slate-400' }}"></i>
+                <span>Profil &amp; Akun Saya</span>
+            </a>
+
             <!-- 5. TAUTAN LUAR / AKSES CEPAT -->
             <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <span>Tautan Luar</span>
@@ -385,6 +402,10 @@
                                     {{ $displayRoleTitle }}
                                 </span>
                             </div>
+                            <a href="{{ route('admin.profile.index') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-800 hover:bg-red-50 hover:text-red-700 font-bold transition border-b border-slate-100">
+                                <i class="bi bi-person-gear text-red-600 text-sm"></i>
+                                <span>Profil &amp; Akun Saya</span>
+                            </a>
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition">
                                 <i class="bi bi-people text-slate-400"></i>
                                 <span>Dashboard Pemuda</span>

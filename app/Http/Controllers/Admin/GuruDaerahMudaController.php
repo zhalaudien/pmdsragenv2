@@ -485,6 +485,158 @@ class GuruDaerahMudaController extends Controller
     }
 
     /**
+     * Pencarian Gabungan (Seamless) Profil Pemuda Sragen & Warga MTA Pusat untuk GDM
+     */
+    public function searchUnified(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q'));
+
+        if (mb_strlen($q) < 2) {
+            return response()->json([
+                'status' => 'success',
+                'data'   => [],
+            ]);
+        }
+
+        $existingGdmPemudaIds = GuruDaerahMuda::whereNotNull('pemuda_id')->pluck('pemuda_id')->all();
+        $existingGdmWargaUuids = GuruDaerahMuda::whereNotNull('mta_warga_uuid')->pluck('mta_warga_uuid')->all();
+
+        // 1. Cari Data Pemuda Lokal Sragen
+        $pemudaQuery = Pemuda::with(['cabang.wilayah', 'alamat.village', 'alamat.district', 'alamat.regency'])
+            ->where('status_data', '!=', 'archived');
+
+        $s = '%' . $q . '%';
+        $pemudaQuery->where(function ($query) use ($s) {
+            $query->where('name', 'LIKE', $s)
+                  ->orWhere('phone', 'LIKE', $s)
+                  ->orWhere('registration_number', 'LIKE', $s);
+        });
+
+        $pemudaList = $pemudaQuery->limit(20)->get();
+
+        $seenMtaUuids = [];
+        $results = [];
+
+        foreach ($pemudaList as $p) {
+            $isGdm = in_array($p->id, $existingGdmPemudaIds, true)
+                || (!empty($p->mta_warga_uuid) && in_array($p->mta_warga_uuid, $existingGdmWargaUuids, true));
+
+            if (!empty($p->mta_warga_uuid)) {
+                $seenMtaUuids[] = $p->mta_warga_uuid;
+            }
+
+            $formattedBirthDate = $p->birth_date ? Carbon::parse($p->birth_date)->format('Y-m-d') : null;
+            $readableBirthDate  = $p->birth_date ? Carbon::parse($p->birth_date)->translatedFormat('d M Y') : null;
+            $alamat = $p->alamat?->alamat_lengkap ?: '';
+
+            $results[] = [
+                'sumber_data'             => 'pemuda',
+                'sumber_label'            => 'Pemuda MTA Sragen',
+                'id'                      => $p->id,
+                'uuid'                    => $p->mta_warga_uuid,
+                'nama'                    => $p->name,
+                'gender'                  => $p->gender,
+                'gender_label'            => $p->gender === 'L' ? 'Ikhwan' : 'Akhwat',
+                'tempat_lahir'            => $p->birth_place,
+                'tanggal_lahir'           => $formattedBirthDate,
+                'tanggal_lahir_formatted' => $readableBirthDate,
+                'cabang_id'               => $p->cabang_id,
+                'cabang_name'             => $p->cabang?->name ?? '-',
+                'wilayah_name'            => $p->cabang?->wilayah?->name ?? '-',
+                'alamat'                  => $alamat,
+                'no_wa'                   => $p->phone,
+                'reg_no'                  => $p->registration_number,
+                'is_gdm'                  => $isGdm,
+            ];
+        }
+
+        // 2. Cari Data Warga MTA Pusat (Jika query minimal 3 karakter)
+        if (mb_strlen($q) >= 3) {
+            try {
+                $res = $this->apiService->searchWarga($q, ['limit' => 15]);
+
+                if (($res['success'] ?? false) && !empty($res['data'])) {
+                    $cabangs = Cabang::with('wilayah')->get(['id', 'name', 'wilayah_id', 'mta_uuid']);
+
+                    foreach ($res['data'] as $w) {
+                        $uuid = $w['uuid'] ?? ($w['id'] ?? null);
+
+                        if ($uuid && in_array($uuid, $seenMtaUuids, true)) {
+                            continue;
+                        }
+
+                        $isGdm = $uuid ? in_array($uuid, $existingGdmWargaUuids, true) : false;
+
+                        $cabangName = $w['cabang'] ?? ($w['cabang_nama'] ?? null);
+                        $cabangUuid = $w['cabang_uuid'] ?? null;
+                        $matchedCabangId = null;
+                        $matchedWilayahName = null;
+
+                        if ($cabangUuid) {
+                            $c = $cabangs->firstWhere('mta_uuid', $cabangUuid);
+                            if ($c) {
+                                $matchedCabangId    = $c->id;
+                                $cabangName         = $c->name;
+                                $matchedWilayahName = $c->wilayah?->name;
+                            }
+                        }
+
+                        if (!$matchedCabangId && $cabangName) {
+                            $c = $cabangs->first(fn($item) => strtolower($item->name) === strtolower($cabangName));
+                            if ($c) {
+                                $matchedCabangId    = $c->id;
+                                $matchedWilayahName = $c->wilayah?->name;
+                            }
+                        }
+
+                        $tglLahir = null;
+                        $tglLahirFormatted = null;
+                        $tglLahirRaw = $w['tanggal_lahir'] ?? ($w['tgl_lahir'] ?? null);
+                        if ($tglLahirRaw) {
+                            try {
+                                $parsed = Carbon::parse($tglLahirRaw);
+                                $tglLahir = $parsed->format('Y-m-d');
+                                $tglLahirFormatted = $parsed->translatedFormat('d M Y');
+                            } catch (\Throwable) {
+                                $tglLahir = null;
+                                $tglLahirFormatted = null;
+                            }
+                        }
+
+                        $results[] = [
+                            'sumber_data'             => 'warga',
+                            'sumber_label'            => 'Warga MTA Pusat',
+                            'id'                      => null,
+                            'uuid'                    => $uuid,
+                            'nama'                    => $w['nama'] ?? ($w['name'] ?? '-'),
+                            'gender'                  => null,
+                            'gender_label'            => null,
+                            'tempat_lahir'            => $w['tempat_lahir'] ?? null,
+                            'tanggal_lahir'           => $tglLahir,
+                            'tanggal_lahir_formatted' => $tglLahirFormatted,
+                            'cabang_id'               => $matchedCabangId,
+                            'cabang_name'             => $cabangName ?? '-',
+                            'wilayah_name'            => $matchedWilayahName ?? '-',
+                            'alamat'                  => $w['alamat'] ?? ($w['alamat_lengkap'] ?? null),
+                            'no_wa'                   => $w['telepon'] ?? ($w['hp'] ?? ($w['no_wa'] ?? null)),
+                            'reg_no'                  => null,
+                            'status_warga'            => $w['status'] ?? ($w['status_warga'] ?? 'Warga MTA'),
+                            'is_gdm'                  => $isGdm,
+                        ];
+                    }
+                }
+            } catch (\Throwable) {
+                // Fail-safe
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $results,
+        ]);
+    }
+
+    /**
      * Pencarian Data Pemuda untuk Diambil Menjadi GDM
      */
     public function searchPemuda(Request $request): JsonResponse

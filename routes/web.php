@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\PresensiDashboardController;
 use App\Http\Controllers\Admin\KegiatanPerwakilanController;
 use App\Http\Controllers\Admin\AjaxController;
 use App\Http\Controllers\Admin\GuruDaerahMudaController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\GuruDaerahController;
 
 // ==========================================
@@ -71,6 +72,14 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('persebaran', [PersebaranController::class, 'index'])->name('persebaran');
     Route::get('dashboard/persebaran', [PersebaranController::class, 'index']);
+
+    // Profil & Pengaturan Akun Saya (Seluruh Peran Admin)
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::post('update', [ProfileController::class, 'updateProfile'])->name('update');
+        Route::post('update-username', [ProfileController::class, 'updateUsername'])->name('update-username');
+        Route::post('update-password', [ProfileController::class, 'updatePassword'])->name('update-password');
+    });
 
     // Dashboard & Monitoring Mobile Presensi PMD
     Route::prefix('presensi')->name('presensi.')->group(function () {
@@ -138,6 +147,7 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
         Route::post('penugasan/{id}/delete', [GuruDaerahMudaController::class, 'deletePenugasan'])->name('penugasan.delete');
 
         // Search picker untuk data pemuda & data warga MTA
+        Route::get('search-unified', [GuruDaerahMudaController::class, 'searchUnified'])->name('search-unified');
         Route::get('search-pemuda', [GuruDaerahMudaController::class, 'searchPemuda'])->name('search-pemuda');
         Route::get('search-warga', [GuruDaerahMudaController::class, 'searchWarga'])->name('search-warga');
     });
@@ -173,6 +183,9 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     // Master Users & Roles (Superadmin)
     Route::prefix('users')->middleware('role:superadmin')->name('users.')->group(function () {
         Route::get('/', [UsersController::class, 'index'])->name('index');
+        Route::get('search-unified', [UsersController::class, 'searchUnified'])->name('search-unified');
+        Route::get('search-pemuda', [UsersController::class, 'searchPemuda'])->name('search-pemuda');
+        Route::get('search-warga', [UsersController::class, 'searchWarga'])->name('search-warga');
         Route::post('simpan', [UsersController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [UsersController::class, 'update'])->name('update');
         Route::post('delete/{id}', [UsersController::class, 'delete'])->name('delete');

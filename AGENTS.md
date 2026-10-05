@@ -3073,4 +3073,127 @@ Setiap penambahan atau pengurangan fitur wajib dicatat pada bagian ini.
   - Memperbaiki tampilan kondisi kosong (*empty state*) pada halaman admin agar menampilkan pesan ramah serta tombol aksi yang jelas.
   - Menambahkan test suite pengujian otomatis `tests/Feature/KegiatanPerwakilanDeletionBugTest.php` (4 test cases, 22 assertions) yang memvalidasi bahwa setelah seluruh kegiatan dihapus, basis data tetap kosong dan API mobile mengembalikan array kosong tanpa melakukan auto-reseed (seluruh 68 tests lulus 100%).
 
+### 2026-10-05 — Binding Wajib Profil Pengguna dari Basis Data Pemuda Sragen & Warga MTA Pusat
+
+- **Kebutuhan Pengguna (User Requirement):**
+  - Pembuatan akun pengguna (username, password, dan peran/role) tidak lagi mengizinkan input nama bebas (free text) secara sembarangan.
+  - Setiap akun baru yang dibuat wajib ditautkan (*profile binding*) ke entitas orang yang sudah terdaftar secara sah di salah satu dari dua basis data:
+    1. **Basis Data Pemuda MTA Perwakilan Sragen** (tabel `pemuda`), ATAU
+    2. **Basis Data Warga MTA Pusat** (REST API `api.mta.or.id` / `mta_warga`).
+- **Skema Basis Data (`users` table):**
+  - Menambahkan kolom `pemuda_id` (INT UNSIGNED NULLABLE, foreign key ke `pemuda.id` on delete set null).
+  - Menambahkan kolom `mta_warga_uuid` (VARCHAR(36) NULLABLE, indexed).
+  - Menambahkan kolom `sumber_data` (VARCHAR(20) DEFAULT 'manual', indexed: `'pemuda'`, `'warga'`, `'manual'`).
+  - Migration: `2026_10_05_070000_add_pemuda_and_warga_to_users_table.php`.
+- **Model (`app/Models/User.php`):**
+  - Mendaftarkan kolom baru pada `$fillable`.
+  - Menambahkan relasi `pemuda()` (`belongsTo(Pemuda::class, 'pemuda_id')`).
+  - Menambahkan accessor `sumber_data_label` untuk menampilkan label sumber data secara ramah pengguna (`Pemuda Sragen`, `Warga MTA Pusat`, `Manual`).
+- **Controller (`app/Http/Controllers/Admin/UsersController.php`) & Routing:**
+  - Injeksi dependensi `MtaApiService`.
+  - Endpoint `searchPemuda(Request $request)` (`GET /admin/users/search-pemuda`): Pencarian live autocomplete data pemuda aktif di Sragen (nama, no registrasi, no HP), dilengkapi deteksi apakah pemuda tersebut sudah memiliki akun pengguna (`has_account`).
+  - Endpoint `searchWarga(Request $request)` (`GET /admin/users/search-warga`): Pencarian live autocomplete ke API server MTA Pusat (`api.mta.or.id`), pencocokan otomatis cabang lokal berdasarkan UUID/nama cabang, dan deteksi apakah warga tersebut sudah memiliki akun.
+  - Server-Side Validation pada `simpan(Request $request)`:
+    - Memvalidasi wajib memilih `sumber_data` (`pemuda` atau `warga`).
+    - Validasi keberadaan entitas (`pemuda_id` atau `mta_warga_uuid`).
+    - Proteksi pencegahan duplikasi akun: Menolak jika pemuda atau warga MTA yang dipilih sudah memiliki akun di sistem.
+    - Nama akun dikunci dari entitas profil terpilih untuk mencegah pemalsuan nama.
+    - Menjaga aturan keterikatan scope wilayah/cabang sesuai peran yang dipilih.
+- **Antarmuka Pengguna (`resources/views/admin/users/index.blade.php`):**
+  - **Tabel Daftar Pengguna:** Menampilkan badge transparansi asal akun (`Pemuda Sragen`, `Warga MTA`, atau `Manual`) pada kolom nama pengguna.
+  - **Modal Tambah Pengguna Baru (Unified & Seamless):**
+    - Mengintegrasikan pencarian data Pemuda Sragen dan Warga MTA Pusat ke dalam **1 kolom pencarian terpadu** (*Single Unified Search Bar*). Admin tidak perlu memilih tab database secara manual.
+    - Pencarian otomatis dijalankan paralel ke database lokal pemuda dan REST API MTA Pusat dengan *debounce* instan dan tombol pembersih (*clear search*).
+    - Mekanisme de-duplikasi otomatis: Profil warga MTA yang sudah tercatat di database lokal pemuda diprioritaskan sebagai pemuda Sragen untuk menghindari hasil pencarian ganda.
+    - Label badge sumber profil (*Pemuda Sragen* [emerald] vs *Warga MTA Pusat* [sky]) ditampilkan secara transparan di setiap item hasil pencarian.
+    - Tombol otomatis mendeteksi apakah calon pengguna sudah memiliki akun terdaftar (`Sudah Punya Akun`).
+    - Kartu pratinjau profil terpilih (*Selected Profile Card*) dengan tombol *"Ganti Profil"* untuk mereset pilihan.
+    - Auto-prefill cabang dan wilayah yang dikelola jika peran membutuhkan lingkup akses cabang/wilayah.
+- **Pengujian Otomatis (`tests/Feature/UserCreationProfileBindingTest.php`):**
+  - Menguji endpoint live search gabungan `search-unified` (200 OK dengan pemuda dan mock warga MTA).
+  - Menguji endpoint live search pemuda dan pencegahan akses untuk non-superadmin (403).
+  - Menguji pencarian warga MTA dengan mock API MTA Pusat.
+  - Menguji pembuatan akun berbasis data Pemuda (berhasil tersimpan dengan relasi `pemuda_id`).
+  - Menguji penolakan duplikasi pembuatan akun untuk pemuda yang sama.
+  - Menguji pembuatan akun berbasis Warga MTA Pusat (berhasil tersimpan dengan `mta_warga_uuid`).
+  - Menguji penolakan duplikasi pembuatan akun untuk warga MTA yang sama.
+  - Menguji penolakan validasi jika profil calon pengguna tidak dipilih.
+  - Seluruh 154 tests di sistem lulus 100% (1.177 assertions).
+
+### 2026-10-05 — Penerapan Pencarian Terpadu (Unified Search) & Opsi Manual pada Penambahan GDM Baru
+
+- **Kebutuhan Pengguna (User Requirement):**
+  - Menerapkan sistem pencarian terpadu (*unified search bar*) yang *seamless* pada modal penambahan Guru Daerah Muda (GDM) baru, menggabungkan pencarian basis data Pemuda MTA Sragen dan Warga MTA Pusat ke dalam 1 kolom pencarian tanpa perlu memilih tab terpisah.
+  - Tetap menyediakan opsi fleksibel untuk menambahkan data kader GDM di luar basis data (input manual / non-database).
+- **Backend & Controller (`app/Http/Controllers/Admin/GuruDaerahMudaController.php` & `routes/web.php`):**
+  - Mendaftarkan rute `GET /admin/gdm/search-unified` dengan penamaan `search-unified`.
+  - Mengimplementasikan method `searchUnified(Request $request): JsonResponse` yang mencari secara bersamaan ke tabel `pemuda` (dengan relasi `cabang`, `pendidikan`, `pekerjaan`) dan REST API MTA Pusat (`MtaApiService->searchWarga`).
+  - Mekanisme de-duplikasi otomatis: Warga MTA yang nomor HP atau namanya telah terdaftar di data Pemuda Sragen tidak dimunculkan ganda.
+  - Deteksi otomatis apakah kader bersangkutan sudah terdaftar sebagai GDM aktif (`is_gdm`).
+  - Parsing tanggal lahir yang robust untuk berbagai format (Y-m-d, d-m-Y, d/m/Y, text Indonesia) serta pencocokan otomatis UUID/nama cabang MTA Pusat dengan cabang lokal di Sragen.
+- **Antarmuka Pengguna Modal Tambah GDM (`resources/views/admin/gdm/index.blade.php`):**
+  - Menyediakan dua mode input:
+    1. **Cari Database (Dari Data Pemuda & Dari Warga MTA):** Mode default dengan satu kolom pencarian terpadu dengan *debounce* instan dan tombol pembersih (*clear search*).
+       - Menampilkan hasil pencarian yang interaktif dengan badge sumber (*Pemuda Sragen* [emerald] vs *Warga MTA Pusat* [sky]), info cabang, nomor kontak, serta status apakah sudah menjadi GDM (`Sudah Menjadi GDM`).
+       - Memilih hasil pencarian akan langsung mengisi formulir (nama lengkap, tempat/tanggal lahir, nomor WA, cabang asal, alamat, `pemuda_id`, `mta_warga_uuid`, `sumber_data`).
+       - Menampilkan kartu ringkasan profil terpilih (*Selected Profile Card*) dengan tombol *"Ganti Profil"* untuk memudahkan pergantian.
+    2. **Input Manual (Luar Database):** Mode opsional yang membuka formulir isian bebas untuk kader GDM yang belum atau tidak terdata di sistem basis data (`sumber_data = 'manual'`).
+- **Pengujian Otomatis (`tests/Feature/GuruDaerahMudaDashboardTest.php`):**
+  - Menambahkan pengujian `test_search_unified_endpoint_for_gdm()` untuk memvalidasi endpoint gabungan `search-unified`.
+  - Seluruh 155 unit & feature test suite di sistem lulus 100% (1.184 assertions).
+
+### 2026-10-05 — Pemisahan Banner Judul Halaman dengan Tombol Menu & Navigasi Cepat pada Manajemen GDM
+
+- **Kebutuhan Pengguna (User Requirement):**
+  - Memisahkan banner judul halaman dengan tombol-tombol aksi/menu navigasi pada modul Manajemen Guru Daerah Muda (GDM), menyeragamkan tata letak (*layout consistency*) dengan halaman modul admin lainnya (seperti Master Cabang, Data Pemuda, Master Wilayah, dan Persebaran Potensi).
+- **Perubahan Tampilan (`resources/views/admin/gdm/index.blade.php`):**
+  - **Banner Header Halaman:** Dikhususkan untuk identitas halaman, badge breadcrumb (`Kader Guru Daerah Muda`, `Kabupaten Sragen`), judul besar halaman (`Manajemen Guru Daerah Muda (GDM)`), serta deskripsi ringkas tanpa memuat tombol aksi di baris yang sama.
+  - **Kartu Tombol Menu & Navigasi Cepat (Terpisah dari Banner):** Seluruh tombol aksi dipindahkan ke dalam kartu tersendiri (`bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs`) dengan ikon `bi-grid-fill` dan label "Menu Cepat".
+  - Tombol-tombol yang tertata rapi dalam kartu navigasi cepat:
+    1. **Tambah GDM Baru** (Tombol utama berwarna merah untuk membuka modal penambahan kader GDM).
+    2. **Sinkronkan Master Cabang** (Form aksi sinkronisasi jadwal kajian & ustadz pengampu dengan master cabang).
+    3. **Sinkronkan Alamat** (Form aksi sinkronisasi alamat domisili GDM dari data Pemuda MTA / Warga MTA).
+    4. **Presensi & Notulensi** (Pintasan cepat ke dashboard rekap presensi kajian cabang).
+    5. **Master Cabang** (Pintasan cepat ke modul data master cabang binaan).
+    6. **Persebaran Pemuda** (Pintasan cepat ke modul analisis persebaran potensi pemuda Sragen).
+    7. **Data Pemuda** (Pintasan cepat ke modul sensus data pemuda Sragen).
+- **Hasil Pengujian Otomatis:**
+  - `php artisan test --filter=GuruDaerahMudaDashboardTest` (9 tests, 63 assertions — 100% lulus).
+  - Seluruh rangkaian tes sistem `php artisan test` (155 tests, 1.186 assertions — 100% lulus).
+
+### 2026-10-05 — Fitur Profil Pengguna, Pergantian Username, dan Pergantian Kata Sandi
+
+- **Kebutuhan Pengguna (User Requirement):**
+  - Menyediakan fitur mandiri bagi setiap pengguna/administrator untuk dapat memperbarui profil (nama, email, kontak), melakukan pergantian username akun, dan mengganti kata sandi (password).
+- **Backend & Routing:**
+  - **Controller Baru (`app/Http/Controllers/Admin/ProfileController.php`):**
+    - `index()`: Menampilkan halaman profil, memuat informasi akun, relasi peran (*role*), lingkup wilayah/cabang, serta detail keterikatan data sensus Pemuda MTA Sragen atau Warga MTA Pusat.
+    - `updateProfile(Request $request)`: Validasi nama lengkap dan email (unik). Jika akun terikat dengan data Pemuda (`pemuda_id`), nomor kontak/telepon dan email otomatis disinkronkan ke tabel `pemuda`. Memperbarui data sesi pengguna aktif secara *real-time*.
+    - `updateUsername(Request $request)`: Validasi format alfanumerik (`alpha_dash`), keunikan username, serta **wajib verifikasi kata sandi saat ini (*current password*)** demi keamanan akun.
+    - `updatePassword(Request $request)`: Verifikasi kata sandi saat ini (`Hash::check`), validasi minimal 6 karakter dengan konfirmasi password baru (`confirmed`), serta proteksi kata sandi baru tidak boleh sama dengan kata sandi lama.
+  - **Routing Web (`routes/web.php`):**
+    - Mendaftarkan grup rute `/admin/profile` (`admin.profile.index`, `admin.profile.update`, `admin.profile.update-username`, `admin.profile.update-password`) yang dapat diakses oleh seluruh peran admin terotentikasi tanpa hambatan scope.
+  - **API Mobile (`app/Http/Controllers/Api/V1/AuthController.php`):**
+    - Memperluas `updateProfile` pada REST API agar dapat menerima dan memperbarui `username` selain nama dan email.
+- **Antarmuka Pengguna (`resources/views/admin/profile/index.blade.php`):**
+  - **Banner Header Halaman:** Badge kategori Pengaturan Akun, deskripsi, dan judul halaman yang seragam dengan seluruh modul sistem.
+  - **Tombol Menu & Navigasi Cepat (Terpisah dari Banner):** Pintasan ke Dashboard Pemuda, Dashboard Presensi, Data Pemuda, Detail Lembar Sensus, dan Keluar Sistem.
+  - **Kolom Kiri — Kartu Identitas & Keterikatan Profil:**
+    - Avatar inisial dengan badge peran dan status aktif.
+    - Badge asal profil (*Pemuda Sragen*, *Warga MTA Pusat*, atau *Manual*).
+    - Ringkasan email, lingkup akses, waktu login terakhir, dan waktu pendaftaran akun.
+    - Kartu rincian data sensus Pemuda (Nomor registrasi, cabang asal, kontak WA, TTL, status verifikasi MTA Pusat) jika akun terikat ke pemuda.
+  - **Kolom Kanan — Tiga Kartu Formulir Pengaturan:**
+    1. **Kartu 1 (Perbarui Informasi Profil):** Input nama lengkap, alamat email, dan nomor WhatsApp/HP.
+    2. **Kartu 2 (Pergantian Username Akun):** Info username saat ini, input username baru, dan konfirmasi kata sandi saat ini.
+    3. **Kartu 3 (Pergantian Kata Sandi):** Input kata sandi saat ini, kata sandi baru, konfirmasi kata sandi baru, lengkap dengan fitur interaktif *toggle show/hide password*.
+- **Integrasi Tata Letak Global (`resources/views/admin/layouts/main.blade.php`):**
+  - Menambahkan tautan *"Pengaturan Akun"* pada *User Mini Profile* di bagian atas sidebar.
+  - Menambahkan menu *"Profil & Akun Saya"* pada bilah navigasi samping sidebar (kelompok Akun Saya).
+  - Menambahkan opsi menu teratas *"Profil & Akun Saya"* pada *User Dropdown* di bilah atas (*top navbar*).
+- **Pengujian Otomatis (`tests/Feature/UserProfileManagementTest.php`):**
+  - 14 test cases komprehensif menguji: proteksi tamu (redirect login), akses pengguna terotentikasi, update profil nama & email, proteksi email duplikat, sinkronisasi kontak ke data pemuda, pergantian username dengan password benar, penolakan password salah saat ganti username, proteksi format & keunikan username, pergantian password dengan konfirmasi benar, penolakan password salah/sama/tidak cocok, login dengan username & password baru, dan update username via REST API mobile.
+  - Seluruh 169 unit & feature tests di sistem lulus 100% (1.252 assertions).
+
+
 

@@ -271,6 +271,39 @@ class GuruDaerahMudaDashboardTest extends TestCase
         $pemuda->delete();
     }
 
+    public function test_search_unified_endpoint_for_gdm(): void
+    {
+        $superadmin = $this->getSuperadmin();
+        $this->actingAs($superadmin);
+
+        $cabang = Cabang::first();
+
+        $uniqueQ = 'UnifiedGdm' . rand(100, 999);
+        $pemuda = Pemuda::create([
+            'cabang_id'           => $cabang->id,
+            'registration_number' => 'REG-GDM' . rand(10000, 99999),
+            'name'                => $uniqueQ . ' Hidayat',
+            'gender'              => 'L',
+            'phone'               => '081299997777',
+            'status_data'         => 'active',
+            'status_verifikasi'   => 'verified',
+        ]);
+
+        $response = $this->get(route('admin.gdm.search-unified', ['q' => $uniqueQ]));
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+        ]);
+
+        $data = $response->json('data');
+        $this->assertNotEmpty($data);
+        $this->assertEquals($pemuda->name, $data[0]['nama']);
+        $this->assertEquals('pemuda', $data[0]['sumber_data']);
+
+        // Cleanup
+        $pemuda->delete();
+    }
+
     public function test_gdm_detail_endpoint_returns_json_with_riwayat_penugasan(): void
     {
         $superadmin = $this->getSuperadmin();

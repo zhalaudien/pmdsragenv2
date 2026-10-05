@@ -21,6 +21,9 @@ class User extends Authenticatable
         'role_id',
         'wilayah_id',
         'cabang_id',
+        'pemuda_id',
+        'mta_warga_uuid',
+        'sumber_data',
         'last_login',
         'status',
     ];
@@ -52,6 +55,20 @@ class User extends Authenticatable
     public function cabang()
     {
         return $this->belongsTo(Cabang::class, 'cabang_id');
+    }
+
+    public function pemuda()
+    {
+        return $this->belongsTo(Pemuda::class, 'pemuda_id');
+    }
+
+    public function getSumberDataLabelAttribute(): string
+    {
+        return match ($this->sumber_data) {
+            'pemuda' => 'Pemuda Sragen',
+            'warga'  => 'Warga MTA Pusat',
+            default  => 'Manual',
+        };
     }
 
     public function getRoleNameAttribute(): string

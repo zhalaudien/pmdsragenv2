@@ -1,32 +1,65 @@
 @extends('admin.layouts.main')
 
+@section('title', 'Manajemen Guru Daerah Muda (GDM)')
+
 @section('content')
 <div class="space-y-6">
 
-    <!-- HEADER TITLE & BREADCRUMB -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
-        <div>
-            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+    <!-- HEADER JUDUL HALAMAN (BANNER) -->
+    <div class="mb-5">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-700 text-xs font-bold">
+                <i class="bi bi-mortarboard-fill"></i> Guru Daerah Muda (GDM)
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                Kabupaten Sragen
+            </span>
+            <span class="text-xs text-slate-400 flex items-center gap-1">
+                <i class="bi bi-dot"></i>
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-red-600 transition">Dashboard</a>
-                <i class="bi bi-chevron-right text-[10px]"></i>
+                <i class="bi bi-chevron-right text-[9px]"></i>
                 <span class="text-slate-600 font-semibold">Guru Daerah Muda</span>
+            </span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center text-base shadow-md flex-shrink-0">
+                <i class="bi bi-mortarboard-fill"></i>
+            </span>
+            <span>Manajemen Guru Daerah Muda (GDM)</span>
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-3xl leading-relaxed">
+            Kelola data kader mubaligh muda (GDM), asal cabang, biodata, serta riwayat penugasan kajian pemuda cabang se-Kabupaten Sragen.
+        </p>
+    </div>
+
+    <!-- TOMBOL MENU & NAVIGASI CEPAT (TERPISAH DARI BANNER) -->
+    <div class="mb-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                    <i class="bi bi-grid-fill"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tombol Menu &amp; Navigasi Cepat</h3>
+                    <p class="text-[11px] text-slate-500">Pintasan aksi penambahan GDM, sinkronisasi cabang &amp; alamat, dan navigasi modul</p>
+                </div>
             </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center text-sm shadow-md">
-                    <i class="bi bi-mortarboard-fill"></i>
-                </span>
-                <span>Manajemen Guru Daerah Muda (GDM)</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl">
-                Kelola data kader mubaligh muda (GDM), asal cabang, biodata, serta riwayat penugasan kajian pemuda cabang se-Kabupaten Sragen.
-            </p>
+            <span class="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1.5 font-medium">
+                <i class="bi bi-lightning-charge-fill text-amber-500"></i> Menu Cepat
+            </span>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Tambah GDM Baru -->
+            <button type="button" onclick="openModalTambahGdm()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2 flex-shrink-0">
+                <i class="bi bi-person-plus-fill text-sm"></i>
+                <span>Tambah GDM Baru</span>
+            </button>
+
             <!-- Sinkronkan Master Cabang -->
             <form action="{{ route('admin.gdm.sync-cabang') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan seluruh data penugasan Guru Daerah Muda (GDM) aktif dengan data Master Cabang?')">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs" title="Sinkronkan jadwal dan ustadz pengampu di Master Cabang">
+                <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs flex items-center gap-2" title="Sinkronkan jadwal dan ustadz pengampu di Master Cabang">
                     <i class="bi bi-arrow-repeat text-indigo-600 text-sm"></i>
                     <span>Sinkronkan Master Cabang</span>
                 </button>
@@ -35,27 +68,35 @@
             <!-- Sinkronkan Alamat Domisili GDM -->
             <form action="{{ route('admin.gdm.sync-alamat') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan alamat domisili seluruh Guru Daerah Muda (GDM) dari data Pemuda MTA atau Warga MTA?')">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs transition border border-teal-200 shadow-2xs" title="Sinkronkan alamat domisili GDM dari data Pemuda MTA / Warga MTA">
+                <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs transition border border-teal-200 shadow-2xs flex items-center gap-2" title="Sinkronkan alamat domisili GDM dari data Pemuda MTA / Warga MTA">
                     <i class="bi bi-geo-alt-fill text-teal-600 text-sm"></i>
                     <span>Sinkronkan Alamat</span>
                 </button>
             </form>
 
             <!-- Presensi & Notulensi Kajian -->
-            <a href="{{ route('admin.presensi.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 shadow-2xs" title="Lihat Rekap Presensi & Notulensi Kajian Cabang">
+            <a href="{{ route('admin.presensi.dashboard') }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 font-semibold text-xs transition border border-slate-200/90 hover:border-indigo-300 shadow-2xs flex items-center gap-2" title="Lihat Rekap Presensi & Notulensi Kajian Cabang">
                 <i class="bi bi-journal-check text-indigo-600 text-sm"></i>
                 <span>Presensi &amp; Notulensi</span>
             </a>
 
-            <a href="{{ route('admin.cabang.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs" title="Buka Master Cabang">
+            <!-- Master Cabang -->
+            <a href="{{ route('admin.cabang.index') }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs flex items-center gap-2" title="Buka Master Cabang">
                 <i class="bi bi-diagram-3-fill text-slate-500 text-sm"></i>
                 <span>Master Cabang</span>
             </a>
 
-            <button type="button" onclick="openModalTambahGdm()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-md hover:shadow-lg flex-shrink-0">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Tambah GDM Baru</span>
-            </button>
+            <!-- Persebaran Data Pemuda -->
+            <a href="{{ route('admin.persebaran') }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs transition border border-slate-200/90 hover:border-amber-300 shadow-2xs flex items-center gap-2" title="Buka modul Persebaran Potensi Pemuda Sragen">
+                <i class="bi bi-pie-chart-fill text-amber-500 text-sm"></i>
+                <span>Persebaran Pemuda</span>
+            </a>
+
+            <!-- Kelola Data Pemuda -->
+            <a href="{{ route('admin.pemuda.index') }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold text-xs transition border border-slate-200/90 shadow-2xs flex items-center gap-2" title="Buka modul Data Pemuda Sragen">
+                <i class="bi bi-people-fill text-slate-500 text-sm"></i>
+                <span>Data Pemuda</span>
+            </a>
         </div>
     </div>
 
@@ -411,43 +452,71 @@
             </button>
         </div>
 
-        <!-- TABS SUMBER DATA: PEMUDA, WARGA MTA, ATAU MANUAL -->
-        <div class="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-            <label class="block font-bold text-slate-700 uppercase mb-2 text-[10px]">Pilih Cara Input / Sumber Data GDM:</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="switchGdmSourceTab('pemuda')" id="btnTabSumberPemuda" class="py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-white text-indigo-700 border border-indigo-300 shadow-2xs">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Dari Data Pemuda</span>
-                </button>
-                <button type="button" onclick="switchGdmSourceTab('warga')" id="btnTabSumberWarga" class="py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-600 hover:bg-white border border-transparent">
-                    <i class="bi bi-cloud-arrow-down-fill"></i>
-                    <span>Dari Warga MTA</span>
-                </button>
-                <button type="button" onclick="switchGdmSourceTab('manual')" id="btnTabSumberManual" class="py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-600 hover:bg-white border border-transparent">
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Input Manual</span>
-                </button>
+        <!-- PILIHAN CARA INPUT GDM: CARI DATABASE TERPADU (PEMUDA & WARGA MTA) ATAU INPUT MANUAL -->
+        <div class="mb-4 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-2.5">
+                <label class="block font-bold text-slate-800 uppercase text-[10px] tracking-wider">
+                    Sumber Data Calon GDM:
+                </label>
+                <div class="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl">
+                    <button type="button" onclick="switchGdmInputMode('unified')" id="btnGdmModeUnified" class="py-1.5 px-3 rounded-lg font-bold text-xs transition bg-white text-indigo-700 shadow-2xs flex items-center gap-1.5">
+                        <i class="bi bi-search"></i>
+                        <span>Cari Database (Dari Data Pemuda &amp; Dari Warga MTA)</span>
+                    </button>
+                    <button type="button" onclick="switchGdmInputMode('manual')" id="btnGdmModeManual" class="py-1.5 px-3 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Input Manual</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Area Search Pemuda -->
-            <div id="sectionSearchPemuda" class="mt-3 pt-3 border-t border-slate-200">
+            <!-- AREA CARI DATABASE TERPADU -->
+            <div id="sectionGdmSearchUnified" class="pt-2.5 border-t border-slate-200">
                 <div class="relative">
                     <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="inputSearchPemuda" oninput="debounceSearchPemuda(this.value)" placeholder="Ketik minimal 2 huruf nama, no registrasi, atau no WA pemuda..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-indigo-200 bg-white focus:ring-indigo-500 focus:border-indigo-500 text-xs">
+                    <input type="text" id="inputSearchGdmUnified" oninput="debounceSearchGdmUnified(this.value)" placeholder="Ketik nama, no WhatsApp, atau no registrasi pemuda/warga..." class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-indigo-200 bg-white focus:ring-indigo-500 focus:border-indigo-500 text-xs shadow-2xs">
+                    <button type="button" id="btnClearSearchGdmUnified" onclick="clearSearchGdmUnified()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title="Bersihkan pencarian">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
                 </div>
-                <div id="searchResultsPemuda" class="mt-2 max-h-48 overflow-y-auto space-y-1.5 hidden">
+                <div id="searchResultsGdmUnified" class="mt-2.5 max-h-52 overflow-y-auto space-y-1.5 hidden">
                     <!-- Loaded via JS -->
                 </div>
             </div>
 
-            <!-- Area Search Warga MTA -->
-            <div id="sectionSearchWarga" class="mt-3 pt-3 border-t border-slate-200 hidden">
-                <div class="relative">
-                    <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="inputSearchWarga" oninput="debounceSearchWarga(this.value)" placeholder="Ketik minimal 3 huruf nama warga MTA Pusat..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-indigo-200 bg-white focus:ring-indigo-500 focus:border-indigo-500 text-xs">
+            <!-- KARTU PROFIL TERPILIH DARI DATABASE -->
+            <div id="selectedGdmProfileCard" class="hidden pt-2.5 border-t border-slate-200">
+                <div class="p-3 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between gap-3 shadow-2xs">
+                    <div class="flex items-center gap-2.5">
+                        <div id="selectedGdmIconContainer" class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span id="selectedGdmNama" class="font-black text-slate-900 text-xs">Nama Profil</span>
+                                <span id="selectedGdmBadge" class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">Pemuda</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                <span id="selectedGdmCabang">Cabang: -</span>
+                                <span id="selectedGdmKontak"></span>
+                                <span id="selectedGdmTtl"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="resetSelectedGdmProfile()" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 text-[10px] font-bold transition shadow-2xs flex-shrink-0 flex items-center gap-1">
+                        <i class="bi bi-arrow-repeat"></i> Ganti Profil
+                    </button>
                 </div>
-                <div id="searchResultsWarga" class="mt-2 max-h-48 overflow-y-auto space-y-1.5 hidden">
-                    <!-- Loaded via JS -->
+            </div>
+
+            <!-- INFO MODE MANUAL (LUAR DATABASE) -->
+            <div id="sectionGdmManualNotice" class="hidden pt-2.5 border-t border-slate-200">
+                <div class="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-900 text-[11px] flex items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-amber-600 text-base flex-shrink-0"></i>
+                    <div>
+                        <span class="font-bold">Mode Input Manual / Luar Database Aktif:</span>
+                        <span class="text-amber-800"> Anda dapat mengisi identitas kader GDM secara manual pada isian di bawah.</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -748,44 +817,82 @@
     }
 
     function openModalTambahGdm() {
-        switchGdmSourceTab('pemuda');
+        resetSelectedGdmProfile();
+        const form = document.querySelector('#modalTambahGdm form');
+        if (form) form.reset();
+        switchGdmInputMode('unified');
         openModal('modalTambahGdm');
+        setTimeout(() => {
+            const input = document.getElementById('inputSearchGdmUnified');
+            if (input) input.focus();
+        }, 150);
     }
 
-    function switchGdmSourceTab(type) {
-        const btnPemuda = document.getElementById('btnTabSumberPemuda');
-        const btnWarga  = document.getElementById('btnTabSumberWarga');
-        const btnManual = document.getElementById('btnTabSumberManual');
-        const secPemuda = document.getElementById('sectionSearchPemuda');
-        const secWarga  = document.getElementById('sectionSearchWarga');
+    function switchGdmInputMode(mode) {
+        const btnUnified = document.getElementById('btnGdmModeUnified');
+        const btnManual  = document.getElementById('btnGdmModeManual');
+        const secSearch  = document.getElementById('sectionGdmSearchUnified');
+        const secNotice  = document.getElementById('sectionGdmManualNotice');
+        const cardProfil = document.getElementById('selectedGdmProfileCard');
         const hiddenSumber = document.getElementById('tambahSumberData');
 
-        hiddenSumber.value = type;
+        if (mode === 'unified') {
+            btnUnified.className = 'py-1.5 px-3 rounded-lg font-bold text-xs transition bg-white text-indigo-700 shadow-2xs flex items-center gap-1.5';
+            btnManual.className  = 'py-1.5 px-3 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+            secNotice.classList.add('hidden');
 
-        [btnPemuda, btnWarga, btnManual].forEach(btn => {
-            btn.className = 'py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-600 hover:bg-white border border-transparent';
-        });
-
-        secPemuda.classList.add('hidden');
-        secWarga.classList.add('hidden');
-
-        if (type === 'pemuda') {
-            btnPemuda.className = 'py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-white text-indigo-700 border border-indigo-300 shadow-2xs';
-            secPemuda.classList.remove('hidden');
-            document.getElementById('inputSearchPemuda').focus();
-        } else if (type === 'warga') {
-            btnWarga.className = 'py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-white text-indigo-700 border border-indigo-300 shadow-2xs';
-            secWarga.classList.remove('hidden');
-            document.getElementById('inputSearchWarga').focus();
+            const hasProfile = document.getElementById('tambahPemudaId').value || document.getElementById('tambahMtaUuid').value;
+            if (hasProfile) {
+                cardProfil.classList.remove('hidden');
+                secSearch.classList.add('hidden');
+            } else {
+                cardProfil.classList.add('hidden');
+                secSearch.classList.remove('hidden');
+                const input = document.getElementById('inputSearchGdmUnified');
+                if (input) input.focus();
+            }
         } else {
-            btnManual.className = 'py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition bg-white text-indigo-700 border border-indigo-300 shadow-2xs';
+            // Manual Mode
+            btnManual.className  = 'py-1.5 px-3 rounded-lg font-bold text-xs transition bg-white text-amber-800 shadow-2xs flex items-center gap-1.5';
+            btnUnified.className = 'py-1.5 px-3 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+            secSearch.classList.add('hidden');
+            cardProfil.classList.add('hidden');
+            secNotice.classList.remove('hidden');
+
+            hiddenSumber.value = 'manual';
+            document.getElementById('tambahPemudaId').value = '';
+            document.getElementById('tambahMtaUuid').value = '';
         }
     }
 
-    let searchPemudaTimer = null;
-    function debounceSearchPemuda(val) {
-        clearTimeout(searchPemudaTimer);
-        const resultsBox = document.getElementById('searchResultsPemuda');
+    function clearSearchGdmUnified() {
+        const input = document.getElementById('inputSearchGdmUnified');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        const btnClear = document.getElementById('btnClearSearchGdmUnified');
+        if (btnClear) btnClear.classList.add('hidden');
+        const box = document.getElementById('searchResultsGdmUnified');
+        if (box) {
+            box.classList.add('hidden');
+            box.innerHTML = '';
+        }
+    }
+
+    let searchGdmUnifiedTimer = null;
+    function debounceSearchGdmUnified(val) {
+        clearTimeout(searchGdmUnifiedTimer);
+        const resultsBox = document.getElementById('searchResultsGdmUnified');
+        const btnClear   = document.getElementById('btnClearSearchGdmUnified');
+
+        if (btnClear) {
+            if (val.trim().length > 0) {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+        }
 
         if (val.trim().length < 2) {
             resultsBox.classList.add('hidden');
@@ -794,116 +901,120 @@
         }
 
         resultsBox.classList.remove('hidden');
-        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400"><i class="bi bi-arrow-repeat animate-spin"></i> Mencari data pemuda...</div>';
+        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400"><i class="bi bi-arrow-repeat animate-spin"></i> Mencari otomatis ke database Pemuda &amp; Warga MTA...</div>';
 
-        searchPemudaTimer = setTimeout(() => {
-            fetch(`{{ route('admin.gdm.search-pemuda') }}?q=${encodeURIComponent(val)}`)
+        searchGdmUnifiedTimer = setTimeout(() => {
+            fetch(`{{ route('admin.gdm.search-unified') }}?q=${encodeURIComponent(val)}`)
                 .then(res => res.json())
                 .then(res => {
                     const list = res.data || [];
                     if (list.length === 0) {
-                        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400 italic">Tidak ditemukan pemuda yang cocok.</div>';
+                        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400 italic">Tidak ditemukan pemuda atau warga MTA yang cocok.</div>';
                         return;
                     }
 
-                    resultsBox.innerHTML = list.map(p => `
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition flex items-center justify-between gap-3 shadow-2xs">
-                            <div>
-                                <div class="font-bold text-slate-800 text-xs">${escapeHtml(p.nama)} (${p.gender_label})</div>
-                                <div class="text-[10px] text-slate-400">
-                                    <span>${p.cabang_name}</span> &bull; <span>${p.tempat_lahir || '-'}, ${p.tanggal_lahir_formatted || '-'}</span>
-                                    ${p.no_wa ? ` &bull; <span class="text-emerald-600 font-semibold">${p.no_wa}</span>` : ''}
+                    resultsBox.innerHTML = list.map(item => {
+                        const isPemuda = item.sumber_data === 'pemuda';
+                        const sourceBadge = isPemuda
+                            ? '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="bi bi-people-fill text-[8px]"></i> Pemuda Sragen</span>'
+                            : '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><i class="bi bi-cloud-check-fill text-[8px]"></i> Warga MTA Pusat</span>';
+
+                        const isGdmBadge = item.is_gdm
+                            ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sudah Terdaftar GDM</span>'
+                            : '';
+
+                        const ttl = [item.tempat_lahir, item.tanggal_lahir_formatted || item.tanggal_lahir].filter(Boolean).join(', ');
+
+                        return `
+                            <div class="p-2.5 rounded-xl bg-white border ${item.is_gdm ? 'border-amber-200 bg-amber-50/20' : 'border-slate-200 hover:border-indigo-300'} transition flex items-center justify-between gap-3 shadow-2xs">
+                                <div>
+                                    <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5 flex-wrap">
+                                        <span>${escapeHtml(item.nama)}</span>
+                                        ${sourceBadge}
+                                        ${item.gender_label ? `<span class="text-[10px] text-slate-400">(${item.gender_label})</span>` : ''}
+                                        ${isGdmBadge}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                        <span>Cabang ${escapeHtml(item.cabang_name)}</span>
+                                        ${item.wilayah_name && item.wilayah_name !== '-' ? `&bull; <span>${escapeHtml(item.wilayah_name)}</span>` : ''}
+                                        ${ttl ? `&bull; <span>${escapeHtml(ttl)}</span>` : ''}
+                                        ${item.no_wa ? `&bull; <span class="text-emerald-600 font-semibold">${escapeHtml(item.no_wa)}</span>` : ''}
+                                        ${item.reg_no ? `&bull; <span class="font-mono text-slate-500">${escapeHtml(item.reg_no)}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="button" onclick='selectUnifiedProfileForGdm(${JSON.stringify(item)})' class="px-2.5 py-1 rounded-lg ${item.is_gdm ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} font-bold text-[10px] transition shadow-2xs flex-shrink-0 flex items-center gap-1">
+                                        <i class="bi bi-check2"></i> Pilih GDM
+                                    </button>
                                 </div>
                             </div>
-                            <button type="button" onclick="selectPemudaForGdm(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-[10px] transition flex-shrink-0">
-                                Pilih Pemuda
-                            </button>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 })
                 .catch(() => {
-                    resultsBox.innerHTML = '<div class="p-3 text-center text-rose-500">Gagal mencari pemuda.</div>';
+                    resultsBox.innerHTML = '<div class="p-3 text-center text-rose-500">Gagal mencari data calon GDM.</div>';
                 });
         }, 300);
     }
 
-    function selectPemudaForGdm(p) {
-        document.getElementById('tambahSumberData').value = 'pemuda';
-        document.getElementById('tambahPemudaId').value = p.id;
-        document.getElementById('tambahMtaUuid').value = p.mta_uuid || '';
-        document.getElementById('tambahNama').value = p.nama || '';
-        document.getElementById('tambahTempatLahir').value = p.tempat_lahir || '';
-        document.getElementById('tambahTanggalLahir').value = p.tanggal_lahir || '';
-        if (p.cabang_id) {
-            document.getElementById('tambahCabangId').value = p.cabang_id;
+    function selectUnifiedProfileForGdm(item) {
+        document.getElementById('tambahSumberData').value = item.sumber_data;
+        document.getElementById('tambahPemudaId').value = item.id || '';
+        document.getElementById('tambahMtaUuid').value = item.uuid || '';
+        document.getElementById('tambahNama').value = item.nama || '';
+        document.getElementById('tambahTempatLahir').value = item.tempat_lahir || '';
+        document.getElementById('tambahTanggalLahir').value = item.tanggal_lahir || '';
+        if (item.cabang_id) {
+            document.getElementById('tambahCabangId').value = item.cabang_id;
         }
-        document.getElementById('tambahNoWa').value = p.no_wa || '';
-        document.getElementById('tambahAlamat').value = p.alamat || '';
-        document.getElementById('searchResultsPemuda').classList.add('hidden');
+        document.getElementById('tambahNoWa').value = item.no_wa || '';
+        document.getElementById('tambahAlamat').value = item.alamat || '';
 
-        showToastNotification(`Data pemuda "${p.nama}" berhasil dimuat ke formulir.`);
+        // Display card
+        document.getElementById('selectedGdmNama').textContent = item.nama;
+        const isPemuda = item.sumber_data === 'pemuda';
+        const badgeEl = document.getElementById('selectedGdmBadge');
+        const iconEl  = document.getElementById('selectedGdmIconContainer');
+
+        if (isPemuda) {
+            badgeEl.className = 'inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200';
+            badgeEl.innerHTML = '<i class="bi bi-people-fill text-[8px]"></i> Pemuda MTA Sragen';
+            if (iconEl) iconEl.className = 'w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0';
+        } else {
+            badgeEl.className = 'inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-100 text-sky-800 border border-sky-200';
+            badgeEl.innerHTML = '<i class="bi bi-cloud-check-fill text-[8px]"></i> Warga MTA Pusat';
+            if (iconEl) iconEl.className = 'w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0';
+        }
+
+        document.getElementById('selectedGdmCabang').textContent = `Cabang ${item.cabang_name || '-'}`;
+        document.getElementById('selectedGdmKontak').textContent = item.no_wa ? `WA: ${item.no_wa}` : '';
+        const ttl = [item.tempat_lahir, item.tanggal_lahir_formatted || item.tanggal_lahir].filter(Boolean).join(', ');
+        document.getElementById('selectedGdmTtl').textContent = ttl ? `TTL: ${ttl}` : '';
+
+        // Switch View
+        document.getElementById('sectionGdmSearchUnified').classList.add('hidden');
+        document.getElementById('selectedGdmProfileCard').classList.remove('hidden');
+
+        showToastNotification(`Data ${item.sumber_label} "${item.nama}" berhasil dimuat ke formulir.`);
     }
 
-    let searchWargaTimer = null;
-    function debounceSearchWarga(val) {
-        clearTimeout(searchWargaTimer);
-        const resultsBox = document.getElementById('searchResultsWarga');
+    function resetSelectedGdmProfile() {
+        document.getElementById('tambahSumberData').value = 'manual';
+        document.getElementById('tambahPemudaId').value = '';
+        document.getElementById('tambahMtaUuid').value = '';
 
-        if (val.trim().length < 3) {
+        const inputSearch = document.getElementById('inputSearchGdmUnified');
+        if (inputSearch) inputSearch.value = '';
+        const resultsBox = document.getElementById('searchResultsGdmUnified');
+        if (resultsBox) {
             resultsBox.classList.add('hidden');
             resultsBox.innerHTML = '';
-            return;
         }
+        const btnClear = document.getElementById('btnClearSearchGdmUnified');
+        if (btnClear) btnClear.classList.add('hidden');
 
-        resultsBox.classList.remove('hidden');
-        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400"><i class="bi bi-arrow-repeat animate-spin"></i> Mencari ke server MTA Pusat...</div>';
-
-        searchWargaTimer = setTimeout(() => {
-            fetch(`{{ route('admin.gdm.search-warga') }}?q=${encodeURIComponent(val)}`)
-                .then(res => res.json())
-                .then(res => {
-                    const list = res.data || [];
-                    if (list.length === 0) {
-                        resultsBox.innerHTML = '<div class="p-3 text-center text-slate-400 italic">Tidak ditemukan warga MTA yang cocok.</div>';
-                        return;
-                    }
-
-                    resultsBox.innerHTML = list.map(w => `
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition flex items-center justify-between gap-3 shadow-2xs">
-                            <div>
-                                <div class="font-bold text-slate-800 text-xs">${escapeHtml(w.nama)}</div>
-                                <div class="text-[10px] text-slate-400">
-                                    <span>${w.cabang_name}</span> &bull; <span>${w.tempat_lahir || '-'}, ${w.tanggal_lahir || '-'}</span>
-                                    ${w.no_wa ? ` &bull; <span class="text-emerald-600 font-semibold">${w.no_wa}</span>` : ''}
-                                </div>
-                            </div>
-                            <button type="button" onclick="selectWargaForGdm(${JSON.stringify(w).replace(/"/g, '&quot;')})" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-[10px] transition flex-shrink-0">
-                                Pilih Warga
-                            </button>
-                        </div>
-                    `).join('');
-                })
-                .catch(() => {
-                    resultsBox.innerHTML = '<div class="p-3 text-center text-rose-500">Gagal mencari warga MTA.</div>';
-                });
-        }, 400);
-    }
-
-    function selectWargaForGdm(w) {
-        document.getElementById('tambahSumberData').value = 'warga';
-        document.getElementById('tambahPemudaId').value = '';
-        document.getElementById('tambahMtaUuid').value = w.uuid || '';
-        document.getElementById('tambahNama').value = w.nama || '';
-        document.getElementById('tambahTempatLahir').value = w.tempat_lahir || '';
-        document.getElementById('tambahTanggalLahir').value = w.tanggal_lahir || '';
-        if (w.cabang_id) {
-            document.getElementById('tambahCabangId').value = w.cabang_id;
-        }
-        document.getElementById('tambahNoWa').value = w.no_wa || '';
-        document.getElementById('tambahAlamat').value = w.alamat || '';
-        document.getElementById('searchResultsWarga').classList.add('hidden');
-
-        showToastNotification(`Data warga "${w.nama}" berhasil dimuat ke formulir.`);
+        document.getElementById('selectedGdmProfileCard').classList.add('hidden');
+        document.getElementById('sectionGdmSearchUnified').classList.remove('hidden');
     }
 
     function editGdm(g) {

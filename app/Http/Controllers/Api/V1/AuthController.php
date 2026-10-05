@@ -212,22 +212,30 @@ class AuthController extends BaseApiController
     {
         $user = $request->user();
         $validator = Validator::make($request->all(), [
-            'name'  => 'required|string|max:100',
-            'email' => 'nullable|email|max:100|unique:users,email,' . $user->id,
+            'name'     => 'required|string|max:100',
+            'email'    => 'nullable|email|max:100|unique:users,email,' . $user->id,
+            'username' => 'nullable|string|min:3|max:50|alpha_dash|unique:users,username,' . $user->id,
         ], [
-            'name.required' => 'Nama lengkap wajib diisi.',
-            'email.email'   => 'Format email tidak valid.',
-            'email.unique'  => 'Email sudah digunakan oleh akun lain.',
+            'name.required'       => 'Nama lengkap wajib diisi.',
+            'email.email'         => 'Format email tidak valid.',
+            'email.unique'        => 'Email sudah digunakan oleh akun lain.',
+            'username.unique'     => 'Username sudah digunakan oleh akun lain.',
+            'username.alpha_dash' => 'Username hanya boleh berisi huruf, angka, tanda strip (-), dan garis bawah (_).',
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse('Validasi gagal.', 422, $validator->errors()->toArray());
         }
 
-        $user->update([
+        $updateData = [
             'name'  => $request->input('name'),
             'email' => $request->input('email'),
-        ]);
+        ];
+        if ($request->filled('username')) {
+            $updateData['username'] = strtolower(trim((string) $request->input('username')));
+        }
+
+        $user->update($updateData);
 
         return $this->successResponse([
             'user' => [
