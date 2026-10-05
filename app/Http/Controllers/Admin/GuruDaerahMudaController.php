@@ -9,11 +9,14 @@ use App\Models\GuruDaerahMuda;
 use App\Models\Pemuda;
 use App\Models\Wilayah;
 use App\Services\GdmCabangSyncService;
+use App\Services\GdmExportService;
+use App\Services\GdmImportService;
 use App\Services\MtaApiService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class GuruDaerahMudaController extends Controller
 {
@@ -119,6 +122,82 @@ class GuruDaerahMudaController extends Controller
             'selectedSumber'      => $sumberData,
             'user'                => session()->all(),
         ]);
+    }
+
+    /**
+     * Export data Guru Daerah Muda (GDM) ke format Excel (.xlsx)
+     */
+    public function export(Request $request, GdmExportService $exportService)
+    {
+        $filters = [
+            'search'              => $request->input('search'),
+            'cabang_asal_id'      => $request->input('cabang_asal_id'),
+            'cabang_penugasan_id' => $request->input('cabang_penugasan_id'),
+            'tahun'               => $request->input('tahun'),
+            'status'              => $request->input('status'),
+            'sumber_data'         => $request->input('sumber_data'),
+        ];
+
+        $spreadsheet = $exportService->exportToExcel($filters);
+        $writer      = new Xlsx($spreadsheet);
+        $filename    = 'data_guru_daerah_muda_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Unduh template file Excel untuk import Guru Daerah Muda (GDM)
+     */
+    public function template(GdmImportService $importService)
+    {
+        $spreadsheet = $importService->generateTemplate();
+        $writer      = new Xlsx($spreadsheet);
+        $filename    = 'template_import_gdm_' . date('Ymd') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Memproses upload file Excel dan mengimpor data Guru Daerah Muda (GDM)
+     */
+    public function import(Request $request, GdmImportService $importService)
+    {
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls|max:10240',
+        ], [
+            'file_excel.required' => 'Silakan pilih file Excel yang akan diunggah.',
+            'file_excel.mimes'    => 'Format file harus berupa Excel (.xlsx atau .xls).',
+            'file_excel.max'      => 'Ukuran file maksimal adalah 10 MB.',
+        ]);
+
+        $file = $request->file('file_excel');
+        $options = [
+            'update_existing' => (bool) $request->input('update_existing', true),
+        ];
+
+        $result = $importService->importExcel($file->getRealPath(), $options);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        if ($result['success']) {
+            return redirect()->route('admin.gdm.index')
+                ->with('success', $result['message'])
+                ->with('import_result', $result);
+        }
+
+        return redirect()->route('admin.gdm.index')
+            ->with('error', $result['message'])
+            ->with('import_result', $result);
     }
 
     /**

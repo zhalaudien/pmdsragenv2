@@ -56,6 +56,18 @@
                 <span>Tambah GDM Baru</span>
             </button>
 
+            <!-- Import Excel -->
+            <button type="button" onclick="openModal('modalImportGdm')" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-sm hover:shadow flex items-center gap-2" title="Import data Guru Daerah Muda dari file Excel">
+                <i class="bi bi-file-earmark-arrow-up-fill text-sm"></i>
+                <span>Import Excel</span>
+            </button>
+
+            <!-- Export Excel -->
+            <a href="{{ route('admin.gdm.export', request()->query()) }}" class="px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-semibold text-xs transition border border-slate-200/90 hover:border-emerald-300 shadow-2xs flex items-center gap-2" title="Export data Guru Daerah Muda ke file Excel (.xlsx)">
+                <i class="bi bi-file-earmark-excel-fill text-emerald-500 text-sm"></i>
+                <span>Export Excel</span>
+            </a>
+
             <!-- Sinkronkan Master Cabang -->
             <form action="{{ route('admin.gdm.sync-cabang') }}" method="POST" class="inline" onsubmit="return confirm('Sinkronkan seluruh data penugasan Guru Daerah Muda (GDM) aktif dengan data Master Cabang?')">
                 @csrf
@@ -122,6 +134,72 @@
             <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 text-xs">
                 <i class="bi bi-x-lg"></i>
             </button>
+        </div>
+    @endif
+
+    @if(session('import_result'))
+        @php $res = session('import_result'); @endphp
+        <div class="mb-6 p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm animate-in fade-in">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl {{ ($res['error_count'] ?? 0) === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center font-bold text-lg flex-shrink-0">
+                        <i class="bi {{ ($res['error_count'] ?? 0) === 0 ? 'bi-check2-circle' : 'bi-exclamation-triangle' }}"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Hasil Pemrosesan Import Data Guru Daerah Muda (GDM)</h4>
+                        <p class="text-xs text-slate-500">{{ $res['message'] ?? 'Import telah selesai diproses.' }}</p>
+                    </div>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">Total Baris: {{ $res['total_rows'] ?? 0 }}</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs mb-3">
+                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <span class="text-[10px] uppercase font-bold text-emerald-700 block">Ditambahkan</span>
+                    <span class="text-lg font-black text-emerald-600">{{ $res['inserted_count'] ?? 0 }}</span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-sky-50 border border-sky-100">
+                    <span class="text-[10px] uppercase font-bold text-sky-700 block">Diperbarui</span>
+                    <span class="text-lg font-black text-sky-600">{{ $res['updated_count'] ?? 0 }}</span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                    <span class="text-[10px] uppercase font-bold text-slate-600 block">Dilewati</span>
+                    <span class="text-lg font-black text-slate-600">{{ $res['skipped_count'] ?? 0 }}</span>
+                </div>
+                <div class="p-2.5 rounded-xl {{ ($res['error_count'] ?? 0) > 0 ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-200/70' }} border">
+                    <span class="text-[10px] uppercase font-bold {{ ($res['error_count'] ?? 0) > 0 ? 'text-rose-700' : 'text-slate-600' }} block">Gagal / Error</span>
+                    <span class="text-lg font-black {{ ($res['error_count'] ?? 0) > 0 ? 'text-rose-600' : 'text-slate-600' }}">{{ $res['error_count'] ?? 0 }}</span>
+                </div>
+            </div>
+
+            @if(!empty($res['errors']))
+                <details class="text-xs group">
+                    <summary class="cursor-pointer font-bold text-rose-700 hover:text-rose-800 flex items-center gap-1.5 p-2 rounded-xl bg-rose-50/60 border border-rose-100 select-none">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span>Lihat Rincian Baris yang Bermasalah ({{ count($res['errors']) }})</span>
+                    </summary>
+                    <div class="mt-2 overflow-x-auto max-h-48 overflow-y-auto border border-rose-200 rounded-xl">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-rose-100/70 text-rose-800 font-bold sticky top-0">
+                                <tr>
+                                    <th class="p-2">Baris</th>
+                                    <th class="p-2">Nama GDM</th>
+                                    <th class="p-2">Keterangan Kesalahan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-rose-100 bg-white">
+                                @foreach($res['errors'] as $err)
+                                    <tr>
+                                        <td class="p-2 font-mono font-bold text-slate-600">Baris {{ $err['row'] ?? '-' }}</td>
+                                        <td class="p-2 font-semibold text-slate-800">{{ $err['nama'] ?? '-' }}</td>
+                                        <td class="p-2 text-rose-600">{{ $err['reason'] ?? '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            @endif
         </div>
     @endif
 
@@ -808,6 +886,90 @@
     </div>
 </div>
 
+<!-- ======================================================== -->
+<!-- MODAL 5: IMPORT DATA GURU DAERAH MUDA (GDM) DARI EXCEL    -->
+<!-- ======================================================== -->
+<div id="modalImportGdm" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 text-xs">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="bi bi-file-earmark-arrow-up-fill text-indigo-600"></i>
+                <span>Import Data Guru Daerah Muda (GDM) dari Excel</span>
+            </h3>
+            <button type="button" onclick="closeModal('modalImportGdm')" class="text-slate-400 hover:text-slate-600">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Panduan & Download Template -->
+        <div class="mb-4 p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2.5">
+            <div class="flex items-start gap-2.5">
+                <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                    1
+                </div>
+                <div>
+                    <span class="font-bold text-indigo-900 block">Unduh Format Template Excel</span>
+                    <p class="text-[11px] text-indigo-700 leading-relaxed">
+                        Gunakan template Excel resmi agar format kolom nama kader, cabang asal, tanggal lahir, dan jadwal penugasan sesuai sistem.
+                    </p>
+                    <a href="{{ route('admin.gdm.template') }}" class="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] transition shadow-xs">
+                        <i class="bi bi-download"></i>
+                        <span>Unduh Template Excel (.xlsx)</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-2.5 pt-2 border-t border-indigo-100/80">
+                <div class="w-6 h-6 rounded-lg bg-slate-700 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                    2
+                </div>
+                <div class="text-[11px] text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block">Isi Data &amp; Unggah</span>
+                    Isi data kader pada sheet <em>"Format Import GDM"</em>. Kolom <strong>Nama Lengkap GDM</strong>, <strong>Cabang Asal</strong>, dan <strong>Status Kader</strong> wajib diisi. Sheet <em>"Referensi Cabang"</em> memuat daftar kode dan nama cabang yang valid untuk cabang asal maupun cabang sasaran penugasan.
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Upload -->
+        <form action="{{ route('admin.gdm.import') }}" method="POST" enctype="multipart/form-data" class="space-y-4" onsubmit="handleImportGdmSubmit(this)">
+            @csrf
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1.5">Pilih File Excel (.xlsx / .xls) <span class="text-red-500">*</span></label>
+                <div class="relative border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-5 text-center bg-slate-50 hover:bg-indigo-50/30 transition cursor-pointer" onclick="document.getElementById('file_excel_gdm').click()">
+                    <input type="file" name="file_excel" id="file_excel_gdm" accept=".xlsx,.xls" required class="hidden" onchange="displayGdmFileName(this)">
+                    <div id="fileGdmUploadPrompt">
+                        <i class="bi bi-cloud-arrow-up text-3xl text-indigo-500 block mb-1"></i>
+                        <span class="font-bold text-slate-700 block text-xs">Klik untuk memilih file Excel</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Mendukung format .xlsx dan .xls (Maks. 10 MB)</span>
+                    </div>
+                    <div id="fileGdmSelectedDisplay" class="hidden">
+                        <i class="bi bi-file-earmark-spreadsheet text-3xl text-emerald-600 block mb-1"></i>
+                        <span id="selectedGdmFileName" class="font-bold text-slate-800 block text-xs truncate max-w-xs mx-auto">nama_file.xlsx</span>
+                        <span id="selectedGdmFileSize" class="text-[10px] text-slate-500 block mt-0.5">0 KB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Option Upsert -->
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+                <input type="checkbox" name="update_existing" id="chk_update_existing_gdm" value="1" checked class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="chk_update_existing_gdm" class="text-[11px] text-slate-700 cursor-pointer select-none leading-relaxed">
+                    <strong>Perbarui data jika kader GDM sudah ada (Upsert)</strong><br>
+                    <span class="text-slate-500">Jika nama kader dan cabang asal sudah terdaftar di database, sistem akan memperbarui informasinya alih-alih menduplikasi data. Penugasan kajian yang diisi juga akan disinkronkan ke Master Cabang.</span>
+                </label>
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalImportGdm')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Batal</button>
+                <button type="submit" id="btnSubmitImportGdm" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition shadow-md flex items-center gap-1.5">
+                    <i class="bi bi-upload"></i>
+                    <span>Mulai Import Data</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function changePerPageGdm(val) {
         const url = new URL(window.location.href);
@@ -1433,6 +1595,24 @@
         setTimeout(() => {
             toast.remove();
         }, 3500);
+    }
+
+    function displayGdmFileName(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            document.getElementById('fileGdmUploadPrompt').classList.add('hidden');
+            document.getElementById('fileGdmSelectedDisplay').classList.remove('hidden');
+            document.getElementById('selectedGdmFileName').textContent = file.name;
+            document.getElementById('selectedGdmFileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+        }
+    }
+
+    function handleImportGdmSubmit(form) {
+        const btn = document.getElementById('btnSubmitImportGdm');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> <span>Mengimpor Data...</span>';
+        }
     }
 </script>
 @endsection

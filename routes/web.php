@@ -133,6 +133,9 @@ Route::prefix('admin')->middleware('auth.admin')->name('admin.')->group(function
     // Manajemen Guru Daerah Muda (GDM) & Penugasan Kajian Cabang (Superadmin & Koordinator GDM)
     Route::prefix('gdm')->middleware('role:superadmin,koordinator_gdm')->name('gdm.')->group(function () {
         Route::get('/', [GuruDaerahMudaController::class, 'index'])->name('index');
+        Route::get('export', [GuruDaerahMudaController::class, 'export'])->name('export');
+        Route::get('template', [GuruDaerahMudaController::class, 'template'])->name('template');
+        Route::post('import', [GuruDaerahMudaController::class, 'import'])->name('import');
         Route::get('detail/{id}', [GuruDaerahMudaController::class, 'detail'])->name('detail');
         Route::post('simpan', [GuruDaerahMudaController::class, 'simpan'])->name('simpan');
         Route::post('update/{id}', [GuruDaerahMudaController::class, 'update'])->name('update');
