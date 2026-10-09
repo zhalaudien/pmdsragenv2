@@ -36,7 +36,18 @@
     <!-- LEFT: PROFILE CARD -->
     <div class="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm text-center">
         @if(!empty($warga['foto']) && !str_contains($warga['foto'], 'default.png'))
-            <img src="{{ $warga['foto'] }}" alt="{{ $warga['nama'] ?? 'MTA' }}" class="w-24 h-24 mx-auto mb-4 rounded-3xl object-cover shadow-sm border-2 {{ $isMale ? 'border-blue-500/20' : 'border-pink-500/20' }}">
+            <div class="relative group cursor-pointer inline-block mx-auto mb-2" onclick="openPhotoModal('{{ $warga['foto'] }}', '{{ addslashes($warga['nama'] ?? 'Warga MTA') }}', '{{ $warga['nomor'] ?? 'No. Warga' }} • MTA')" title="Klik untuk membuka & zoom foto">
+                <img src="{{ $warga['foto'] }}" alt="{{ $warga['nama'] ?? 'MTA' }}" class="w-24 h-24 rounded-3xl object-cover shadow-sm border-2 {{ $isMale ? 'border-blue-500/20' : 'border-pink-500/20' }} group-hover:scale-105 group-hover:shadow-md transition">
+                <div class="absolute inset-0 bg-slate-950/40 rounded-3xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition">
+                    <i class="bi bi-zoom-in text-lg mb-0.5"></i>
+                    <span class="text-[10px] font-bold">Perbesar</span>
+                </div>
+            </div>
+            <div class="mb-3">
+                <button type="button" onclick="openPhotoModal('{{ $warga['foto'] }}', '{{ addslashes($warga['nama'] ?? 'Warga MTA') }}', '{{ $warga['nomor'] ?? 'No. Warga' }} • MTA')" class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-red-600 transition">
+                    <i class="bi bi-arrows-fullscreen text-[10px]"></i> Perbesar Foto
+                </button>
+            </div>
         @else
             <div class="w-24 h-24 mx-auto mb-4 rounded-3xl bg-slate-50 border-2 {{ $isMale ? 'border-blue-500/20 text-blue-600' : 'border-pink-500/20 text-pink-600' }} flex items-center justify-center text-4xl shadow-sm">
                 <i class="bi bi-person-fill"></i>

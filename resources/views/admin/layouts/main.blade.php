@@ -582,6 +582,8 @@
         });
     </script>
 
+    @include('components.photo-modal')
+
     @yield('scripts')
     @stack('scripts')
 </body>

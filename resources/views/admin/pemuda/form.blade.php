@@ -171,10 +171,34 @@
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 uppercase mb-1">Foto Pemuda (JPG, PNG max 2MB)</label>
                     <input type="file" name="foto" accept="image/*" class="w-full py-2 px-3 rounded-xl border border-slate-300 bg-slate-50 text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-                    @if(!empty($pemuda->foto))
-                        <div class="mt-2 flex items-center gap-2">
-                            <img src="{{ asset('uploads/pemuda/' . $pemuda->foto) }}" alt="Foto" class="w-12 h-14 object-cover rounded-lg border">
-                            <span class="text-[11px] text-slate-500">Foto saat ini terpasang</span>
+                    @php
+                        $formPhotoUrl = null;
+                        if (!empty($pemuda->foto)) {
+                            $formPhotoUrl = asset('uploads/pemuda/' . $pemuda->foto);
+                        } elseif (!empty($pemuda->mta_foto_url) && !str_contains($pemuda->mta_foto_url, 'default.png')) {
+                            $formPhotoUrl = $pemuda->mta_foto_url;
+                        }
+                    @endphp
+                    @if($formPhotoUrl)
+                        <div class="mt-2.5 flex items-center gap-3 p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-fit">
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden flex-shrink-0" onclick="openPhotoModal('{{ $formPhotoUrl }}', '{{ addslashes($pemuda->name ?? 'Foto Pemuda') }}', 'Foto Saat Ini Terpasang')" title="Klik untuk membuka & zoom foto">
+                                <img src="{{ $formPhotoUrl }}" alt="Foto" class="w-12 h-14 object-cover rounded-xl border border-slate-200 group-hover:scale-105 transition">
+                                <span class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs transition rounded-xl">
+                                    <i class="bi bi-zoom-in"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-bold text-slate-700 block">Foto saat ini terpasang</span>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <button type="button" onclick="openPhotoModal('{{ $formPhotoUrl }}', '{{ addslashes($pemuda->name ?? 'Foto Pemuda') }}', 'Foto Saat Ini Terpasang')" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 font-bold">
+                                        <i class="bi bi-arrows-fullscreen text-[10px]"></i> Perbesar & Buka
+                                    </button>
+                                    <span class="text-slate-300">•</span>
+                                    <a href="{{ $formPhotoUrl }}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-500 hover:text-slate-700">
+                                        Tab Baru <i class="bi bi-box-arrow-up-right text-[9px]"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>

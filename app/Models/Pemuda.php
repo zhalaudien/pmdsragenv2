@@ -1383,5 +1383,34 @@ class Pemuda extends Model
             'missing_items'   => $missingItems,
         ];
     }
+
+    /**
+     * URL Foto Profil Pemuda
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!empty($this->foto)) {
+            $path = public_path('uploads/pemuda/' . $this->foto);
+            if (file_exists($path)) {
+                return asset('uploads/pemuda/' . $this->foto);
+            }
+            if (!empty($this->mta_foto_url) && !str_contains($this->mta_foto_url, 'default.png')) {
+                return $this->mta_foto_url;
+            }
+            return asset('uploads/pemuda/' . $this->foto);
+        }
+
+        if (!empty($this->mta_foto_url) && !str_contains($this->mta_foto_url, 'default.png')) {
+            return $this->mta_foto_url;
+        }
+
+        return null;
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->photo_url;
+    }
 }
+
 

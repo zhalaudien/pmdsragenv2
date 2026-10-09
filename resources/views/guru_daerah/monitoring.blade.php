@@ -437,7 +437,9 @@
                             <td>
                                 <div class="d-flex align-items-center gap-3">
                                     @if($avatarUrl)
-                                        <img src="{{ $avatarUrl }}" alt="{{ $p->name }}" class="avatar-pemuda">
+                                        <button type="button" class="btn p-0 border-0 bg-transparent" onclick="openPhotoModal('{{ $avatarUrl }}', '{{ addslashes($p->name) }}', '{{ $p->registration_number }}')" title="Klik untuk membuka & zoom foto {{ $p->name }}">
+                                            <img src="{{ $avatarUrl }}" alt="{{ $p->name }}" class="avatar-pemuda" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                        </button>
                                     @else
                                         <div class="avatar-initial {{ $p->gender === 'L' ? 'bg-primary text-white' : 'bg-danger text-white' }}">
                                             {{ $initial }}
@@ -663,7 +665,7 @@
                         <div class="avatar-initial bg-danger text-white rounded-circle fs-4" id="modalInitial" style="width: 54px; height: 54px;">
                             P
                         </div>
-                        <img src="" alt="" id="modalImg" class="rounded-circle border shadow-sm d-none" style="width: 54px; height: 54px; object-fit: cover;">
+                        <img src="" alt="" id="modalImg" class="rounded-circle border shadow-sm d-none" style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" title="Klik untuk membuka & zoom foto">
                     </div>
                     <div>
                         <h5 class="fw-bold text-dark mb-0.5" id="modalName">Nama Pemuda</h5>
@@ -889,6 +891,11 @@ function openDetailPemuda(id) {
             if (data.foto_url) {
                 imgEl.src = data.foto_url;
                 imgEl.classList.remove('d-none');
+                imgEl.onclick = function() {
+                    if (typeof openPhotoModal === 'function') {
+                        openPhotoModal(data.foto_url, data.name, data.registration_number);
+                    }
+                };
                 initEl.classList.add('d-none');
             } else {
                 imgEl.classList.add('d-none');

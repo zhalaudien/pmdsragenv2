@@ -82,19 +82,7 @@ class AuthController extends BaseApiController
                 'cabang_id'  => $user->cabang_id,
                 'wilayah_id' => $user->wilayah_id,
             ],
-            'cabang' => $user->cabang ? [
-                'id'               => $user->cabang->id,
-                'code'             => $user->cabang->code,
-                'name'             => $user->cabang->name,
-                'alamat'           => $user->cabang->alamat,
-                'pimpinan_nama'    => $user->cabang->pimpinan_nama,
-                'no_wa'            => $user->cabang->no_wa,
-                'has_gelombang'    => $user->cabang->has_gelombang,
-                'gelombang_hari'   => $user->cabang->gelombang_hari,
-                'gelombang_jam'    => $user->cabang->gelombang_jam,
-                'gelombang_ustadz' => $user->cabang->gelombang_ustadz,
-                'wilayah'          => $user->cabang->wilayah?->name,
-            ] : null,
+            'cabang' => $this->formatCabangData($user->cabang),
             'app_config' => [
                 'min_app_version'    => ApiSetting::get('api_min_app_version', '1.0.0'),
                 'latest_app_version' => ApiSetting::get('api_latest_app_version', '1.0.0'),
@@ -143,19 +131,7 @@ class AuthController extends BaseApiController
                 'cabang_id'  => $user->cabang_id,
                 'wilayah_id' => $user->wilayah_id,
             ],
-            'cabang' => $user->cabang ? [
-                'id'               => $user->cabang->id,
-                'code'             => $user->cabang->code,
-                'name'             => $user->cabang->name,
-                'alamat'           => $user->cabang->alamat,
-                'pimpinan_nama'    => $user->cabang->pimpinan_nama,
-                'no_wa'            => $user->cabang->no_wa,
-                'has_gelombang'    => $user->cabang->has_gelombang,
-                'gelombang_hari'   => $user->cabang->gelombang_hari,
-                'gelombang_jam'    => $user->cabang->gelombang_jam,
-                'gelombang_ustadz' => $user->cabang->gelombang_ustadz,
-                'wilayah'          => $user->cabang->wilayah?->name,
-            ] : null,
+            'cabang' => $this->formatCabangData($user->cabang),
             'app_config' => [
                 'min_app_version'    => ApiSetting::get('api_min_app_version', '1.0.0'),
                 'latest_app_version' => ApiSetting::get('api_latest_app_version', '1.0.0'),
@@ -317,4 +293,48 @@ class AuthController extends BaseApiController
 
         return $this->successResponse($data, 'Daftar kegiatan pemuda perwakilan.');
     }
+
+    /**
+     * Format data cabang beserta penugasan GDM resmi
+     */
+    public function formatCabangData(?\App\Models\Cabang $cabang): ?array
+    {
+        if (!$cabang) {
+            return null;
+        }
+
+        $penugasanGdm = $cabang->penugasanGdmAktif()->with('gdm')->get();
+        $gdmNames = $penugasanGdm->map(fn($p) => $p->gdm?->nama)->filter()->unique()->values()->all();
+
+        if (empty($gdmNames) && !empty($cabang->gelombang_ustadz)) {
+            $gdmNames = array_values(array_filter(array_map('trim', explode(',', $cabang->gelombang_ustadz))));
+        }
+
+        return [
+            'id'               => $cabang->id,
+            'code'             => $cabang->code,
+            'name'             => $cabang->name,
+            'alamat'           => $cabang->alamat,
+            'pimpinan_nama'    => $cabang->pimpinan_nama,
+            'no_wa'            => $cabang->no_wa,
+            'has_gelombang'    => $cabang->has_gelombang,
+            'gelombang_hari'   => $cabang->gelombang_hari,
+            'gelombang_jam'    => $cabang->gelombang_jam,
+            'gelombang_ustadz' => $cabang->gelombang_ustadz,
+            'wilayah'          => $cabang->wilayah?->name,
+            'daftar_ustadz'    => $gdmNames,
+            'penugasan_gdm'    => $penugasanGdm->map(function ($p) {
+                return [
+                    'id'          => $p->id,
+                    'gdm_id'      => $p->gdm_id,
+                    'nama'        => $p->gdm?->nama,
+                    'no_wa'       => $p->gdm?->no_wa,
+                    'alamat'      => $p->gdm?->alamat,
+                    'hari_kajian' => $p->hari_kajian,
+                    'jam_kajian'  => $p->jam_kajian,
+                ];
+            })->values()->toArray(),
+        ];
+    }
 }
+

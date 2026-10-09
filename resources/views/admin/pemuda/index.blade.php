@@ -280,7 +280,37 @@
                             {{ $p->registration_number }}
                         </td>
                         <td class="py-3 px-4">
-                            <div class="font-bold text-slate-900">{{ $p->name }}</div>
+                            @php
+                                $pPhotoUrl = $p->photo_url ?? null;
+                                if (!$pPhotoUrl) {
+                                    if (!empty($p->foto) && file_exists(public_path('uploads/pemuda/' . $p->foto))) {
+                                        $pPhotoUrl = asset('uploads/pemuda/' . $p->foto);
+                                    } elseif (!empty($p->foto)) {
+                                        $pPhotoUrl = asset('uploads/pemuda/' . $p->foto);
+                                    } elseif (!empty($p->mta_foto_url) && !str_contains($p->mta_foto_url, 'default.png')) {
+                                        $pPhotoUrl = $p->mta_foto_url;
+                                    }
+                                }
+                            @endphp
+                            <div class="flex items-center gap-2.5">
+                                @if($pPhotoUrl)
+                                    <button type="button" onclick="openPhotoModal('{{ $pPhotoUrl }}', '{{ addslashes($p->name) }}', '{{ $p->registration_number }} • {{ $p->cabang->name ?? 'Cabang' }}')" class="relative group flex-shrink-0 rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm" title="Klik untuk zoom & buka foto {{ $p->name }}">
+                                        <img src="{{ $pPhotoUrl }}" alt="{{ $p->name }}" class="w-8 h-8 rounded-xl object-cover border border-slate-200 group-hover:scale-110 transition duration-150">
+                                        <span class="absolute inset-0 bg-slate-950/45 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] transition duration-150 rounded-xl">
+                                            <i class="bi bi-zoom-in"></i>
+                                        </span>
+                                    </button>
+                                @else
+                                    <div class="w-8 h-8 rounded-xl {{ $p->gender === 'L' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-pink-50 text-pink-600 border border-pink-200' }} font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                        {{ strtoupper(substr($p->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <div class="min-w-0">
+                                    <a href="{{ route('admin.pemuda.detail', $p->id) }}" class="font-bold text-slate-900 hover:text-red-600 transition truncate block" title="{{ $p->name }}">
+                                        {{ $p->name }}
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-1.5">

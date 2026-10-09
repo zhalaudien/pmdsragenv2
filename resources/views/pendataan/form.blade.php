@@ -405,13 +405,21 @@
                         
                         <!-- Existing photo preview if updating -->
                         <div id="existing_foto_box" class="hidden mb-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
-                            <img id="existing_foto_img" src="" alt="Foto Pemuda" class="w-14 h-16 object-cover rounded-xl border border-slate-300 shadow-sm flex-shrink-0">
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden flex-shrink-0" onclick="if(document.getElementById('existing_foto_img').src) openPhotoModal(document.getElementById('existing_foto_img').src, 'Foto Profil Pemuda', 'Foto Tersimpan')" title="Klik untuk membuka & zoom foto">
+                                <img id="existing_foto_img" src="" alt="Foto Pemuda" class="w-14 h-16 object-cover rounded-xl border border-slate-300 shadow-sm group-hover:scale-105 transition">
+                                <span class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs transition rounded-xl">
+                                    <i class="bi bi-zoom-in"></i>
+                                </span>
+                            </div>
                             <div class="text-xs">
                                 <span class="font-bold text-slate-800 flex items-center gap-1.5">
                                     <i class="bi bi-check-circle-fill text-emerald-600"></i>
                                     Foto profil sudah tersimpan di sistem
                                 </span>
                                 <span class="text-slate-500 text-[11px] block mt-0.5">Unggah berkas baru di bawah jika Anda ingin memperbarui foto profil.</span>
+                                <button type="button" onclick="if(document.getElementById('existing_foto_img').src) openPhotoModal(document.getElementById('existing_foto_img').src, 'Foto Profil Pemuda', 'Foto Tersimpan')" class="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700">
+                                    <i class="bi bi-arrows-fullscreen text-[10px]"></i> Perbesar & Buka Foto
+                                </button>
                             </div>
                         </div>
 

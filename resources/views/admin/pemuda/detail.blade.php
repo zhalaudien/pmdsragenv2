@@ -7,11 +7,15 @@
 @php
     $userRole = session('role') ?? auth()->user()?->role?->name;
     $isMale = ($pemuda->gender ?? 'L') === 'L';
-    $photoUrl = null;
-    if (!empty($pemuda->foto) && file_exists(public_path('uploads/pemuda/' . $pemuda->foto))) {
-        $photoUrl = asset('uploads/pemuda/' . $pemuda->foto);
-    } elseif (!empty($pemuda->mta_foto_url)) {
-        $photoUrl = $pemuda->mta_foto_url;
+    $photoUrl = $pemuda->photo_url ?? null;
+    if (!$photoUrl) {
+        if (!empty($pemuda->foto) && file_exists(public_path('uploads/pemuda/' . $pemuda->foto))) {
+            $photoUrl = asset('uploads/pemuda/' . $pemuda->foto);
+        } elseif (!empty($pemuda->foto)) {
+            $photoUrl = asset('uploads/pemuda/' . $pemuda->foto);
+        } elseif (!empty($pemuda->mta_foto_url)) {
+            $photoUrl = $pemuda->mta_foto_url;
+        }
     }
     $age = $pemuda->birth_date ? \Carbon\Carbon::parse($pemuda->birth_date)->age : null;
 @endphp
@@ -30,11 +34,37 @@
         <!-- AVATAR / PHOTO -->
         <div class="flex-shrink-0 text-center">
             @if($photoUrl)
-                <img src="{{ $photoUrl }}" alt="{{ $pemuda->name }}" class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover shadow-md border-4 {{ $isMale ? 'border-blue-500/20' : 'border-pink-500/20' }}">
+                <div class="relative group inline-block cursor-pointer" onclick="openPhotoModal('{{ $photoUrl }}', '{{ addslashes($pemuda->name) }}', '{{ $pemuda->registration_number }} • {{ $pemuda->cabang->name ?? 'Cabang' }}')" title="Klik untuk membuka & memperbesar (zoom) foto">
+                    <img src="{{ $photoUrl }}" alt="{{ $pemuda->name }}" class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover shadow-md border-4 {{ $isMale ? 'border-blue-500/20' : 'border-pink-500/20' }} group-hover:scale-105 group-hover:shadow-lg transition duration-200">
+                    
+                    <!-- Hover overlay with zoom icon -->
+                    <div class="absolute inset-0 bg-slate-950/45 rounded-3xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity duration-200">
+                        <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white mb-1 shadow-sm">
+                            <i class="bi bi-zoom-in text-lg"></i>
+                        </div>
+                        <span class="text-[11px] font-bold tracking-wide">Perbesar Foto</span>
+                    </div>
+
+                    <!-- Small zoom badge bottom right -->
+                    <span class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/80 text-white text-[11px] flex items-center justify-center shadow border border-white/30 group-hover:hidden" title="Bisa diperbesar">
+                        <i class="bi bi-arrows-fullscreen text-[10px]"></i>
+                    </span>
+                </div>
+
+                <div class="mt-2.5 flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="openPhotoModal('{{ $photoUrl }}', '{{ addslashes($pemuda->name) }}', '{{ $pemuda->registration_number }} • {{ $pemuda->cabang->name ?? 'Cabang' }}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-slate-700 hover:text-red-600 bg-slate-100 hover:bg-slate-200/80 transition border border-slate-200/80 shadow-sm" title="Buka & zoom foto profil">
+                        <i class="bi bi-zoom-in text-red-500"></i>
+                        <span>Buka / Zoom Foto</span>
+                    </button>
+                    <a href="{{ $photoUrl }}" target="_blank" rel="noopener noreferrer" class="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition border border-transparent hover:border-slate-200" title="Buka di Tab Baru">
+                        <i class="bi bi-box-arrow-up-right text-xs"></i>
+                    </a>
+                </div>
             @else
                 <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr {{ $isMale ? 'from-blue-600 to-indigo-600' : 'from-pink-600 to-rose-600' }} text-white font-black text-4xl flex items-center justify-center shadow-md">
                     {{ strtoupper(substr($pemuda->name, 0, 1)) }}
                 </div>
+                <div class="mt-2 text-[11px] text-slate-400 font-medium">Belum ada foto</div>
             @endif
         </div>
 
