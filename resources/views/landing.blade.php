@@ -34,7 +34,9 @@
                         <span>{{ $settings['hero_btn_text'] ?? 'Mulai Isi Formulir Pendataan' }}</span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="{{ route('guru-daerah.index') }}" class="btn btn-outline-light rounded-pill px-3.5 py-2.5 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm" style="backdrop-filter: blur(8px); background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); font-size: 0.92rem;">
+                    <a href="{{ route('guru-daerah.index') }}"
+                        class="btn btn-outline-light rounded-pill px-3.5 py-2.5 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm link-hover-warning"
+                        style="backdrop-filter: blur(8px); background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); font-size: 0.92rem;">
                         <i class="bi bi-person-check text-warning fs-5"></i>
                         <span>Pantau Cabang (Guru Daerah)</span>
                     </a>
