@@ -4,6 +4,7 @@
 
 ### Added (Ditambahkan)
 
+-   Aset logo `pemudamta-inverted` untuk logo inverted pada halaman auth (CL4)
 -   views/pendataan/auth.blade.php — Tambah style `back-btn` (CL3)
 -   views/pendataan/auth.blade.php — Tambah image public `pemudamta-inverted` untuk inverted logo halaman (CL4)
 -   views/layout/app.blade.php — Tambah custom alert SweetAlert2 (CL6)
