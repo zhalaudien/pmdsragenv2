@@ -11,6 +11,7 @@ use App\Models\Wilayah;
 use App\Services\MtaApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller
@@ -480,8 +481,19 @@ class UsersController extends Controller
             }
         }
 
-        $user->delete();
+        try {
+            DB::transaction(function () use ($user) {
+                // Hapus token API mobile pengguna jika ada
+                if (method_exists($user, 'tokens')) {
+                    $user->tokens()->delete();
+                }
 
-        return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');
+                $user->delete();
+            });
+
+            return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus pengguna: ' . $e->getMessage());
+        }
     }
 }
