@@ -7,12 +7,18 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6">
 
         <!-- TOP BREADCRUMB & HEADER BADGE -->
-        <div class="flex items-center justify-between gap-2 mb-6">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition border border-slate-200 shadow-2xs">
-                <i class="bi bi-arrow-left text-red-600 font-bold"></i>
-                <span>Kembali ke Beranda</span>
-            </a>
-            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mb-6">
+            <div>
+                <a href="{{ route('home') }}" class="back-btn">
+                    <i class="bi bi-arrow-left text-red-600 font-bold"></i>
+                    <span>
+                        Kembali<span class="btn-text-full"> ke Beranda</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- On mobile, this will automatically wrap to a new row below the back button -->
+            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs self-center sm:self-auto">
                 <i class="bi bi-shield-check text-emerald-600"></i>
                 <span>Portal Basis Data Resmi Pemuda MTA Sragen</span>
             </div>
@@ -20,9 +26,13 @@
 
         <!-- AUTHENTICATION HERO TITLE -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-200 mb-4 p-3 border border-red-500">
-                <img src="{{ asset('icons/pemudamta.png') }}" alt="Logo Pemuda MTA" class="w-full h-full object-contain filter drop-shadow">
+            <!-- Separate row/column for the logo image container -->
+            <div class="block mb-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-200 p-3 border border-red-500">
+                    <img src="{{ asset('icons/pemudamta-inverted.png') }}" alt="Logo Pemuda MTA" class="w-full h-full object-contain filter drop-shadow">
+                </div>
             </div>
+
             <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold mb-2 shadow-2xs">
                 <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
                 <span>Langkah 1: Verifikasi &amp; Autentikasi Pemuda</span>
@@ -34,16 +44,16 @@
         </div>
 
         <!-- SMART SEARCH / ANTI-DUPLIKASI NOTICE -->
-        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 via-white to-amber-50/60 border border-red-200/80 text-xs text-slate-700 shadow-sm mb-6 flex items-start gap-3.5">
+        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 via-white to-amber-50/60 border border-red-200/80 text-xs text-slate-700 shadow-xs mb-6 flex items-start gap-3.5">
             <span class="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-red-200 text-base mt-0.5">
                 <i class="bi bi-person-check-fill"></i>
             </span>
             <div class="space-y-1">
                 <strong class="font-bold text-slate-900 text-sm block">Pencegahan Data Ganda (Anti-Duplikasi):</strong>
-                <p class="text-slate-600 leading-relaxed text-[11px] sm:text-xs">
-                    Ketik <strong>minimal 4 huruf nama</strong> untuk menampilkan sugesti data pemuda yang sudah ada atau warga binaan MTA Pusat di cabang Anda. 
+                <span class="text-slate-600 leading-relaxed text-[11px] sm:text-xs">
+                    Ketik <strong>minimal 4 huruf nama</strong> untuk menampilkan sugesti data pemuda yang sudah ada atau warga binaan MTA Pusat di cabang Anda.
                     Jika data Anda sudah ada, sistem akan otomatis beralih ke mode <strong>Pembaruan / Update Data</strong>. Jika belum ada, Anda dapat melanjutkan sebagai <strong>Pendaftaran Pemuda Baru</strong>.
-                </p>
+                </span>
             </div>
         </div>
 
@@ -115,7 +125,7 @@
                     <input type="hidden" name="cabang_id" id="public_cabang_id" value="{{ $preselectedId ?: '' }}" required>
 
                     <!-- Dropdown Button Trigger -->
-                    <button type="button" id="cabang_dropdown_btn" class="w-full py-3.5 px-4 rounded-2xl border border-slate-300 bg-white hover:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-slate-800 shadow-2xs flex items-center justify-between transition text-left group">
+                    <button type="button" id="cabang_dropdown_btn" style="border-radius: 1.3rem;" class="w-full py-3.5 px-4 border border-slate-300 bg-white hover:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-slate-800 shadow-2xs flex items-center justify-between transition text-left group">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <i class="bi bi-geo-alt-fill text-slate-400 group-hover:text-red-600 transition text-base flex-shrink-0"></i>
                             <span id="cabang_selected_label" class="truncate {{ $preselectedCabang ? 'text-slate-900 font-bold' : 'text-slate-400 font-normal' }}">
@@ -173,14 +183,14 @@
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <i class="bi bi-person text-base"></i>
                         </div>
-                        <input type="text" 
-                               name="name" 
-                               id="input_name" 
-                               value="{{ old('name') }}" 
-                               placeholder="{{ $preselectedCabang ? 'Ketik minimal 4 huruf nama Anda...' : 'Pilih Cabang terlebih dahulu...' }}" 
-                               {{ $preselectedCabang ? '' : 'disabled' }} 
-                               required 
-                               autocomplete="off" 
+                        <input type="text"
+                               name="name"
+                               id="input_name"
+                               value="{{ old('name') }}"
+                               placeholder="{{ $preselectedCabang ? 'Ketik minimal 4 huruf nama Anda...' : 'Pilih Cabang terlebih dahulu...' }}"
+                               {{ $preselectedCabang ? '' : 'disabled' }}
+                               required
+                               autocomplete="off"
                                class="w-full py-3.5 pl-10 pr-10 rounded-2xl border border-slate-300 {{ $preselectedCabang ? 'bg-white' : 'bg-slate-100' }} focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-slate-800 transition shadow-2xs">
 
                         <!-- Search Loading Spinner -->
@@ -247,8 +257,8 @@
                                 $initDay   = str_pad($parts[2], 2, '0', STR_PAD_LEFT);
                             }
                         }
-                        $currentYear = (int) date('Y');
-                        $minYear     = $currentYear - 40;
+                        $currentYear = (int) date('Y') - 10; //CL1
+                        $minYear     = $currentYear - 45; //CL2
                         $monthList   = [
                             '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
                             '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
@@ -338,7 +348,7 @@
                 <i class="bi bi-question-circle-fill text-red-600 text-lg"></i>
                 <span>Mengalami kendala saat verifikasi nama atau cabang?</span>
             </div>
-            <a href="https://wa.me/6281234567890?text={{ rawurlencode('Assalamu\'alaikum, saya mengalami kendala saat verifikasi pendataan pemuda MTA Sragen.') }}" target="_blank" class="inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 font-bold transition">
+            <a class="url-link" href="https://wa.me/6281234567890?text={{ rawurlencode('Assalamu\'alaikum, saya mengalami kendala saat verifikasi pendataan pemuda MTA Sragen.') }}" target="_blank" >
                 <i class="bi bi-whatsapp text-emerald-600"></i>
                 <span>Hubungi Bantuan WA</span>
                 <i class="bi bi-arrow-right text-xs"></i>
@@ -809,30 +819,61 @@
             const nameVal   = inputName.value.trim();
             const birthDate = inputBirthDate.value;
 
+           // Default configuration for SweetAlert2
+            const swalConfig = {
+                icon: 'warning',
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#dc2626',
+                scrollbarPadding: false,
+                heightAuto: false,
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+                }
+            };
+
+            // 1. Validation for Cabang
             if (!cabangId) {
                 e.preventDefault();
-                alert('Silakan pilih Cabang MTA tempat mengaji Anda terlebih dahulu.');
-                openCabangDropdown();
+                Swal.fire({
+                    ...swalConfig,
+                    title: 'Cabang Belum Dipilih',
+                    text: 'Silakan pilih Cabang MTA tempat mengaji Anda terlebih dahulu.',
+                }).then(() => {
+                    openCabangDropdown();
+                });
                 return;
             }
 
+            // 2. Validation for Name
             if (nameVal.length < 2) {
                 e.preventDefault();
-                alert('Silakan masukkan nama lengkap Anda.');
-                inputName.focus();
+                Swal.fire({
+                    ...swalConfig,
+                    title: 'Nama Tidak Valid',
+                    text: 'Silakan masukkan nama lengkap Anda.',
+                }).then(() => {
+                    inputName.focus();
+                });
                 return;
             }
 
+            // 3. Validation for Birth Date
             if (!birthDate) {
                 e.preventDefault();
-                alert('Silakan pilih tanggal, bulan, dan tahun lahir Anda secara lengkap.');
-                if (!birthDaySelect.value) {
-                    birthDaySelect.focus();
-                } else if (!birthMonthSelect.value) {
-                    birthMonthSelect.focus();
-                } else {
-                    birthYearSelect.focus();
-                }
+                Swal.fire({
+                    ...swalConfig,
+                    title: 'Tanggal Lahir Belum Lengkap',
+                    text: 'Silakan pilih tanggal, bulan, dan tahun lahir Anda secara lengkap.',
+                }).then(() => {
+                    if (!birthDaySelect.value) {
+                        birthDaySelect.focus();
+                    } else if (!birthMonthSelect.value) {
+                        birthMonthSelect.focus();
+                    } else {
+                        birthYearSelect.focus();
+                    }
+                });
                 return;
             }
 

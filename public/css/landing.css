@@ -157,6 +157,21 @@ html {
     flex-shrink: 0;
 }
 
+.link-hover-warning {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.link-hover-warning:hover {
+    color: #f59e0b !important;
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-color: #f59e0b !important;
+}
+
+.link-hover-warning:hover span,
+.link-hover-warning:hover i {
+    color: #f59e0b !important;
+}
+
 /* ===================================================
    2. STATISTIK STRIP (MINIMALIS & BERSIH)
    =================================================== */
@@ -407,9 +422,11 @@ html {
     .hero-elegant {
         padding: 3.25rem 0 2.75rem;
     }
+
     .section-clean {
         padding: 3.5rem 0;
     }
+
     .stat-item .stat-num {
         font-size: 1.85rem;
     }
@@ -420,6 +437,7 @@ html {
         width: 100%;
         justify-content: center;
     }
+
     .hero-trust-badge {
         justify-content: center;
         text-align: center;

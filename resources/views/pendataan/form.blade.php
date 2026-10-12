@@ -6,14 +6,20 @@
 
 <div class="py-8 sm:py-12 bg-slate-50/60 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
-        
+
         <!-- TOP BREADCRUMB & HEADER BADGE -->
-        <div class="flex items-center justify-between gap-2 mb-6">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition border border-slate-200 shadow-sm">
-                <i class="bi bi-arrow-left text-red-600 font-bold"></i>
-                <span>Kembali ke Beranda</span>
-            </a>
-            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mb-6">
+            <div>
+                <a href="{{ route('pendataan.logout') }}" onclick="return confirmChangedIdentity(event)" class="back-btn">
+                    <i class="bi bi-arrow-left text-red-600 font-bold"></i>
+                    <span>
+                        Kembali<span class="btn-text-full"> ke Identitas</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- On mobile, this will automatically wrap to a new row below the back button -->
+            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs self-center sm:self-auto">
                 <i class="bi bi-shield-check text-emerald-600"></i>
                 <span>Portal Basis Data Resmi Pemuda MTA Sragen</span>
             </div>
@@ -36,7 +42,7 @@
             <div class="relative">
                 <!-- Connecting line behind steps -->
                 <div class="absolute top-5 left-8 right-8 h-1 bg-slate-200 rounded-full z-0">
-                    <div id="desktopProgressTrack" class="h-full bg-red-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="desktopProgressTrack" class="h-full bg-emerald-600 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
 
                 <!-- 7 Step indicators -->
@@ -109,16 +115,6 @@
                 </div>
             @endif
 
-            <!-- ALERT NOTIFICATION BANNER (FOR STEP VALIDATION ERRORS) -->
-            <div id="step_alert_box" class="hidden p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 text-rose-900 text-xs flex items-center justify-between gap-3 shadow-sm transition-all">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-xl bg-rose-600 text-white flex items-center justify-center flex-shrink-0">
-                        <i class="bi bi-exclamation-triangle-fill text-sm"></i>
-                    </span>
-                    <span id="step_alert_message" class="font-bold text-slate-800">Mohon lengkapi seluruh isian wajib pada langkah ini.</span>
-                </div>
-                <button type="button" onclick="hideStepAlert()" class="w-6 h-6 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 flex items-center justify-center font-bold text-sm transition flex-shrink-0">&times;</button>
-            </div>
 
             <!-- ========================================================================= -->
             <!-- STEP 1: CABANG & DATA DIRI -->
@@ -159,7 +155,7 @@
                     <!-- Hidden native input to submit cabang_id -->
                     <input type="hidden" name="cabang_id" id="public_cabang_id" value="{{ old('cabang_id', $authSession['cabang_id'] ?? $selectedCabang->id) }}" required>
 
-                    <a href="{{ route('pendataan.logout') }}" onclick="return confirm('Apakah Anda yakin ingin mengganti identitas / mengulang autentikasi? Data isian yang belum tersimpan akan dibatalkan.')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-700 hover:text-red-700 font-bold text-xs border border-slate-300 hover:border-red-300 shadow-2xs transition flex-shrink-0">
+                    <a href="{{ route('pendataan.logout') }}" onclick="return confirmChangedIdentity(event)"  class="back-btn">
                         <i class="bi bi-arrow-repeat text-red-600"></i>
                         <span>Ganti Identitas / Keluar</span>
                     </a>
@@ -252,10 +248,10 @@
                                 <i class="bi bi-lock-fill text-slate-400 text-sm"></i>
                             </div>
                         </div>
-                        <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5" id="name_helper_text">
+                        <span class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5" id="name_helper_text">
                             <i class="bi bi-info-circle text-slate-400"></i>
-                            <span>Nama terkunci dari hasil autentikasi awal. Untuk mengubah identitas, klik tombol "Ganti Identitas / Keluar" di atas.</span>
-                        </p>
+                            <span>Nama terkunci dari hasil autentikasi awal. Untuk mengubah identitas, klik tombol <b>"Ganti Identitas / Keluar"</b> di atas.</span>
+                        </span>
                     </div>
 
                     <div>
@@ -284,8 +280,14 @@
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
                             Tempat Lahir <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="birth_place" id="input_birth_place" value="{{ old('birth_place') }}" placeholder="Kota / Kabupaten Lahir" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
-                    </div>
+                        <input type="text"
+                            name="birth_place"
+                            id="input_birth_place"
+                            value="{{ old('birth_place') }}"
+                            placeholder="Kota / Kabupaten Lahir"
+                            required
+                            class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
+                        </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
@@ -310,8 +312,8 @@
                                     $fDay   = str_pad($fParts[2], 2, '0', STR_PAD_LEFT);
                                 }
                             }
-                            $cYear   = (int) date('Y');
-                            $mYear   = $cYear - 40;
+                            $cYear   = (int) date('Y')- 10; //CL1
+                            $mYear   = $cYear - 45; //CL2
                             $mMonths = [
                                 '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
                                 '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
@@ -384,7 +386,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                 <i class="bi bi-whatsapp text-sm text-emerald-600"></i>
                             </div>
-                            <input type="tel" name="phone" id="input_phone" value="{{ old('phone') }}" placeholder="08xxxxxxxxxx" required class="w-full py-2.5 pl-10 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
+                            <input type="tel" name="phone" id="input_phone" value="{{ old('phone') }}" placeholder="+628xxxxxxxxxx atau 08xxxxxxxxxx" inputmode="tel" maxlength="16" required class="w-full py-2.5 pl-10 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
                         </div>
                     </div>
 
@@ -400,9 +402,9 @@
 
                     <div class="sm:col-span-2">
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1.5">
-                            Pas Foto Formal / Bebas Rapi <span class="text-slate-400 font-normal text-[11px]">(Wajib untuk kader laki-laki pada pendaftaran baru)</span>
+                            Pas Foto Formal / Bebas Rapi <span class="text-red-600 font-normal text-[11px]">(Wajib untuk kader laki-laki pada pendaftaran baru)</span>
                         </label>
-                        
+
                         <!-- Existing photo preview if updating -->
                         <div id="existing_foto_box" class="hidden mb-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
                             <div class="relative group cursor-pointer rounded-xl overflow-hidden flex-shrink-0" onclick="if(document.getElementById('existing_foto_img').src) openPhotoModal(document.getElementById('existing_foto_img').src, 'Foto Profil Pemuda', 'Foto Tersimpan')" title="Klik untuk membuka & zoom foto">
@@ -537,9 +539,9 @@
                             Status Kelulusan <span class="text-red-500">*</span>
                         </label>
                         <select name="education_status" id="input_education_status" required class="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-medium shadow-sm">
-                            <option value="lulus" {{ old('education_status') == 'lulus' ? 'selected' : '' }}>Sudah Lulus</option>
-                            <option value="sedang_sekolah" {{ old('education_status') == 'sedang_sekolah' ? 'selected' : '' }}>Sedang Menempuh Pendidikan</option>
-                            <option value="putus_sekolah" {{ old('education_status') == 'putus_sekolah' ? 'selected' : '' }}>Putus Sekolah</option>
+                            <option value="lulus" {{ old('education_status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
+                            <option value="sedang_sekolah" {{ old('education_status') == 'sedang_sekolah' ? 'selected' : '' }}>Masih Bersekolah / Kuliah</option>
+                            <option value="putus_sekolah" {{ old('education_status') == 'putus_sekolah' ? 'selected' : '' }}>Tidak Tamat</option>
                         </select>
                     </div>
 
@@ -663,7 +665,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs" id="org_checkboxes_container">
                     @foreach($orgDetails as $orgName => $info)
                         <label class="relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
-                            <input type="checkbox" name="organizations[]" value="{{ strtoupper($orgName) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+                            <input type="checkbox" hidden name="organizations[]" value="{{ strtoupper($orgName) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
                             <div class="flex items-center gap-2 min-w-0">
                                 <i class="bi {{ $info['icon'] }} {{ $info['color'] }} text-base"></i>
                                 <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">{{ strtoupper($orgName) }}</span>
@@ -677,7 +679,7 @@
                                 $cMeta = $orgDetails[strtoupper($cOrg)] ?? ['icon' => 'bi-flag-fill', 'color' => 'text-red-600'];
                             @endphp
                             <label class="relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
-                                <input type="checkbox" name="organizations[]" value="{{ strtoupper($cOrg) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+                                <input type="checkbox" hidden name="organizations[]" value="{{ strtoupper($cOrg) }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <i class="bi {{ $cMeta['icon'] }} {{ $cMeta['color'] }} text-base"></i>
                                     <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">{{ strtoupper($cOrg) }}</span>
@@ -705,7 +707,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                 <i class="bi bi-flag text-xs"></i>
                             </div>
-                            <input type="text" id="input_new_org" name="custom_organization" placeholder="Ketik nama elemen baru (contoh: TIM LOGISTIK, KOKAM, PANDU)..." autocomplete="off" class="w-full py-2.5 pl-9 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs font-semibold text-slate-800 uppercase placeholder:normal-case placeholder:text-slate-400 shadow-2xs">
+                           <input type="text" id="input_new_org" name="custom_organization" placeholder="Ketik nama elemen baru (contoh: TIM LOGISTIK, KOKAM, PANDU)..." autocomplete="off" class="w-full py-2.5 pl-9 pr-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-xs font-semibold text-slate-800 uppercase placeholder:normal-case placeholder:text-[9px] placeholder:text-slate-400 shadow-2xs">
                         </div>
                         <button type="button" onclick="addNewOrganization()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition flex-shrink-0">
                             <i class="bi bi-plus-circle"></i>
@@ -729,10 +731,10 @@
                     <!-- KOLOM BAKAT / KEAHLIAN -->
                     <div class="flex flex-col">
                         <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                            <h6 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                                 <i class="bi bi-tools text-red-600"></i>
                                 <span>Bakat / Keahlian yang Dikuasai:</span>
-                            </h4>
+                            </h6>
                             <span class="text-[10px] text-slate-400">Pilih yang sesuai</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-3.5 rounded-2xl bg-slate-50 border border-slate-200" id="skills_container">
@@ -764,10 +766,10 @@
                     <!-- KOLOM MINAT -->
                     <div class="flex flex-col">
                         <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                            <h6 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                                 <i class="bi bi-lightbulb text-amber-500"></i>
                                 <span>Minat yang Ingin Dipelajari:</span>
-                            </h4>
+                            </h6>
                             <span class="text-[10px] text-slate-400">Pilih yang sesuai</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-3.5 rounded-2xl bg-slate-50 border border-slate-200" id="interests_container">
@@ -804,7 +806,7 @@
             <div class="form-step hidden" id="step-7">
                 <div class="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100">
                     <span class="w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs font-black flex items-center justify-center">7</span>
-                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pemeriksaan Ringkasan &amp; Konfirmasi Kirim</h3>
+                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider">Konfirmasi Data</h3>
                 </div>
 
                 <!-- DYNAMIC SUMMARY CARD -->
@@ -863,6 +865,8 @@
                     </dl>
                 </div>
 
+                <hr/>
+
                 <div class="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-950 mb-4 leading-relaxed">
                     <strong class="font-bold block mb-1 flex items-center gap-1.5 text-red-900">
                         <i class="bi bi-shield-lock-fill"></i>
@@ -871,10 +875,16 @@
                     Dengan mengirimkan formulir ini, saya menyatakan dengan sesungguhnya bahwa seluruh data yang diisikan adalah benar dan valid untuk kepentingan basis data organisasi Pemuda MTA Perwakilan Sragen.
                 </div>
 
-                <label class="flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-slate-50 cursor-pointer text-xs transition shadow-sm select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/30">
-                    <input type="checkbox" id="confirm_agreement" required class="mt-0.5 rounded border-slate-300 text-red-600 focus:ring-red-500 w-4 h-4">
-                    <span class="text-slate-800 font-bold leading-relaxed">Saya telah memeriksa ringkasan data di atas dengan teliti dan menyatakan data siap dikirimkan.</span>
-                </label>
+               <label class="group flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition-all duration-200 shadow-sm select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40 has-[:checked]:shadow-md">
+                <input type="checkbox"
+                    id="confirm_agreement"
+                    required
+                    class="mt-0.5 w-4 h-4 shrink-0 rounded border-slate-300 text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-0 transition cursor-pointer">
+
+                <span class="text-sm text-slate-700 font-medium leading-relaxed group-hover:text-slate-900 transition">
+                    Saya telah memeriksa ringkasan data di atas dengan teliti dan menyatakan data siap dikirimkan.
+                </span>
+            </label>
             </div>
 
             <!-- ========================================================================= -->
@@ -968,14 +978,84 @@
     const existingFotoBox    = document.getElementById('existing_foto_box');
     const existingFotoImg    = document.getElementById('existing_foto_img');
     const btnSubmitText      = document.getElementById('btnSubmitText');
-    const stepAlertBox       = document.getElementById('step_alert_box');
-    const stepAlertMsg       = document.getElementById('step_alert_message');
 
     // Dropdown Tanggal Lahir (Tanggal, Bulan, Tahun Maksimal 40 Tahun)
     const formBirthDay       = document.getElementById('form_birth_day');
     const formBirthMonth     = document.getElementById('form_birth_month');
     const formBirthYear      = document.getElementById('form_birth_year');
     const inputBirthDate     = document.getElementById('input_birth_date');
+
+    // Validation Form
+    /// Validation phone
+    document.getElementById('input_phone').addEventListener('input', function (e) {
+        let val = this.value;
+
+        // Check if it starts with '+'
+        const hasPlus = val.startsWith('+');
+
+        // Strip everything except digits
+        val = val.replace(/\D/g, '');
+
+        // Keep max 15 digits
+        val = val.slice(0, 15);
+
+        // Re-attach '+' at the start if it was originally there
+        this.value = hasPlus ? '+' + val : val;
+    });
+
+    /// Validation address
+    document.getElementById('input_birth_place').addEventListener('input', function (e) {
+        // Remove all numeric digits (0-9) instantly as the user types or pastes
+        this.value = this.value.replace(/[0-9]/g, '');
+    });
+
+
+    /// Validation RT & RW
+    document.getElementById('input_rt').addEventListener('input', function (e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 3);
+    });
+
+    document.getElementById('input_rw').addEventListener('input', function (e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 3);
+    });
+
+    /// Validation graduation year
+    document.getElementById('input_graduation_year').addEventListener('input', function (e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    function confirmChangedIdentity(event) {
+        // Stop the default browser link navigation
+        event.preventDefault();
+
+        const targetUrl = event.currentTarget.href;
+
+        Swal.fire({
+            title: 'Konfirmasi Perubahan',
+            text: 'Apakah Anda yakin ingin mengganti identitas / mengulang autentikasi? Data isian yang belum tersimpan akan dibatalkan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            scrollbarPadding: false,
+            heightAuto: false,
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-5 py-2.5 font-bold',
+                cancelButton: 'rounded-xl px-5 py-2.5 font-bold'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to the Laravel route URL
+                window.location.href = targetUrl;
+            }
+        });
+
+        return false;
+    }
+
 
     function updateFormBirthDateFromDropdowns() {
         adjustFormDaysInMonth();
@@ -1055,22 +1135,28 @@
         }
     }
 
-    // 1. ALERT NOTIFICATIONS
-    function showStepAlert(message) {
-        if (stepAlertBox && stepAlertMsg) {
-            stepAlertMsg.textContent = message;
-            stepAlertBox.classList.remove('hidden');
-            stepAlertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-            alert(message);
-        }
+    // 1. ALERT NOTIFICATIONS USING SWEETALERT2
+    function showStepAlert(message, callback) {
+        Swal.fire({
+            title: 'Perhatian',
+            text: message,
+            icon: 'warning',
+            confirmButtonText: 'Mengerti',
+            confirmButtonColor: '#dc2626', // Tailwind red-600
+            scrollbarPadding: false,        // Prevents body shift
+            heightAuto: false,              // Prevents body height jump
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+            }
+        }).then((result) => {
+            // Optional callback (e.g., to focus an input or scroll after closing)
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
     }
 
-    function hideStepAlert() {
-        if (stepAlertBox) {
-            stepAlertBox.classList.add('hidden');
-        }
-    }
 
     // 2. SEARCHABLE CABANG DROPDOWN LOGIC
     if (cabBtn && cabPanel) {
@@ -1212,12 +1298,15 @@
             }, 250);
         });
 
+        //REVIEW (CL10) - Contain error: but do need this? input is disabled?
+        /*
         // Close dropdown when clicking outside
         document.addEventListener('click', function (e) {
             if (!inputName.contains(e.target) && !dropdownList.contains(e.target)) {
                 dropdownList.classList.add('hidden');
             }
         });
+        */
     }
 
     // Helper URL HTTPS Auto-Resolver
@@ -1760,7 +1849,7 @@
         const newCard = document.createElement('label');
         newCard.className = 'relative flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer transition shadow-sm group select-none has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40 animate-in fade-in duration-150';
         newCard.innerHTML = `
-            <input type="checkbox" name="organizations[]" value="${escapeHtml(orgName)}" checked class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
+            <input type="checkbox" hidden name="organizations[]" value="${escapeHtml(orgName)}" checked class="rounded border-slate-300 text-red-600 focus:ring-red-500 focus:ring-offset-0 w-4 h-4">
             <div class="flex items-center gap-2 min-w-0">
                 <i class="bi ${meta.icon} ${meta.color} text-base"></i>
                 <span class="font-black text-slate-900 text-sm group-hover:text-red-700 transition truncate uppercase tracking-wider">${escapeHtml(orgName)}</span>
@@ -1972,7 +2061,6 @@
 
     // 9. UPDATE STEP VIEW & NAVIGATION
     function updateStepView() {
-        hideStepAlert();
 
         for (let i = 1; i <= totalSteps; i++) {
             const stepEl = document.getElementById(`step-${i}`);
@@ -2088,6 +2176,31 @@
                 phone.focus();
                 return false;
             }
+            const genderVal = document.getElementById('input_gender').value;
+            const fotoInput = document.getElementById('input_foto');
+            const fotoFile  = fotoInput.files?.[0];
+
+            if (genderVal === "L" && !fotoFile) {
+                showStepAlert('Pas foto profil wajib diunggah untuk pendaftaran pemuda baru laki-laki');
+                return false;
+            }
+
+            if (fotoFile) {
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                const allowedExts  = ['jpeg', 'jpg', 'png', 'webp'];
+                const ext = fotoFile.name.split('.').pop().toLowerCase();
+
+                if (!allowedTypes.includes(fotoFile.type) && !allowedExts.includes(ext)) {
+                    showStepAlert('Foto harus berupa file dengan tipe: jpeg, jpg, png, webp');
+                    return false;
+                }
+
+                const maxSize = 2 * 1024 * 1024;
+                if (fotoFile.size > maxSize) {
+                    showStepAlert('Ukuran foto maksimal 2 MB');
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -2100,6 +2213,7 @@
                 reg.focus();
                 return false;
             }
+            //NOTE - CL9 : this logic should by backend, validation is data dist. and vill. available before run
             if (!dist.value) {
                 showStepAlert('Silakan pilih Kecamatan domisili Anda.');
                 dist.focus();
@@ -2198,7 +2312,7 @@
 
         if (summaryName) summaryName.textContent = inputName.value.trim() || '-';
         if (summaryCabang) summaryCabang.textContent = cabLabel ? cabLabel.textContent.trim() : '-';
-        
+
         if (summaryGender) {
             const genderVal = document.getElementById('input_gender').value;
             const maritalVal = document.getElementById('input_marital_status').value;
@@ -2210,7 +2324,7 @@
         }
 
         if (summaryPhone) summaryPhone.textContent = document.getElementById('input_phone').value || '-';
-        
+
         if (summaryAddr) {
             const regSelect = document.getElementById('public_regency_id');
             const distSelect = document.getElementById('public_district_id');

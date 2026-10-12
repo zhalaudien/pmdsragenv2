@@ -7,9 +7,14 @@
     <div class="max-w-3xl mx-auto">
         <!-- Breadcrumb & Back button -->
         <div class="flex items-center justify-between mb-6">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-300 bg-white text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
-                <i class="bi bi-arrow-left"></i> Kembali ke Beranda
-            </a>
+            <div>
+                <a href="{{ url('/') }}" class="back-btn">
+                    <i class="bi bi-arrow-left text-red-600 font-bold"></i>
+                    <span>
+                        Kembali<span class="btn-text-full"> ke Beranda</span>
+                    </span>
+                </a>
+            </div>
             <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
                 <i class="bi bi-check2-circle"></i> {{ !empty($data['is_update']) ? 'Pembaruan Sukses' : 'Pendaftaran Sukses' }}
             </span>
@@ -26,9 +31,9 @@
                     {{ !empty($data['is_update']) ? 'Data Pemuda Berhasil Diperbarui!' : 'Pendaftaran Pemuda Berhasil!' }}
                 </h1>
                 <p class="text-red-100 text-sm max-w-xl mx-auto">
-                    {{ !empty($data['is_update']) 
-                        ? 'Data profil dan potensi diri Anda telah berhasil diselaraskan dalam sistem basis data Pemuda MTA Perwakilan Sragen.' 
-                        : 'Data profil dan potensi diri Anda telah tersimpan dengan aman dalam sistem basis data Pemuda MTA Perwakilan Sragen.' 
+                    {{ !empty($data['is_update'])
+                        ? 'Data profil dan potensi diri Anda telah berhasil diselaraskan dalam sistem basis data Pemuda MTA Perwakilan Sragen.'
+                        : 'Data profil dan potensi diri Anda telah tersimpan dengan aman dalam sistem basis data Pemuda MTA Perwakilan Sragen.'
                     }}
                 </p>
             </div>
@@ -95,13 +100,13 @@
                 <!-- Action Buttons (Hidden on Print) -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 print:hidden">
                     <button type="button" onclick="window.print()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-sm text-slate-700 shadow-sm hover:bg-slate-50 transition">
-                        <i class="bi bi-printer text-base"></i> Cetak / Simpan PDF
+                        <i class="bi bi-printer text-base"></i> Cetak / Simpan
                     </button>
                     <a href="{{ route('pendataan.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 font-semibold text-sm text-white shadow-sm transition">
-                        <i class="bi bi-plus-circle text-base"></i> Input Data Baru
+                        <i class="bi bi-plus-circle text-base"></i> Input Baru
                     </a>
                     <a href="{{ url('/') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 font-semibold text-sm text-white shadow-md shadow-red-500/20 transition">
-                        <i class="bi bi-house-door text-base"></i> Ke Beranda
+                        <i class="bi bi-house-door text-base"></i> Beranda
                     </a>
                 </div>
             </div>
