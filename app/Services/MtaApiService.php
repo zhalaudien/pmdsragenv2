@@ -16,11 +16,11 @@ class MtaApiService
 
     public function __construct()
     {
-        $this->baseUrl        = config('mta.baseUrl', 'https://api.mta.or.id/api/v1');
-        $this->apiToken       = config('mta.apiToken', '');
-        $this->timeout        = (int) config('mta.timeout', 15);
-        $this->enabled        = (bool) config('mta.enabled', true);
-        $this->perwakilanUuid = config('mta.perwakilanUuid', '3246792b-f0a7-48ca-95fa-379e3bee777d');
+        $this->baseUrl        = env('MTA_API_BASE_URL', 'https://api.mta.or.id/api/v1');
+        $this->apiToken       = env('MTA_API_TOKEN', '');
+        $this->timeout        = (int) env('MTA_API_TIMEOUT', 15);
+        $this->enabled        = filter_var(env('MTA_API_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
+        $this->perwakilanUuid = env('MTA_PERWAKILAN_UUID', '3246792b-f0a7-48ca-95fa-379e3bee777d');
     }
 
     public function isEnabled(): bool
